@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Badge, Card, Group, Stack, Text, ThemeIcon } from "@mantine/core";
 import { IconArrowRight } from "@tabler/icons-react";
-import type { Coin } from "@/data/coins";
+import type { FuturesMarketOverviewItem } from "@/core/binance/futures/market/domain/models/futuresMarket.model";
 
 type HomeCardProps = {
-  coin: Coin;
+  coin: FuturesMarketOverviewItem;
 };
 
 export default function HomeCard({ coin }: HomeCardProps) {
@@ -33,18 +33,18 @@ export default function HomeCard({ coin }: HomeCardProps) {
                 {coin.symbol}
               </Text>
               <Badge variant="light" color="gray" size="sm">
-                {coin.change}
+                {coin.ticker.displayChange}
               </Badge>
             </Group>
             <Text c="dimmed" size="sm">
-              {coin.name}
+              {coin.displayName}
             </Text>
-            <Text size="sm">{coin.note}</Text>
+            <Text size="sm">{coin.contractType ?? "Futures contract"}</Text>
           </Stack>
         </Group>
         <Group gap="xs" wrap="nowrap">
           <Text size="sm" c="dimmed">
-            Detail
+            {coin.ticker.displayLastPrice}
           </Text>
           <ThemeIcon variant="light" color="teal" radius="xl" size="md">
             <IconArrowRight size={16} />

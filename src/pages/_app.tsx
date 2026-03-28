@@ -3,6 +3,11 @@ import "@mantine/core/styles.css";
 
 import type { AppProps } from "next/app";
 import { createTheme, MantineProvider } from "@mantine/core";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { useState } from "react";
 
 const theme = createTheme({
   fontFamily:
@@ -10,9 +15,26 @@ const theme = createTheme({
 });
 
 export default function App({ Component, pageProps }: AppProps) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+          mutations: {
+            retry: 0,
+          },
+        },
+      }),
+  );
+
   return (
-    <MantineProvider theme={theme} defaultColorScheme="dark">
-      <Component {...pageProps} />
-    </MantineProvider>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <Component {...pageProps} />
+      </MantineProvider>
+    </QueryClientProvider>
   );
 }

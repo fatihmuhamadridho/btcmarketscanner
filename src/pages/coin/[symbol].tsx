@@ -1,5 +1,1 @@
-export {
-  default,
-  getStaticPaths,
-  getStaticProps,
-} from "@/features/coin/view/Coin";
+export { default } from "@/features/coin/Coin";

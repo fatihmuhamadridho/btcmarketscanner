@@ -1,0 +1,38 @@
+import { FuturesExchangeInfo } from "./models/futuresExchangeInfo.model";
+import {
+  FuturesExchangeInfoResponse,
+  FuturesExchangeInfoResult,
+  FuturesExchangeInfoSummaryResult,
+} from "./futuresExchangeInfo.type";
+import { FuturesExchangeInfoRepository } from "./futuresExchangeInfo.repository";
+
+export class GetFuturesExchangeInfoUseCase {
+  constructor(
+    private readonly futuresExchangeInfoRepository: FuturesExchangeInfoRepository,
+  ) {}
+
+  async execute(): Promise<FuturesExchangeInfoResult> {
+    const response = await this.futuresExchangeInfoRepository.getExchangeInfo();
+
+    return {
+      data: new FuturesExchangeInfo(response as FuturesExchangeInfoResponse),
+    };
+  }
+}
+
+export class GetFuturesExchangeInfoSummaryUseCase {
+  constructor(
+    private readonly futuresExchangeInfoRepository: FuturesExchangeInfoRepository,
+  ) {}
+
+  async execute(): Promise<FuturesExchangeInfoSummaryResult> {
+    const response = await this.futuresExchangeInfoRepository.getExchangeInfo();
+    const exchangeInfo = new FuturesExchangeInfo(
+      response as FuturesExchangeInfoResponse,
+    );
+
+    return {
+      data: exchangeInfo.summary,
+    };
+  }
+}
