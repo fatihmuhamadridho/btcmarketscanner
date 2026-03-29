@@ -1,9 +1,11 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { WebsocketService } from "@/common/services/websocket.service";
 import type { FuturesKlineCandle } from "../domain/models/futuresMarket.model";
 import { FuturesMarketController } from "../domain/futuresMarket.controller";
 
 const futuresMarketController = new FuturesMarketController();
+const futuresWebsocketService = new WebsocketService();
 const MARKET_TIMEFRAMES = [
   { label: "1m", value: "1m" },
   { label: "5m", value: "5m" },
@@ -26,6 +28,89 @@ function getSupportResistance(candles: FuturesKlineCandle[], windowSize: number)
     resistance: Math.max(...windowCandles.map((candle) => candle.high)),
   };
 }
+
+type BinanceKlineStreamEvent = {
+  e?: string;
+  s?: string;
+  k?: {
+    t?: number;
+    T?: number;
+    s?: string;
+    i?: string;
+    o?: string;
+    c?: string;
+    h?: string;
+    l?: string;
+    v?: string;
+    x?: boolean;
+  };
+};
+
+function parseKlineStreamCandle(
+  rawMessage: string,
+  symbol: string,
+  interval: string,
+): FuturesKlineCandle | null {
+  try {
+    const parsed = JSON.parse(rawMessage) as BinanceKlineStreamEvent;
+    const kline = parsed.k;
+
+    if (
+      parsed.e !== "kline" ||
+      parsed.s?.toUpperCase() !== symbol.toUpperCase() ||
+      kline?.s?.toUpperCase() !== symbol.toUpperCase() ||
+      kline?.i?.toLowerCase() !== interval.toLowerCase() ||
+      kline?.t === undefined ||
+      kline?.T === undefined ||
+      kline?.o === undefined ||
+      kline?.c === undefined ||
+      kline?.h === undefined ||
+      kline?.l === undefined ||
+      kline?.v === undefined
+    ) {
+      return null;
+    }
+
+    return {
+      openTime: kline.t,
+      closeTime: kline.T,
+      open: Number(kline.o),
+      high: Number(kline.h),
+      low: Number(kline.l),
+      close: Number(kline.c),
+      volume: Number(kline.v),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function mergeCandlesByOpenTime(
+  current: FuturesKlineCandle[],
+  nextCandles: FuturesKlineCandle[],
+) {
+  const merged = new Map<number, FuturesKlineCandle>();
+
+  current.forEach((candle) => {
+    merged.set(candle.openTime, candle);
+  });
+
+  nextCandles.forEach((candle) => {
+    merged.set(candle.openTime, candle);
+  });
+
+  return Array.from(merged.values()).sort(
+    (left, right) => left.openTime - right.openTime,
+  );
+}
+
+export type TimeframeSupportResistance = {
+  interval: string;
+  label: string;
+  isLoading: boolean;
+  isError: boolean;
+  supportResistance: { support: number; resistance: number } | null;
+};
 
 export function useFuturesMarketOverview() {
   return useQuery({
@@ -82,11 +167,91 @@ export function useFuturesMarketSymbolCandles(
   const [candles, setCandles] = useState(initialCandles);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreOlderCandles, setHasMoreOlderCandles] = useState(true);
+  const datasetKeyRef = useRef<string>("");
 
   useEffect(() => {
-    setCandles(initialCandles);
-    setHasMoreOlderCandles(true);
+    const nextDatasetKey = `${symbol ?? ""}-${interval}`;
+
+    if (datasetKeyRef.current !== nextDatasetKey) {
+      datasetKeyRef.current = nextDatasetKey;
+      setCandles(initialCandles);
+      setHasMoreOlderCandles(true);
+      futuresWebsocketService.close();
+      return;
+    }
+
+    if (initialCandles.length === 0) {
+      return;
+    }
+
+    setCandles((current) => {
+      if (current.length === 0) {
+        return initialCandles;
+      }
+
+      return mergeCandlesByOpenTime(current, initialCandles);
+    });
   }, [initialCandles, interval, symbol]);
+
+  useEffect(() => {
+    setHasMoreOlderCandles(true);
+  }, [interval, symbol]);
+
+  useEffect(() => {
+    if (!symbol) {
+      return undefined;
+    }
+
+    if (globalThis.window === undefined) {
+      return undefined;
+    }
+
+    const streamPath = `${symbol.toLowerCase()}@kline_${interval}`;
+    futuresWebsocketService.connect(streamPath);
+
+    const handleMessage = (event: MessageEvent<string>) => {
+      const nextCandle = parseKlineStreamCandle(event.data, symbol, interval);
+
+      if (!nextCandle) {
+        return;
+      }
+
+      setCandles((current) => {
+        if (current.length === 0) {
+          return [nextCandle];
+        }
+
+        const lastIndex = current.length - 1;
+        const lastCandle = current[lastIndex];
+
+        if (nextCandle.openTime < lastCandle.openTime) {
+          return current;
+        }
+
+        if (nextCandle.openTime > lastCandle.openTime + 1) {
+          return mergeCandlesByOpenTime(current, [nextCandle]);
+        }
+
+        if (nextCandle.openTime === lastCandle.openTime) {
+          const nextCandles = [...current];
+          nextCandles[lastIndex] = nextCandle;
+          return nextCandles;
+        }
+
+        const nextCandles = [...current];
+        nextCandles.push(nextCandle);
+
+        return nextCandles;
+      });
+    };
+
+    const unsubscribe = futuresWebsocketService.onMessage(handleMessage);
+
+    return () => {
+      unsubscribe();
+      futuresWebsocketService.close();
+    };
+  }, [interval, symbol]);
 
   const loadOlderCandles = async (beforeOpenTime: number, limit = 48) => {
     if (!symbol || isLoadingMore || !hasMoreOlderCandles) {

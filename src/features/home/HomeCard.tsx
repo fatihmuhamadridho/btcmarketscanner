@@ -8,6 +8,10 @@ type HomeCardProps = {
 };
 
 export default function HomeCard({ coin }: HomeCardProps) {
+  const priceChangePercent = Number(coin.ticker.priceChangePercent ?? 0);
+  const changeBadgeColor =
+    priceChangePercent > 0 ? "green" : priceChangePercent < 0 ? "red" : "gray";
+
   return (
     <Card
       component={Link}
@@ -32,7 +36,7 @@ export default function HomeCard({ coin }: HomeCardProps) {
               <Text fw={700} fz="lg" tt="uppercase" style={{ letterSpacing: 1 }}>
                 {coin.symbol}
               </Text>
-              <Badge variant="light" color="gray" size="sm">
+              <Badge variant="light" color={changeBadgeColor} size="sm">
                 {coin.ticker.displayChange}
               </Badge>
             </Group>

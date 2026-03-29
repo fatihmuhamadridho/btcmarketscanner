@@ -1,0 +1,21 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E3A8A" />
+      <stop offset="0.5" stop-color="#0F766E" />
+      <stop offset="1" stop-color="#22C55E" />
+    </linearGradient>
+    <linearGradient id="coin" x1="18" y1="16" x2="46" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDE68A" />
+      <stop offset="1" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)" />
+  <circle cx="32" cy="32" r="17" fill="url(#coin)" />
+  <path
+    d="M28 20H35.2C38.6 20 41.2 22.6 41.2 26C41.2 28.2 40.1 30 38.3 31C40.8 31.9 42.4 34.1 42.4 36.9C42.4 41 39.1 44 34.6 44H28V20Z"
+    fill="#0B1220"
+  />
+  <path d="M31 24H35.4C36.8 24 37.8 25 37.8 26.4C37.8 27.8 36.8 28.8 35.4 28.8H31V24Z" fill="url(#bg)" />
+  <path d="M31 33H36C37.8 33 39 34.2 39 36C39 37.8 37.8 39 36 39H31V33Z" fill="url(#bg)" />
+</svg>

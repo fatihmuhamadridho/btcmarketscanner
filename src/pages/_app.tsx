@@ -1,3 +1,4 @@
+import Head from "next/head";
 import "@/styles/globals.css";
 import "@mantine/core/styles.css";
 
@@ -33,6 +34,10 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme} defaultColorScheme="dark">
+        <Head>
+          <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
+          <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
+        </Head>
         <Component {...pageProps} />
       </MantineProvider>
     </QueryClientProvider>

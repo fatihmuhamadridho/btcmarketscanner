@@ -11,15 +11,20 @@ import {
 import { IconChartLine } from "@tabler/icons-react";
 import type {
   CandlestickData,
+  IPriceLine,
   IChartApi,
   LineData,
   ISeriesApi,
+  ISeriesMarkersPluginApi,
   LogicalRange,
   MouseEventParams,
+  SeriesMarker,
   Time,
   UTCTimestamp,
 } from "lightweight-charts";
+import { LineStyle, createSeriesMarkers } from "lightweight-charts";
 import { formatDecimalString } from "@/common/utils/format-number";
+import type { TimeframeSupportResistance } from "@/core/binance/futures/market/infrastructure/futuresMarket.hook";
 import type { FuturesKlineCandle } from "@/core/binance/futures/market/domain/models/futuresMarket.model";
 
 type CoinTimeframe = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d";
@@ -37,6 +42,11 @@ type CoinChartProps = {
   isLoadingMore: boolean;
   onLoadOlderCandles: (beforeOpenTime: number) => Promise<boolean>;
   onIntervalChange: (interval: CoinTimeframe) => void;
+  supportResistance: {
+    support: number;
+    resistance: number;
+  } | null;
+  strongSupportResistanceLevel: TimeframeSupportResistance | null;
   symbol: string;
 };
 
@@ -109,6 +119,111 @@ function createMovingAverageSeries(
   });
 
   return result;
+}
+
+function getStructureSeries(
+  candles: CandlestickData<UTCTimestamp>[],
+  lookback = 3,
+) {
+  const pivotHighs: CandlestickData<UTCTimestamp>[] = [];
+  const pivotLows: CandlestickData<UTCTimestamp>[] = [];
+
+  for (let index = lookback; index < candles.length - lookback; index += 1) {
+    const candle = candles[index];
+    const left = candles.slice(index - lookback, index);
+    const right = candles.slice(index + 1, index + lookback + 1);
+
+    const isPivotHigh =
+      left.every((item) => item.high < candle.high) &&
+      right.every((item) => item.high <= candle.high);
+    const isPivotLow =
+      left.every((item) => item.low > candle.low) &&
+      right.every((item) => item.low >= candle.low);
+
+    if (isPivotHigh) {
+      pivotHighs.push(candle);
+    }
+
+    if (isPivotLow) {
+      pivotLows.push(candle);
+    }
+  }
+
+  const recentPivotHighs = pivotHighs.slice(-6);
+  const recentPivotLows = pivotLows.slice(-6);
+
+  const highLinePoints = recentPivotHighs.slice(-4).map((candle) => ({
+    time: candle.time,
+    value: candle.high,
+  }));
+  const lowLinePoints = recentPivotLows.slice(-4).map((candle) => ({
+    time: candle.time,
+    value: candle.low,
+  }));
+
+  const markers: Array<SeriesMarker<Time>> = [];
+
+  const pushHighMarker = (
+    candle: CandlestickData<UTCTimestamp>,
+    index: number,
+    isLatest: boolean,
+  ) => {
+    const previous = pivotHighs[index - 1];
+    const label = index === 0 ? "H" : candle.high > previous.high ? "HH" : "LH";
+    const accent =
+      index === 0
+        ? "rgba(251, 146, 60, 0.7)"
+        : candle.high > previous.high
+          ? "rgba(103, 232, 249, 0.98)"
+          : "rgba(251, 146, 60, 0.98)";
+
+    markers.push({
+      time: candle.time,
+      position: "aboveBar",
+      shape: index === 0 ? "circle" : "arrowDown",
+      color: accent,
+      size: isLatest ? 2 : index === 0 ? 1.2 : 1.5,
+      text: label,
+    });
+  };
+
+  const pushLowMarker = (
+    candle: CandlestickData<UTCTimestamp>,
+    index: number,
+    isLatest: boolean,
+  ) => {
+    const previous = pivotLows[index - 1];
+    const label = index === 0 ? "L" : candle.low > previous.low ? "HL" : "LL";
+    const accent =
+      index === 0
+        ? "rgba(103, 232, 249, 0.7)"
+        : candle.low > previous.low
+          ? "rgba(103, 232, 249, 0.98)"
+          : "rgba(251, 146, 60, 0.98)";
+
+    markers.push({
+      time: candle.time,
+      position: "belowBar",
+      shape: index === 0 ? "circle" : isLatest ? "square" : "arrowUp",
+      color: accent,
+      size: isLatest ? 2 : index === 0 ? 1.1 : 1.6,
+      text: label,
+    });
+  };
+
+  pivotHighs.forEach((candle, index) => {
+    pushHighMarker(candle, index, index === pivotHighs.length - 1);
+  });
+
+  pivotLows.forEach((candle, index) => {
+    pushLowMarker(candle, index, index === pivotLows.length - 1);
+  });
+
+  return {
+    markers,
+    pivotHighSeries: highLinePoints,
+    pivotLowSeries: lowLinePoints,
+  };
 }
 
 function getMovingAverageValueAtIndex(
@@ -203,6 +318,8 @@ export default function CoinChart({
   isLoadingMore,
   onLoadOlderCandles,
   onIntervalChange,
+  supportResistance,
+  strongSupportResistanceLevel,
   symbol,
 }: CoinChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -214,6 +331,14 @@ export default function CoinChart({
   const ma50SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const ma100SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const ma200SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const pivotHighSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const pivotLowSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const structureMarkersRef =
+    useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const supportPriceLineRef = useRef<IPriceLine | null>(null);
+  const resistancePriceLineRef = useRef<IPriceLine | null>(null);
+  const strongSupportPriceLineRef = useRef<IPriceLine | null>(null);
+  const strongResistancePriceLineRef = useRef<IPriceLine | null>(null);
   const candlesRef = useRef(candles);
   const onLoadOlderCandlesRef = useRef(onLoadOlderCandles);
   const hasMoreOlderCandlesRef = useRef(hasMoreOlderCandles);
@@ -230,6 +355,7 @@ export default function CoinChart({
   );
   const shouldResetPriceScaleRef = useRef(false);
   const shouldSnapToLatestRef = useRef(true);
+  const shouldFollowLatestRef = useRef(true);
   const [hoveredCandle, setHoveredCandle] = useState<ActiveCandle | null>(
     null,
   );
@@ -242,11 +368,20 @@ export default function CoinChart({
   const scrollToLatestRef = useRef<(() => void) | null>(null);
 
   const chartData = useMemo(() => createPriceSeries(candles), [candles]);
+  const chartDataRef = useRef(chartData);
+  useEffect(() => {
+    chartDataRef.current = chartData;
+  }, [chartData]);
+
   const [isChartReady, setIsChartReady] = useState(false);
   const ma10Data = useMemo(() => createMovingAverageSeries(chartData, 10), [chartData]);
   const ma50Data = useMemo(() => createMovingAverageSeries(chartData, 50), [chartData]);
   const ma100Data = useMemo(() => createMovingAverageSeries(chartData, 100), [chartData]);
   const ma200Data = useMemo(() => createMovingAverageSeries(chartData, 200), [chartData]);
+  const structureSeries = useMemo(
+    () => getStructureSeries(chartData, 3),
+    [chartData],
+  );
   const latestCandle = useMemo(() => {
     if (chartData.length === 0) {
       return null;
@@ -432,6 +567,7 @@ export default function CoinChart({
     priceScaleBaseRangeRef.current = null;
     shouldResetPriceScaleRef.current = true;
     shouldSnapToLatestRef.current = true;
+    shouldFollowLatestRef.current = true;
     setHoveredCandle(null);
   }, [interval, symbol]);
 
@@ -455,6 +591,16 @@ export default function CoinChart({
       }
 
       if (isProgrammaticRangeChangeRef.current) {
+        return;
+      }
+
+      const isAtLatest =
+        chartRef.current.timeScale().scrollPosition() <= 0.5;
+      if (!isAtLatest) {
+        shouldFollowLatestRef.current = false;
+      }
+
+      if (!isAtLatest) {
         return;
       }
 
@@ -572,6 +718,24 @@ export default function CoinChart({
         lastValueVisible: true,
         priceLineVisible: false,
       });
+      pivotHighSeriesRef.current = chart.addSeries(LineSeries, {
+        color: "rgba(251, 146, 60, 0.95)",
+        lineWidth: 3,
+        lineStyle: LineStyle.Solid,
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+      pivotLowSeriesRef.current = chart.addSeries(LineSeries, {
+        color: "rgba(103, 232, 249, 0.95)",
+        lineWidth: 3,
+        lineStyle: LineStyle.Solid,
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+      structureMarkersRef.current = createSeriesMarkers(series, [], {
+        autoScale: true,
+        zOrder: "top",
+      });
 
       handleCrosshairMove = ({ seriesData }) => {
         const candleSeries = series;
@@ -642,6 +806,9 @@ export default function CoinChart({
       ma50SeriesRef.current = null;
       ma100SeriesRef.current = null;
       ma200SeriesRef.current = null;
+      pivotHighSeriesRef.current = null;
+      pivotLowSeriesRef.current = null;
+      structureMarkersRef.current = null;
       chartRef.current?.remove();
       chartRef.current = null;
       chart = null;
@@ -658,10 +825,13 @@ export default function CoinChart({
 
     if (chartData.length === 0) {
       seriesRef.current.setData([]);
-      ma10SeriesRef.current?.setData([]);
-      ma50SeriesRef.current?.setData([]);
-      ma100SeriesRef.current?.setData([]);
-      ma200SeriesRef.current?.setData([]);
+    ma10SeriesRef.current?.setData([]);
+    ma50SeriesRef.current?.setData([]);
+    ma100SeriesRef.current?.setData([]);
+    ma200SeriesRef.current?.setData([]);
+    pivotHighSeriesRef.current?.setData([]);
+    pivotLowSeriesRef.current?.setData([]);
+    structureMarkersRef.current?.setMarkers([]);
       previousDataLengthRef.current = 0;
       return;
     }
@@ -671,6 +841,9 @@ export default function CoinChart({
     ma50SeriesRef.current?.setData(ma50Data);
     ma100SeriesRef.current?.setData(ma100Data);
     ma200SeriesRef.current?.setData(ma200Data);
+    pivotHighSeriesRef.current?.setData(structureSeries.pivotHighSeries);
+    pivotLowSeriesRef.current?.setData(structureSeries.pivotLowSeries);
+    structureMarkersRef.current?.setMarkers(structureSeries.markers);
     syncPriceScaleRangeRef.current(chartData);
 
     const shouldResetPriceScale =
@@ -715,6 +888,13 @@ export default function CoinChart({
       pendingRangeRef.current = null;
     }
 
+    const isStillAtLatest =
+      chartRef.current.timeScale().scrollPosition() <= 0.5;
+
+    if (shouldFollowLatestRef.current && isStillAtLatest) {
+      scrollToLatestRef.current?.();
+    }
+
     previousDataLengthRef.current = chartData.length;
 
   }, [
@@ -725,7 +905,154 @@ export default function CoinChart({
     ma50Data,
     ma100Data,
     ma200Data,
+    structureSeries.markers,
+    structureSeries.pivotHighSeries,
+    structureSeries.pivotLowSeries,
   ]);
+
+  useEffect(() => {
+    if (!isChartReady || !seriesRef.current) {
+      return undefined;
+    }
+
+    const series = seriesRef.current;
+
+    const removeExistingPriceLines = () => {
+      if (supportPriceLineRef.current) {
+        try {
+          series.removePriceLine(supportPriceLineRef.current);
+        } catch {
+          // The chart can already be disposed during interval remounts.
+        }
+        supportPriceLineRef.current = null;
+      }
+
+      if (resistancePriceLineRef.current) {
+        try {
+          series.removePriceLine(resistancePriceLineRef.current);
+        } catch {
+          // The chart can already be disposed during interval remounts.
+        }
+        resistancePriceLineRef.current = null;
+      }
+    };
+
+    const removeStrongPriceLines = () => {
+      if (strongSupportPriceLineRef.current) {
+        try {
+          series.removePriceLine(strongSupportPriceLineRef.current);
+        } catch {
+          // Ignore disposed series during interval remounts.
+        }
+        strongSupportPriceLineRef.current = null;
+      }
+
+      if (strongResistancePriceLineRef.current) {
+        try {
+          series.removePriceLine(strongResistancePriceLineRef.current);
+        } catch {
+          // Ignore disposed series during interval remounts.
+        }
+        strongResistancePriceLineRef.current = null;
+      }
+    };
+
+    removeExistingPriceLines();
+    removeStrongPriceLines();
+
+    if (
+      !supportResistance ||
+      !Number.isFinite(supportResistance.support) ||
+      !Number.isFinite(supportResistance.resistance)
+    ) {
+      return undefined;
+    }
+
+    const supportColor = "rgba(87, 199, 166, 0.95)";
+    const resistanceColor = "rgba(237, 85, 101, 0.95)";
+
+    try {
+      supportPriceLineRef.current = series.createPriceLine({
+        price: supportResistance.support,
+        color: supportColor,
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        lineVisible: true,
+        axisLabelVisible: true,
+        title: "Support",
+        axisLabelColor: supportColor,
+        axisLabelTextColor: "#ffffff",
+      });
+
+      resistancePriceLineRef.current = series.createPriceLine({
+        price: supportResistance.resistance,
+        color: resistanceColor,
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        lineVisible: true,
+        axisLabelVisible: true,
+        title: "Resistance",
+        axisLabelColor: resistanceColor,
+        axisLabelTextColor: "#ffffff",
+      });
+    } catch {
+      supportPriceLineRef.current = null;
+      resistancePriceLineRef.current = null;
+    }
+
+    if (
+      strongSupportResistanceLevel &&
+      strongSupportResistanceLevel.interval !== interval &&
+      strongSupportResistanceLevel.supportResistance &&
+      Number.isFinite(strongSupportResistanceLevel.supportResistance.support) &&
+      Number.isFinite(strongSupportResistanceLevel.supportResistance.resistance)
+    ) {
+      const level = strongSupportResistanceLevel.supportResistance;
+      const supportColor = "rgba(103, 232, 249, 0.68)";
+      const resistanceColor = "rgba(251, 146, 60, 0.68)";
+
+      try {
+        strongSupportPriceLineRef.current = series.createPriceLine({
+          price: level.support,
+          color: supportColor,
+          lineWidth: 2,
+          lineStyle: LineStyle.Solid,
+          lineVisible: true,
+          axisLabelVisible: true,
+          title: "Strong Support",
+          axisLabelColor: supportColor,
+          axisLabelTextColor: "#ffffff",
+        });
+
+        strongResistancePriceLineRef.current = series.createPriceLine({
+          price: level.resistance,
+          color: resistanceColor,
+          lineWidth: 2,
+          lineStyle: LineStyle.Solid,
+          lineVisible: true,
+          axisLabelVisible: true,
+          title: "Strong Resistance",
+          axisLabelColor: resistanceColor,
+          axisLabelTextColor: "#ffffff",
+        });
+      } catch {
+        // Ignore line creation failures on transient remounts.
+      }
+    }
+
+    return () => {
+      if (!chartRef.current || !seriesRef.current) {
+        supportPriceLineRef.current = null;
+        resistancePriceLineRef.current = null;
+        strongSupportPriceLineRef.current = null;
+        strongResistancePriceLineRef.current = null;
+        return;
+      }
+
+      removeExistingPriceLines();
+      removeStrongPriceLines();
+    };
+  }, [interval, isChartReady, strongSupportResistanceLevel, supportResistance]);
 
   useEffect(() => {
     if (
@@ -826,7 +1153,7 @@ export default function CoinChart({
               </Text>
             </Group>
             <Text c="dimmed" size="sm">
-              Pergerakan harga historis untuk {symbol}
+              Historical price movement for {symbol}
             </Text>
           </Stack>
 
@@ -979,7 +1306,7 @@ export default function CoinChart({
                 {chartError}
               </Text>
             </div>
-          ) : null}
+        ) : null}
           <div
             ref={containerRef}
             style={{

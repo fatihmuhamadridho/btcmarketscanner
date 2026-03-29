@@ -28,3 +28,8 @@
 ## Editor / Workflow
 
 - Run lint after larger refactors.
+
+## Git
+
+- No need to run `git add`; I will decide when to stage changes.
+- Write the commit message based on the actual changes, then push.

@@ -16,6 +16,8 @@ import {
 import { useMemo, useState } from "react";
 import { formatInteger } from "@/common/utils/format-number";
 import { useFuturesMarketOverview } from "@/core/binance/futures/market/infrastructure/futuresMarket.hook";
+import AppFooter from "../shared/AppFooter";
+import AnalysisDisclaimer from "../shared/AnalysisDisclaimer";
 import HomeCard from "./HomeCard";
 
 const HOME_PAGE_SIZE = 10;
@@ -88,8 +90,9 @@ export default function Home() {
                 Scan the market from one clean coin list.
               </Title>
               <Text c="dimmed" fz="lg" maw={760} lh={1.7}>
-                Klik card coin untuk masuk ke halaman detail. Daftar di bawah
-                dibuat satu kolom supaya lebih enak dibaca dari atas ke bawah.
+                Click a coin card to open the detail page. The list below is
+                laid out in a single column so it is easier to scan from top
+                to bottom.
               </Text>
             </Stack>
 
@@ -117,8 +120,8 @@ export default function Home() {
                       Live market structure snapshot
                     </Title>
                     <Text c="dimmed" size="sm" maw={720}>
-                      Pulled from `/fapi/v1/exchangeInfo` and mapped into a
-                      compact homepage summary.
+                      A compact overview of the current market structure and
+                      available trading symbols.
                     </Text>
                   </Stack>
                   <Badge variant="light" color="gray" size="lg">
@@ -250,6 +253,10 @@ export default function Home() {
                 </>
               ) : null}
             </Paper>
+
+            <AnalysisDisclaimer />
+
+            <AppFooter />
           </Stack>
         </Container>
       </Box>
