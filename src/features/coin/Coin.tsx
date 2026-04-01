@@ -19,7 +19,7 @@ import {
   Title,
 } from '@mantine/core';
 import { IconArrowLeft, IconTrendingDown, IconTrendingUp, IconMinus } from '@tabler/icons-react';
-import { formatDecimalString } from '@/common/utils/format-number';
+import { formatDecimalString } from '@utils/format-number';
 import CoinChart from './CoinChart';
 import AppFooter from '../shared/AppFooter';
 import AnalysisDisclaimer from '../shared/AnalysisDisclaimer';
@@ -28,7 +28,7 @@ import {
   useFuturesMarketSymbolInitialCandles,
   useFuturesMarketSymbolSnapshot,
   useFuturesMarketTimeframeSupportResistance,
-} from '@/core/binance/futures/market/infrastructure/futuresMarket.hook';
+} from '@core/binance/futures/market/infrastructure/futuresMarket.hook';
 
 function formatDate(value?: number) {
   if (!value) return 'n/a';

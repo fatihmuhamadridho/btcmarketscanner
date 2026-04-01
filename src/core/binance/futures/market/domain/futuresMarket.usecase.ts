@@ -1,4 +1,4 @@
-import { FuturesExchangeInfo } from '@/core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model';
+import { FuturesExchangeInfo } from '@core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model';
 import { FuturesMarketOverviewItem, FuturesMarketSymbolSnapshot, FuturesMarketSymbolDetail } from './models/futuresMarket.model';
 import type { FuturesMarketRepository } from './futuresMarket.repository';
 

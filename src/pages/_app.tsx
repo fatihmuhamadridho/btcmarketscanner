@@ -1,7 +1,7 @@
-import Head from 'next/head';
-import '@/styles/globals.css';
+import '@styles/globals.css';
 import '@mantine/core/styles.css';
 
+import Head from 'next/head';
 import type { AppProps } from 'next/app';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

@@ -1,1 +1,1 @@
-export { default } from '@/features/coin/Coin';
+export { default } from '@features/coin/Coin';

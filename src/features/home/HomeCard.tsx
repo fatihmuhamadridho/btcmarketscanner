@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Badge, Card, Group, Stack, Text, ThemeIcon } from '@mantine/core';
 import { IconArrowRight } from '@tabler/icons-react';
-import type { FuturesMarketOverviewItem } from '@/core/binance/futures/market/domain/models/futuresMarket.model';
+import type { FuturesMarketOverviewItem } from '@core/binance/futures/market/domain/models/futuresMarket.model';
 
 type HomeCardProps = {
   coin: FuturesMarketOverviewItem;

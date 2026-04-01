@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { BASE_API_BINANCE } from '@/common/configs/base';
+import { BASE_API_BINANCE } from '@configs/base';
 
 export interface AxiosServiceOptions {
   baseURL?: string;

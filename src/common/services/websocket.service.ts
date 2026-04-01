@@ -1,4 +1,4 @@
-import { BASE_API_WEBSOCKET_BINANCE } from '@/common/configs/base';
+import { BASE_API_WEBSOCKET_BINANCE } from '@configs/base';
 
 export type WebsocketEventHandler = (event: MessageEvent<string>) => void;
 

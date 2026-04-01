@@ -14,8 +14,12 @@
     "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@commons/*": ["./src/common/*"]
+      "@core/*": ["./src/core/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@features/*": ["./src/features/*"],
+      "@configs/*": ["./src/common/configs/*"],
+      "@services/*": ["./src/common/services/*"],
+      "@utils/*": ["./src/common/utils/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts", "**/*.mts"],

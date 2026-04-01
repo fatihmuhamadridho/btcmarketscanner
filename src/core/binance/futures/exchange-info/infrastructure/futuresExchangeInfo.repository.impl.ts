@@ -1,4 +1,4 @@
-import { AxiosService } from '@/common/services/axios.service';
+import { AxiosService } from '@services/axios.service';
 import { FuturesExchangeInfoRepository } from '../domain/futuresExchangeInfo.repository';
 import type { FuturesExchangeInfoResponse } from '../domain/futuresExchangeInfo.type';
 

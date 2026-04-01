@@ -14,8 +14,8 @@ import {
   Title,
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
-import { formatInteger } from '@/common/utils/format-number';
-import { useFuturesMarketOverview } from '@/core/binance/futures/market/infrastructure/futuresMarket.hook';
+import { formatInteger } from '@utils/format-number';
+import { useFuturesMarketOverview } from '@core/binance/futures/market/infrastructure/futuresMarket.hook';
 import AppFooter from '../shared/AppFooter';
 import AnalysisDisclaimer from '../shared/AnalysisDisclaimer';
 import HomeCard from './HomeCard';

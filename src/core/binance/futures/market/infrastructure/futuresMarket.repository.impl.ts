@@ -1,5 +1,5 @@
-import { AxiosService } from '@/common/services/axios.service';
-import { BASE_API_BINANCE } from '@/common/configs/base';
+import { AxiosService } from '@services/axios.service';
+import { BASE_API_BINANCE } from '@configs/base';
 import { FuturesMarketRepository } from '../domain/futuresMarket.repository';
 import type { FuturesExchangeInfoResponse, FuturesKlinesQuery, FuturesKlinesResponse, FuturesTicker24hrResponse } from '../domain/futuresMarket.type';
 

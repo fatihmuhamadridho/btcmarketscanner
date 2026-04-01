@@ -1,5 +1,5 @@
-import type { FuturesExchangeInfo } from '@/core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model';
-import { formatDecimalString } from '@/common/utils/format-number';
+import type { FuturesExchangeInfo } from '@core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model';
+import { formatDecimalString } from '@utils/format-number';
 
 export type FuturesTicker24hrProps = {
   lastPrice?: string;
