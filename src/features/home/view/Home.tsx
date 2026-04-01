@@ -14,10 +14,10 @@ import {
   Title,
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
-import { formatInteger } from '@utils/format-number';
+import { formatInteger } from '@utils/format-number.util';
 import { useFuturesMarketOverview } from '@core/binance/futures/market/infrastructure/futuresMarket.hook';
-import AppFooter from '../shared/AppFooter';
-import AnalysisDisclaimer from '../shared/AnalysisDisclaimer';
+import AppFooter from '../../shared/AppFooter';
+import AnalysisDisclaimer from '../../shared/AnalysisDisclaimer';
 import HomeCard from './HomeCard';
 
 const HOME_PAGE_SIZE = 10;

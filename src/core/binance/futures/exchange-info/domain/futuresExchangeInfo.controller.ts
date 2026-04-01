@@ -1,5 +1,5 @@
 import { AxiosService } from '@services/axios.service';
-import { BASE_API_BINANCE } from '@configs/base';
+import { BASE_API_BINANCE } from '@configs/base.config';
 import { FuturesExchangeInfoRepositoryImpl } from '../infrastructure/futuresExchangeInfo.repository.impl';
 import { GetFuturesExchangeInfoSummaryUseCase } from './futuresExchangeInfo.usecase';
 

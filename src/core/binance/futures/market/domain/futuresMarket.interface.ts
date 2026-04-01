@@ -1,5 +1,5 @@
-import type { FuturesExchangeInfo } from '@core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model';
-import type { FuturesKlineCandle, FuturesMarketOverviewItem, FuturesMarketSymbolDetail, FuturesTicker24hrProps } from './models/futuresMarket.model';
+import type { FuturesExchangeInfo } from '@core/binance/futures/exchange-info/domain/futuresExchangeInfo.model';
+import type { FuturesKlineCandle, FuturesMarketOverviewItem, FuturesMarketSymbolDetail, FuturesTicker24hrProps } from './futuresMarket.model';
 
 export type FuturesTicker24hrResponse = FuturesTicker24hrProps[];
 

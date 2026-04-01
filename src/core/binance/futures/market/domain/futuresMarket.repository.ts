@@ -1,4 +1,4 @@
-import type { FuturesExchangeInfoResponse, FuturesKlinesQuery, FuturesKlinesResponse, FuturesTicker24hrResponse } from './futuresMarket.type';
+import type { FuturesExchangeInfoResponse, FuturesKlinesQuery, FuturesKlinesResponse, FuturesTicker24hrResponse } from './futuresMarket.interface';
 
 export abstract class FuturesMarketRepository {
   abstract getExchangeInfo(): Promise<FuturesExchangeInfoResponse>;

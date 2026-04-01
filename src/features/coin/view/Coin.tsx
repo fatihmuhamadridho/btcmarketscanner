@@ -19,10 +19,10 @@ import {
   Title,
 } from '@mantine/core';
 import { IconArrowLeft, IconTrendingDown, IconTrendingUp, IconMinus } from '@tabler/icons-react';
-import { formatDecimalString } from '@utils/format-number';
+import { formatDecimalString } from '@utils/format-number.util';
 import CoinChart from './CoinChart';
-import AppFooter from '../shared/AppFooter';
-import AnalysisDisclaimer from '../shared/AnalysisDisclaimer';
+import AppFooter from '../../shared/AppFooter';
+import AnalysisDisclaimer from '../../shared/AnalysisDisclaimer';
 import {
   useFuturesMarketSymbolCandles,
   useFuturesMarketSymbolInitialCandles,

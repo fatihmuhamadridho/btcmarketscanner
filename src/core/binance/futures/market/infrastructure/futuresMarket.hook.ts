@@ -1,7 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { WebsocketService } from '@services/websocket.service';
-import type { FuturesKlineCandle } from '../domain/models/futuresMarket.model';
+import type { FuturesKlineCandle } from '../domain/futuresMarket.model';
 import { FuturesMarketController } from '../domain/futuresMarket.controller';
 
 const futuresMarketController = new FuturesMarketController();

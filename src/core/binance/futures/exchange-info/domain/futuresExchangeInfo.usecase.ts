@@ -1,5 +1,5 @@
-import { FuturesExchangeInfo } from './models/futuresExchangeInfo.model';
-import { FuturesExchangeInfoResponse, FuturesExchangeInfoResult, FuturesExchangeInfoSummaryResult } from './futuresExchangeInfo.type';
+import { FuturesExchangeInfo } from './futuresExchangeInfo.model';
+import { FuturesExchangeInfoResponse, FuturesExchangeInfoResult, FuturesExchangeInfoSummaryResult } from './futuresExchangeInfo.interface';
 import { FuturesExchangeInfoRepository } from './futuresExchangeInfo.repository';
 
 export class GetFuturesExchangeInfoUseCase {

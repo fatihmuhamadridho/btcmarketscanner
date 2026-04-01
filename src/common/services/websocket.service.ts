@@ -1,4 +1,4 @@
-import { BASE_API_WEBSOCKET_BINANCE } from '@configs/base';
+import { BASE_API_WEBSOCKET_BINANCE } from '@configs/base.config';
 
 export type WebsocketEventHandler = (event: MessageEvent<string>) => void;
 
@@ -21,7 +21,7 @@ export class WebsocketService {
       return path;
     }
 
-    const baseUrl = this.options.baseURL ?? BASE_API_WEBSOCKET_BINANCE ?? 'wss://fstream.binance.com/ws';
+    const baseUrl = this.options.baseURL ?? BASE_API_WEBSOCKET_BINANCE ?? '';
     const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     if (!path) return normalizedBaseUrl;
 

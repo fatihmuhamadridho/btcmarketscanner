@@ -1,6 +1,6 @@
 import { AxiosService } from '@services/axios.service';
 import { FuturesExchangeInfoRepository } from '../domain/futuresExchangeInfo.repository';
-import type { FuturesExchangeInfoResponse } from '../domain/futuresExchangeInfo.type';
+import type { FuturesExchangeInfoResponse } from '../domain/futuresExchangeInfo.interface';
 
 export class FuturesExchangeInfoRepositoryImpl implements FuturesExchangeInfoRepository {
   constructor(private readonly axiosService: AxiosService) {}

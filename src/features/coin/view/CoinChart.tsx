@@ -15,9 +15,9 @@ import type {
   UTCTimestamp,
 } from 'lightweight-charts';
 import { LineStyle, createSeriesMarkers } from 'lightweight-charts';
-import { formatDecimalString } from '@utils/format-number';
+import { formatDecimalString } from '@utils/format-number.util';
 import type { TimeframeSupportResistance } from '@core/binance/futures/market/infrastructure/futuresMarket.hook';
-import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/models/futuresMarket.model';
+import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
 
 type CoinTimeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d';
 

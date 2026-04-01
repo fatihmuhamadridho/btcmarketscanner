@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { FuturesExchangeInfoSummary } from '../domain/models/futuresExchangeInfo.model';
+import type { FuturesExchangeInfoSummary } from '../domain/futuresExchangeInfo.model';
 import { FuturesExchangeInfoController } from '../domain/futuresExchangeInfo.controller';
 
 const futuresExchangeInfoController = new FuturesExchangeInfoController();

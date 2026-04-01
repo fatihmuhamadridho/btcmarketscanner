@@ -1,5 +1,5 @@
 import { Group, Paper, Stack, Text } from '@mantine/core';
-import { APP_VERSION } from '@configs/base';
+import { APP_VERSION } from '@configs/base.config';
 
 export default function AppFooter() {
   const year = new Date().getFullYear();
