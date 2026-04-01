@@ -3,4 +3,3 @@ export const BASE_API_BINANCE = process.env.BASE_API_BINANCE;
 export const BASE_API_WEBSOCKET_BINANCE = process.env.BASE_API_WEBSOCKET_BINANCE;
 export const BINANCE_API_KEY = process.env.BINANCE_API_KEY;
 export const BINANCE_SECRET_KEY = process.env.BINANCE_SECRET_KEY;
-export const BINANCE_RECV_WINDOW = process.env.BINANCE_RECV_WINDOW;
