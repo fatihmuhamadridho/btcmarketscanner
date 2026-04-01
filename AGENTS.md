@@ -3,23 +3,44 @@
 ## Feature Structure
 
 - Use a feature-based structure under `src/features/<feature>`.
-- Keep business/data flow in `domain` and `infrastructure`.
-- Keep UI in `views`.
-- `src/pages` should stay thin and only mount the feature page component.
+- Keep UI in `src/features/<feature>/view`.
+- Keep feature contracts and UI-facing types in `src/features/<feature>/interface` as `*.interface.ts`.
+- Keep feature logic in `src/features/<feature>/logic` as `*.logic.ts`.
+- Keep domain and infrastructure code in their own layers.
+- Keep `src/pages` thin and prefer direct re-exports from feature page components.
+
+## Layer Boundaries
+
+- Only `pages` and `logic` may import from `domain` or `infrastructure`.
+- `atoms`, `molecules`, `organisms`, and `templates` must stay presentational.
+- Do not put business logic in `atoms`, `molecules`, `organisms`, or `templates`.
+- Do not import domain types directly into `view` files.
+- If a UI component needs shared data shape, define it in `src/features/<feature>/interface`.
 
 ## View Layer Rules
 
-- Treat `views/pages` as the only place for page-level logic.
+- Treat `view/pages` as the orchestration layer.
 - Page logic may include:
   - data fetching hooks
-  - context reads/writes
-  - mapping domain data into UI-specific interfaces
-  - pagination state
-  - metadata such as `<Head>`
-- `views/templates` must only compose UI sections.
-- `views/organisms`, `views/molecules`, and `views/atoms` must stay presentational.
-- Do not put business logic in `atoms`, `molecules`, `organisms`, or `templates`.
-- Do not import domain types directly into `views`; define UI-specific interfaces in `views/interfaces` instead.
+  - context reads and writes
+  - mapping domain data into UI props
+  - pagination or selection state
+  - handler wiring
+- Pages should usually pass props into a single template component.
+- `view/templates` is the top UI composition layer.
+- `view/templates` may render `<Head>` when the metadata belongs to that page composition.
+- `view/organisms`, `view/molecules`, and `view/atoms` must remain presentational and only use UI-facing interfaces.
+
+## Naming
+
+- Name component files with the layer suffix:
+  - `*.atom.tsx`
+  - `*.molecule.tsx`
+  - `*.organism.tsx`
+  - `*.template.tsx`
+  - `*.page.tsx`
+- Keep the component name in PascalCase before the suffix.
+- Apply the same naming pattern to shared components in `src/common/components` when they are part of the atomic UI layer.
 
 ## UI Composition
 
@@ -44,22 +65,22 @@
 
 - Follow strict TypeScript practices.
 - Type props explicitly once a component becomes reusable or non-trivial.
-- Keep UI-facing interfaces in `views/interfaces`.
-- Keep domain types in `domain`.
+- Keep UI-facing interfaces in `interface`.
+- Keep helper functions out of `interface`; put them in `logic`.
 - Prefer `import type` for types that are only used at compile time.
 
 ## React / Next.js
 
-- Use `next/head` for page metadata when needed.
+- Use `next/head` where page metadata belongs to the feature composition.
 - Keep route files thin.
 - Use default export for page components only when the route requires it.
-- Prefer named exports for feature components.
+- Prefer named exports for feature components and helper hooks.
 - Keep React Query configuration close to the feature hook.
 
 ## Workflow
 
 - Run lint after larger refactors.
-- Run Prettier and TypeScript checks before finishing work.
+- Run TypeScript checks before finishing work.
 - Do not run production builds unless the user explicitly asks for it.
 - Leave `build` to the user.
 
@@ -67,4 +88,9 @@
 
 - Do not run `git add` unless explicitly requested.
 - When asked to commit, write a message that reflects the actual changes.
+- Before every commit and push, bump the `version` field in `package.json`.
+- Choose the version bump based on the change scope:
+  - `patch` for small fixes, refactors, and internal cleanup
+  - `minor` for new backward-compatible features
+  - `major` for breaking changes
 - Push only when the user asks for it.

@@ -18,11 +18,12 @@
       "@styles/*": ["./src/styles/*"],
       "@features/*": ["./src/features/*"],
       "@libs/*": ["./src/common/libs/*"],
-      "@interfaces/*": ["./src/common/interfaces/*"],
       "@utils/*": ["./src/common/utils/*"],
       "@configs/*": ["./src/common/configs/*"],
       "@services/*": ["./src/common/services/*"],
-      "@contexts/*": ["./src/common/contexts/*"]
+      "@contexts/*": ["./src/common/contexts/*"],
+      "@interfaces/*": ["./src/common/interfaces/*"],
+      "@components/*": ["./src/common/components/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts", "**/*.mts"],

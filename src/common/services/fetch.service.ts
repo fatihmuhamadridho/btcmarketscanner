@@ -1,4 +1,4 @@
-import { BASE_API_URL } from '@configs/base.config';
+import { BASE_API_BINANCE } from '@configs/base.config';
 import { CookiesStorageService } from './cookiesStorage.service';
 
 export interface FetchServiceOptions {
@@ -13,7 +13,7 @@ export class FetchService {
 
   constructor(options?: FetchServiceOptions) {
     this.options = {
-      baseURL: options?.baseURL ?? BASE_API_URL ?? '',
+      baseURL: options?.baseURL ?? BASE_API_BINANCE ?? '',
       defaultHeaders: options?.defaultHeaders ?? { 'Content-Type': 'application/json' },
       cookieHeader: options?.cookieHeader ?? '',
     };

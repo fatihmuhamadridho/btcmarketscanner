@@ -1,6 +1,6 @@
 {
   "name": "btcmarketscanner",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,6 +16,7 @@
     "@tabler/icons-react": "^3.41.0",
     "@tanstack/react-query": "^5.95.2",
     "axios": "^1.14.0",
+    "cookie": "^1.1.1",
     "lightweight-charts": "^5.1.0",
     "next": "16.2.1",
     "prettier": "^3.8.1",
