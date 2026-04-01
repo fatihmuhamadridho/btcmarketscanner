@@ -1,5 +1,5 @@
-import { Group, Paper, Stack, Text } from "@mantine/core";
-import { APP_VERSION } from "@/common/configs/base";
+import { Group, Paper, Stack, Text } from '@mantine/core';
+import { APP_VERSION } from '@/common/configs/base';
 
 export default function AppFooter() {
   const year = new Date().getFullYear();
@@ -10,8 +10,8 @@ export default function AppFooter() {
       p={{ base: 18, sm: 22 }}
       withBorder
       style={{
-        backgroundColor: "rgba(9, 18, 33, 0.88)",
-        borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: 'rgba(9, 18, 33, 0.88)',
+        borderColor: 'rgba(255,255,255,0.08)',
       }}
     >
       <Stack gap={6} align="center">
@@ -23,7 +23,7 @@ export default function AppFooter() {
             Version
           </Text>
           <Text size="xs" fw={700}>
-            {APP_VERSION ?? "dev"}
+            {APP_VERSION ?? 'dev'}
           </Text>
         </Group>
       </Stack>

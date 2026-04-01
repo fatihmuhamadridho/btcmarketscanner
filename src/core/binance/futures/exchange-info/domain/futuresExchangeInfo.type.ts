@@ -1,7 +1,4 @@
-import type {
-  FuturesExchangeInfo,
-  FuturesExchangeInfoSummary,
-} from "./models/futuresExchangeInfo.model";
+import type { FuturesExchangeInfo, FuturesExchangeInfoSummary } from './models/futuresExchangeInfo.model';
 
 export type FuturesExchangeInfoResponse = {
   exchangeFilters?: unknown[];

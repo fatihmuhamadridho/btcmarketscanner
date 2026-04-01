@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Card, Stack, Text, ThemeIcon } from "@mantine/core";
+import type { ReactNode } from 'react';
+import { Card, Stack, Text, ThemeIcon } from '@mantine/core';
 
 type CoinMetricCardProps = {
   icon: ReactNode;
@@ -7,19 +7,15 @@ type CoinMetricCardProps = {
   value: string;
 };
 
-export default function CoinMetricCard({
-  icon,
-  label,
-  value,
-}: CoinMetricCardProps) {
+export default function CoinMetricCard({ icon, label, value }: CoinMetricCardProps) {
   return (
     <Card
       radius="lg"
       p="lg"
       withBorder
       style={{
-        backgroundColor: "rgba(9, 18, 33, 0.72)",
-        borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: 'rgba(9, 18, 33, 0.72)',
+        borderColor: 'rgba(255,255,255,0.08)',
       }}
     >
       <Stack gap="xs">

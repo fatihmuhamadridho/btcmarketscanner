@@ -1,7 +1,7 @@
-import { AxiosService } from "@/common/services/axios.service";
-import { BASE_API_BINANCE } from "@/common/configs/base";
-import { FuturesExchangeInfoRepositoryImpl } from "../infrastructure/futuresExchangeInfo.repository.impl";
-import { GetFuturesExchangeInfoSummaryUseCase } from "./futuresExchangeInfo.usecase";
+import { AxiosService } from '@/common/services/axios.service';
+import { BASE_API_BINANCE } from '@/common/configs/base';
+import { FuturesExchangeInfoRepositoryImpl } from '../infrastructure/futuresExchangeInfo.repository.impl';
+import { GetFuturesExchangeInfoSummaryUseCase } from './futuresExchangeInfo.usecase';
 
 export class FuturesExchangeInfoController {
   private readonly axiosService: AxiosService;
@@ -12,13 +12,8 @@ export class FuturesExchangeInfoController {
     this.axiosService = new AxiosService({
       baseURL: BASE_API_BINANCE,
     });
-    this.futuresExchangeInfoRepository = new FuturesExchangeInfoRepositoryImpl(
-      this.axiosService,
-    );
-    this.getFuturesExchangeInfoSummaryUseCase =
-      new GetFuturesExchangeInfoSummaryUseCase(
-        this.futuresExchangeInfoRepository,
-      );
+    this.futuresExchangeInfoRepository = new FuturesExchangeInfoRepositoryImpl(this.axiosService);
+    this.getFuturesExchangeInfoSummaryUseCase = new GetFuturesExchangeInfoSummaryUseCase(this.futuresExchangeInfoRepository);
   }
 
   getExchangeInfoSummary() {

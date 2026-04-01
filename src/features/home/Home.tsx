@@ -1,4 +1,4 @@
-import Head from "next/head";
+import Head from 'next/head';
 import {
   Badge,
   Box,
@@ -12,13 +12,13 @@ import {
   Stack,
   Text,
   Title,
-} from "@mantine/core";
-import { useMemo, useState } from "react";
-import { formatInteger } from "@/common/utils/format-number";
-import { useFuturesMarketOverview } from "@/core/binance/futures/market/infrastructure/futuresMarket.hook";
-import AppFooter from "../shared/AppFooter";
-import AnalysisDisclaimer from "../shared/AnalysisDisclaimer";
-import HomeCard from "./HomeCard";
+} from '@mantine/core';
+import { useMemo, useState } from 'react';
+import { formatInteger } from '@/common/utils/format-number';
+import { useFuturesMarketOverview } from '@/core/binance/futures/market/infrastructure/futuresMarket.hook';
+import AppFooter from '../shared/AppFooter';
+import AnalysisDisclaimer from '../shared/AnalysisDisclaimer';
+import HomeCard from './HomeCard';
 
 const HOME_PAGE_SIZE = 10;
 const EMPTY_MARKET_ITEMS: never[] = [];
@@ -30,8 +30,8 @@ function StatCard({ label, value }: { label: string; value: string }) {
       p="md"
       withBorder
       style={{
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderColor: 'rgba(255,255,255,0.08)',
       }}
     >
       <Stack gap={4}>
@@ -52,10 +52,7 @@ export default function Home() {
 
   const exchangeInfo = data?.exchangeInfo;
   const marketItems = data?.data ?? EMPTY_MARKET_ITEMS;
-  const totalPages = Math.max(
-    1,
-    Math.ceil(marketItems.length / HOME_PAGE_SIZE),
-  );
+  const totalPages = Math.max(1, Math.ceil(marketItems.length / HOME_PAGE_SIZE));
   const currentPage = Math.min(activePage, totalPages);
 
   const visibleMarketItems = useMemo(() => {
@@ -68,17 +65,14 @@ export default function Home() {
     <>
       <Head>
         <title>BTC Market Scanner</title>
-        <meta
-          name="description"
-          content="A simple starting homepage for scanning major crypto coins."
-        />
+        <meta name="description" content="A simple starting homepage for scanning major crypto coins." />
       </Head>
 
       <Box
         mih="100vh"
         py={{ base: 24, sm: 36, lg: 56 }}
         px={{ base: 16, sm: 24 }}
-        style={{ backgroundColor: "transparent" }}
+        style={{ backgroundColor: 'transparent' }}
       >
         <Container size="lg">
           <Stack gap="xl">
@@ -90,9 +84,8 @@ export default function Home() {
                 Scan the market from one clean coin list.
               </Title>
               <Text c="dimmed" fz="lg" maw={760} lh={1.7}>
-                Click a coin card to open the detail page. The list below is
-                laid out in a single column so it is easier to scan from top
-                to bottom.
+                Click a coin card to open the detail page. The list below is laid out in a single column so it is easier
+                to scan from top to bottom.
               </Text>
             </Stack>
 
@@ -101,31 +94,25 @@ export default function Home() {
               p={{ base: 20, sm: 28 }}
               withBorder
               style={{
-                backgroundColor: "rgba(9, 18, 33, 0.88)",
-                borderColor: "rgba(255,255,255,0.08)",
+                backgroundColor: 'rgba(9, 18, 33, 0.88)',
+                borderColor: 'rgba(255,255,255,0.08)',
               }}
             >
               <Stack gap="lg">
                 <Group justify="space-between" align="flex-start" gap="lg">
                   <Stack gap={4}>
-                    <Badge
-                      color="teal"
-                      variant="light"
-                      size="lg"
-                      tt="uppercase"
-                    >
+                    <Badge color="teal" variant="light" size="lg" tt="uppercase">
                       Futures exchangeInfo
                     </Badge>
                     <Title order={2} fz="h3">
                       Live market structure snapshot
                     </Title>
                     <Text c="dimmed" size="sm" maw={720}>
-                      A compact overview of the current market structure and
-                      available trading symbols.
+                      A compact overview of the current market structure and available trading symbols.
                     </Text>
                   </Stack>
                   <Badge variant="light" color="gray" size="lg">
-                    {exchangeInfo?.timezone ?? "UTC"}
+                    {exchangeInfo?.timezone ?? 'UTC'}
                   </Badge>
                 </Group>
 
@@ -142,44 +129,19 @@ export default function Home() {
                 ) : exchangeInfo ? (
                   <Stack gap="lg">
                     <SimpleGrid cols={{ base: 1, sm: 2, md: 5 }} spacing="md">
-                      <StatCard
-                        label="Symbols"
-                        value={formatInteger(exchangeInfo.summary.symbolCount)}
-                      />
-                      <StatCard
-                        label="Trading"
-                        value={formatInteger(
-                          exchangeInfo.summary.tradingSymbolCount,
-                        )}
-                      />
-                      <StatCard
-                        label="Request weight"
-                        value={formatInteger(
-                          exchangeInfo.summary.requestWeightLimit,
-                        )}
-                      />
-                      <StatCard
-                        label="Orders limit"
-                        value={formatInteger(exchangeInfo.summary.orderLimit)}
-                      />
-                      <StatCard
-                        label="Assets"
-                        value={formatInteger(exchangeInfo.summary.assetCount)}
-                      />
+                      <StatCard label="Symbols" value={formatInteger(exchangeInfo.summary.symbolCount)} />
+                      <StatCard label="Trading" value={formatInteger(exchangeInfo.summary.tradingSymbolCount)} />
+                      <StatCard label="Request weight" value={formatInteger(exchangeInfo.summary.requestWeightLimit)} />
+                      <StatCard label="Orders limit" value={formatInteger(exchangeInfo.summary.orderLimit)} />
+                      <StatCard label="Assets" value={formatInteger(exchangeInfo.summary.assetCount)} />
                     </SimpleGrid>
 
                     <Group justify="space-between" align="center" wrap="wrap">
                       <Text size="sm" c="dimmed">
-                        Perpetual contracts:{" "}
-                        {formatInteger(
-                          exchangeInfo.summary.perpetualSymbolCount,
-                        )}
+                        Perpetual contracts: {formatInteger(exchangeInfo.summary.perpetualSymbolCount)}
                       </Text>
                       <Text size="sm" c="dimmed">
-                        Margin available assets:{" "}
-                        {formatInteger(
-                          exchangeInfo.summary.marginAvailableAssetCount,
-                        )}
+                        Margin available assets: {formatInteger(exchangeInfo.summary.marginAvailableAssetCount)}
                       </Text>
                     </Group>
 
@@ -209,8 +171,8 @@ export default function Home() {
               withBorder
               shadow="xl"
               style={{
-                backgroundColor: "rgba(9, 18, 33, 0.88)",
-                backdropFilter: "blur(18px)",
+                backgroundColor: 'rgba(9, 18, 33, 0.88)',
+                backdropFilter: 'blur(18px)',
               }}
             >
               <Group justify="space-between" px={{ base: 16, sm: 24 }} py={16}>
@@ -233,14 +195,9 @@ export default function Home() {
               {totalPages > 1 ? (
                 <>
                   <Divider color="rgba(255,255,255,0.1)" />
-                  <Group
-                    justify="space-between"
-                    px={{ base: 16, sm: 24 }}
-                    py={16}
-                  >
+                  <Group justify="space-between" px={{ base: 16, sm: 24 }} py={16}>
                     <Text size="sm" c="dimmed">
-                      Showing {visibleMarketItems.length} of{" "}
-                      {marketItems.length} coins
+                      Showing {visibleMarketItems.length} of {marketItems.length} coins
                     </Text>
                     <Pagination
                       value={currentPage}

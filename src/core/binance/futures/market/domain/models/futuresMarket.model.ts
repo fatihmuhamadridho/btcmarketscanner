@@ -1,5 +1,5 @@
-import type { FuturesExchangeInfo } from "@/core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model";
-import { formatDecimalString } from "@/common/utils/format-number";
+import type { FuturesExchangeInfo } from '@/core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model';
+import { formatDecimalString } from '@/common/utils/format-number';
 
 export type FuturesTicker24hrProps = {
   lastPrice?: string;
@@ -37,8 +37,8 @@ export class FuturesTicker24hr implements FuturesTicker24hrProps {
   }
 
   get displayChange() {
-    const value = this.priceChangePercent ?? "0";
-    const prefix = value.startsWith("-") ? "" : "+";
+    const value = this.priceChangePercent ?? '0';
+    const prefix = value.startsWith('-') ? '' : '+';
     return `${prefix}${value}%`;
   }
 
@@ -77,11 +77,11 @@ export class FuturesMarketOverviewItem implements FuturesMarketOverviewItemProps
   }
 
   get displayName() {
-    return `${this.baseAsset ?? this.symbol}/${this.quoteAsset ?? "USDT"}`;
+    return `${this.baseAsset ?? this.symbol}/${this.quoteAsset ?? 'USDT'}`;
   }
 
   get isTrading() {
-    return this.status === "TRADING";
+    return this.status === 'TRADING';
   }
 }
 
@@ -113,9 +113,7 @@ export class FuturesMarketSymbolDetail implements FuturesMarketSymbolDetailProps
   }
 
   get symbolInfo() {
-    return this.exchangeInfo.symbols?.find(
-      (item) => item.symbol === this.symbol.symbol,
-    );
+    return this.exchangeInfo.symbols?.find((item) => item.symbol === this.symbol.symbol);
   }
 }
 
@@ -124,9 +122,7 @@ export type FuturesMarketSymbolSnapshotProps = {
   symbol: FuturesMarketOverviewItem;
 };
 
-export class FuturesMarketSymbolSnapshot
-  implements FuturesMarketSymbolSnapshotProps
-{
+export class FuturesMarketSymbolSnapshot implements FuturesMarketSymbolSnapshotProps {
   exchangeInfo: FuturesExchangeInfo;
   symbol: FuturesMarketOverviewItem;
 
@@ -136,8 +132,6 @@ export class FuturesMarketSymbolSnapshot
   }
 
   get symbolInfo() {
-    return this.exchangeInfo.symbols?.find(
-      (item) => item.symbol === this.symbol.symbol,
-    );
+    return this.exchangeInfo.symbols?.find((item) => item.symbol === this.symbol.symbol);
   }
 }

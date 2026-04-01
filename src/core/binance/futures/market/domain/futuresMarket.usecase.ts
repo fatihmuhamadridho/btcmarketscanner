@@ -1,10 +1,6 @@
-import { FuturesExchangeInfo } from "@/core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model";
-import {
-  FuturesMarketOverviewItem,
-  FuturesMarketSymbolSnapshot,
-  FuturesMarketSymbolDetail,
-} from "./models/futuresMarket.model";
-import type { FuturesMarketRepository } from "./futuresMarket.repository";
+import { FuturesExchangeInfo } from '@/core/binance/futures/exchange-info/domain/models/futuresExchangeInfo.model';
+import { FuturesMarketOverviewItem, FuturesMarketSymbolSnapshot, FuturesMarketSymbolDetail } from './models/futuresMarket.model';
+import type { FuturesMarketRepository } from './futuresMarket.repository';
 
 export class GetFuturesMarketOverviewUseCase {
   constructor(private readonly futuresMarketRepository: FuturesMarketRepository) {}
@@ -20,7 +16,7 @@ export class GetFuturesMarketOverviewUseCase {
 
     const items = (exchangeInfo.tradingSymbols ?? [])
       .map((symbol) => {
-        const ticker = tickerMap.get(symbol.symbol ?? "");
+        const ticker = tickerMap.get(symbol.symbol ?? '');
 
         return new FuturesMarketOverviewItem({
           baseAsset: symbol.baseAsset,
@@ -28,13 +24,13 @@ export class GetFuturesMarketOverviewUseCase {
           pair: symbol.pair,
           quoteAsset: symbol.quoteAsset,
           status: symbol.status,
-          symbol: symbol.symbol ?? "",
+          symbol: symbol.symbol ?? '',
           ticker: ticker ?? {
-            symbol: symbol.symbol ?? "",
-            lastPrice: "n/a",
-            priceChangePercent: "0",
-            quoteVolume: "0",
-            volume: "0",
+            symbol: symbol.symbol ?? '',
+            lastPrice: 'n/a',
+            priceChangePercent: '0',
+            quoteVolume: '0',
+            volume: '0',
           },
         });
       })
@@ -56,7 +52,7 @@ export class GetFuturesMarketOverviewUseCase {
 export class GetFuturesMarketSymbolDetailUseCase {
   constructor(private readonly futuresMarketRepository: FuturesMarketRepository) {}
 
-  async execute(symbol: string, interval = "1d") {
+  async execute(symbol: string, interval = '1d') {
     const [exchangeInfoResponse, tickers, candles] = await Promise.all([
       this.futuresMarketRepository.getExchangeInfo(),
       this.futuresMarketRepository.getTickers24hr(),
@@ -67,9 +63,7 @@ export class GetFuturesMarketSymbolDetailUseCase {
     ]);
 
     const exchangeInfo = new FuturesExchangeInfo(exchangeInfoResponse);
-    const symbolInfo = exchangeInfo.symbols?.find(
-      (item) => item.symbol === symbol,
-    );
+    const symbolInfo = exchangeInfo.symbols?.find((item) => item.symbol === symbol);
 
     if (!symbolInfo) {
       throw new Error(`Symbol ${symbol} not found`);
@@ -79,10 +73,10 @@ export class GetFuturesMarketSymbolDetailUseCase {
       tickers.find((item) => item.symbol === symbol) ??
       ({
         symbol,
-        lastPrice: "n/a",
-        priceChangePercent: "0",
-        quoteVolume: "0",
-        volume: "0",
+        lastPrice: 'n/a',
+        priceChangePercent: '0',
+        quoteVolume: '0',
+        volume: '0',
       } as const);
 
     const overviewItem = new FuturesMarketOverviewItem({
@@ -123,9 +117,7 @@ export class GetFuturesMarketSymbolSnapshotUseCase {
     ]);
 
     const exchangeInfo = new FuturesExchangeInfo(exchangeInfoResponse);
-    const symbolInfo = exchangeInfo.symbols?.find(
-      (item) => item.symbol === symbol,
-    );
+    const symbolInfo = exchangeInfo.symbols?.find((item) => item.symbol === symbol);
 
     if (!symbolInfo) {
       throw new Error(`Symbol ${symbol} not found`);
@@ -135,10 +127,10 @@ export class GetFuturesMarketSymbolSnapshotUseCase {
       tickers.find((item) => item.symbol === symbol) ??
       ({
         symbol,
-        lastPrice: "n/a",
-        priceChangePercent: "0",
-        quoteVolume: "0",
-        volume: "0",
+        lastPrice: 'n/a',
+        priceChangePercent: '0',
+        quoteVolume: '0',
+        volume: '0',
       } as const);
 
     return {
@@ -161,7 +153,7 @@ export class GetFuturesMarketSymbolSnapshotUseCase {
 export class GetFuturesMarketInitialCandlesUseCase {
   constructor(private readonly futuresMarketRepository: FuturesMarketRepository) {}
 
-  async execute(symbol: string, interval = "1d", limit = 500) {
+  async execute(symbol: string, interval = '1d', limit = 500) {
     const candles = await this.futuresMarketRepository.getKlines(symbol, {
       interval,
       limit,
@@ -184,12 +176,7 @@ export class GetFuturesMarketInitialCandlesUseCase {
 export class GetFuturesMarketOlderCandlesUseCase {
   constructor(private readonly futuresMarketRepository: FuturesMarketRepository) {}
 
-  async execute(
-    symbol: string,
-    beforeOpenTime: number,
-    interval = "1d",
-    limit = 200,
-  ) {
+  async execute(symbol: string, beforeOpenTime: number, interval = '1d', limit = 200) {
     const candles = await this.futuresMarketRepository.getKlines(symbol, {
       interval,
       limit,

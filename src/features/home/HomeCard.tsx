@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { Badge, Card, Group, Stack, Text, ThemeIcon } from "@mantine/core";
-import { IconArrowRight } from "@tabler/icons-react";
-import type { FuturesMarketOverviewItem } from "@/core/binance/futures/market/domain/models/futuresMarket.model";
+import Link from 'next/link';
+import { Badge, Card, Group, Stack, Text, ThemeIcon } from '@mantine/core';
+import { IconArrowRight } from '@tabler/icons-react';
+import type { FuturesMarketOverviewItem } from '@/core/binance/futures/market/domain/models/futuresMarket.model';
 
 type HomeCardProps = {
   coin: FuturesMarketOverviewItem;
@@ -9,8 +9,7 @@ type HomeCardProps = {
 
 export default function HomeCard({ coin }: HomeCardProps) {
   const priceChangePercent = Number(coin.ticker.priceChangePercent ?? 0);
-  const changeBadgeColor =
-    priceChangePercent > 0 ? "green" : priceChangePercent < 0 ? "red" : "gray";
+  const changeBadgeColor = priceChangePercent > 0 ? 'green' : priceChangePercent < 0 ? 'red' : 'gray';
 
   return (
     <Card
@@ -20,10 +19,10 @@ export default function HomeCard({ coin }: HomeCardProps) {
       p={{ base: 16, sm: 20 }}
       withBorder
       style={{
-        borderColor: "rgba(255,255,255,0.08)",
-        backgroundColor: "transparent",
-        textDecoration: "none",
-        transition: "transform 160ms ease, background-color 160ms ease",
+        borderColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: 'transparent',
+        textDecoration: 'none',
+        transition: 'transform 160ms ease, background-color 160ms ease',
       }}
     >
       <Group justify="space-between" align="center" wrap="nowrap">
@@ -43,7 +42,7 @@ export default function HomeCard({ coin }: HomeCardProps) {
             <Text c="dimmed" size="sm">
               {coin.displayName}
             </Text>
-            <Text size="sm">{coin.contractType ?? "Futures contract"}</Text>
+            <Text size="sm">{coin.contractType ?? 'Futures contract'}</Text>
           </Stack>
         </Group>
         <Group gap="xs" wrap="nowrap">

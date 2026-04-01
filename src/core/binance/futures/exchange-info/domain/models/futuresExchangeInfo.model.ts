@@ -61,7 +61,7 @@ export type FuturesExchangeInfoSummary = {
 };
 
 export class FuturesExchangeInfo implements FuturesExchangeInfoProps {
-  exchangeFilters?: FuturesExchangeInfoProps["exchangeFilters"];
+  exchangeFilters?: FuturesExchangeInfoProps['exchangeFilters'];
   rateLimits?: FuturesExchangeRateLimitProps[];
   assets?: FuturesExchangeAssetProps[];
   symbols?: FuturesExchangeSymbolProps[];
@@ -73,53 +73,40 @@ export class FuturesExchangeInfo implements FuturesExchangeInfoProps {
     this.rateLimits ??= [];
     this.assets ??= [];
     this.symbols ??= [];
-    this.timezone ??= "UTC";
+    this.timezone ??= 'UTC';
   }
 
   get requestWeightLimit(): number | null {
-    return (
-      this.rateLimits?.find(
-        (rateLimit) => rateLimit.rateLimitType === "REQUEST_WEIGHT",
-      )?.limit ?? null
-    );
+    return this.rateLimits?.find((rateLimit) => rateLimit.rateLimitType === 'REQUEST_WEIGHT')?.limit ?? null;
   }
 
   get orderLimit(): number | null {
-    return (
-      this.rateLimits?.find((rateLimit) => rateLimit.rateLimitType === "ORDERS")
-        ?.limit ?? null
-    );
+    return this.rateLimits?.find((rateLimit) => rateLimit.rateLimitType === 'ORDERS')?.limit ?? null;
   }
 
   get tradingSymbols() {
-    return this.symbols?.filter((symbol) => symbol.status === "TRADING") ?? [];
+    return this.symbols?.filter((symbol) => symbol.status === 'TRADING') ?? [];
   }
 
   get perpetualSymbolCount(): number {
-    return (
-      this.symbols?.filter((symbol) => symbol.contractType === "PERPETUAL")
-        .length ?? 0
-    );
+    return this.symbols?.filter((symbol) => symbol.contractType === 'PERPETUAL').length ?? 0;
   }
 
   get summary(): FuturesExchangeInfoSummary {
     const tradingSymbols = this.tradingSymbols;
-    const marginAvailableAssets =
-      this.assets?.filter((asset) => asset.marginAvailable) ?? [];
+    const marginAvailableAssets = this.assets?.filter((asset) => asset.marginAvailable) ?? [];
 
     return {
       assetCount: this.assets?.length ?? 0,
-      featuredAssets: (this.assets ?? [])
-        .slice(0, 6)
-        .map((asset) => asset.asset ?? ""),
-      featuredSymbols: tradingSymbols.slice(0, 6).map((symbol) => symbol.symbol ?? ""),
+      featuredAssets: (this.assets ?? []).slice(0, 6).map((asset) => asset.asset ?? ''),
+      featuredSymbols: tradingSymbols.slice(0, 6).map((symbol) => symbol.symbol ?? ''),
       marginAvailableAssetCount: marginAvailableAssets.length,
       orderLimit: this.orderLimit,
       perpetualSymbolCount: this.perpetualSymbolCount,
       requestWeightLimit: this.requestWeightLimit,
       symbolCount: this.symbols?.length ?? 0,
       tradingSymbolCount: tradingSymbols.length,
-      timezone: this.timezone ?? "UTC",
+      timezone: this.timezone ?? 'UTC',
     };
   }
 }
