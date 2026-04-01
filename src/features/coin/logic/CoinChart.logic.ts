@@ -3,7 +3,13 @@ import type { TimeframeSupportResistance } from '@core/binance/futures/market/in
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
 import type { CoinTimeframe } from '../interface/CoinView.interface';
 import { formatChartTime, formatPercent, formatSignedDecimal } from './CoinChartFormat.logic';
-import { createMovingAverageSeries, createPriceSeries, getMovingAverageValueAtIndex, getStructureSeries } from './CoinChartSeries.logic';
+import {
+  createMovingAverageSeries,
+  createPriceSeries,
+  extendWithFutureWhitespace,
+  getMovingAverageValueAtIndex,
+  getStructureSeries,
+} from './CoinChartSeries.logic';
 import { useCoinChartLifecycle } from './CoinChartLifecycle.logic';
 
 export type { CoinTimeframe } from '../interface/CoinView.interface';
@@ -42,9 +48,14 @@ export function useCoinChartLogic(props: CoinChartProps) {
     onIntervalChange,
     supportResistance,
     strongSupportResistanceLevel,
+    symbol,
   } = props;
 
   const chartData = useMemo(() => createPriceSeries(candles), [candles]);
+  const chartSeriesData = useMemo(
+    () => extendWithFutureWhitespace(chartData, interval),
+    [chartData, interval]
+  );
   const ma10Data = useMemo(() => createMovingAverageSeries(chartData, 10), [chartData]);
   const ma50Data = useMemo(() => createMovingAverageSeries(chartData, 50), [chartData]);
   const ma100Data = useMemo(() => createMovingAverageSeries(chartData, 100), [chartData]);
@@ -53,6 +64,7 @@ export function useCoinChartLogic(props: CoinChartProps) {
   const lifecycle = useCoinChartLifecycle({
     candles,
     chartData,
+    chartSeriesData,
     hasMoreOlderCandles,
     interval,
     isLoadingMore,
@@ -64,6 +76,7 @@ export function useCoinChartLogic(props: CoinChartProps) {
     strongSupportResistanceLevel,
     structureSeries,
     supportResistance,
+    symbol,
   });
 
   const displayedCandle = lifecycle.displayedCandle;

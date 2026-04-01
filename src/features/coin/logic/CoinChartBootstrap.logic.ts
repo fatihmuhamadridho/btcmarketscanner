@@ -5,7 +5,9 @@ import { useCoinChartBootstrapSync } from './CoinChartBootstrapSync.logic';
 export function useCoinChartBootstrap({
   candles,
   containerRef,
+  interval,
   priceScaleOverlayRef,
+  wrapperRef,
   isLoadingMore,
   hasMoreOlderCandles,
   onLoadOlderCandles,
@@ -29,6 +31,8 @@ export function useCoinChartBootstrap({
   isProgrammaticRangeChangeRef,
   priceScaleZoomRef,
   priceScaleWheelDeltaRef,
+  timeScaleWheelDeltaRef,
+  timeScaleZoomRef,
   applyPriceScaleRangeRef,
   shouldFollowLatestRef,
 }: CoinChartBootstrapProps) {
@@ -45,6 +49,10 @@ export function useCoinChartBootstrap({
     priceScaleOverlayRef,
     priceScaleWheelDeltaRef,
     priceScaleZoomRef,
+    timeScaleWheelDeltaRef,
+    timeScaleZoomRef,
+    wrapperRef,
+    chartRef,
     seriesRef,
   });
 
@@ -52,6 +60,7 @@ export function useCoinChartBootstrap({
     candlesRef,
     chartRef,
     containerRef,
+    interval,
     hasMoreOlderCandlesRef,
     isLoadingMoreRef,
     isProgrammaticRangeChangeRef,

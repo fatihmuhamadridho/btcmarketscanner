@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import type { LineData, SeriesMarker, Time, UTCTimestamp } from 'lightweight-charts';
+import { useEffect, useRef } from 'react';
+import type { LineData, SeriesMarker, Time, UTCTimestamp, WhitespaceData } from 'lightweight-charts';
 import type { MutableRefObject as ReactMutableRefObject } from 'react';
 
 type CoinChartLifecycleSyncProps = {
@@ -10,6 +10,16 @@ type CoinChartLifecycleSyncProps = {
     open: number;
     time: UTCTimestamp;
   }>;
+  chartSeriesData: Array<
+    | {
+        close: number;
+        high: number;
+        low: number;
+        open: number;
+        time: UTCTimestamp;
+      }
+    | WhitespaceData<UTCTimestamp>
+  >;
   isChartReady: boolean;
   ma10Data: LineData<UTCTimestamp>[];
   ma50Data: LineData<UTCTimestamp>[];
@@ -21,7 +31,10 @@ type CoinChartLifecycleSyncProps = {
     pivotLowSeries: LineData<UTCTimestamp>[];
   };
   chartRef: ReactMutableRefObject<{ timeScale: () => { scrollPosition: () => number; setVisibleLogicalRange: (range: { from: number; to: number }) => void } } | null>;
-  seriesRef: ReactMutableRefObject<{ setData: (data: Array<{ close: number; high: number; low: number; open: number; time: UTCTimestamp }>) => void; priceScale: () => { applyOptions: (options: { autoScale: boolean }) => void } } | null>;
+  seriesRef: ReactMutableRefObject<{
+    setData: (data: Array<{ close: number; high: number; low: number; open: number; time: UTCTimestamp } | WhitespaceData<UTCTimestamp>>) => void;
+    priceScale: () => { applyOptions: (options: { autoScale: boolean }) => void };
+  } | null>;
   ma10SeriesRef: ReactMutableRefObject<{ setData: (data: LineData<UTCTimestamp>[]) => void } | null>;
   ma50SeriesRef: ReactMutableRefObject<{ setData: (data: LineData<UTCTimestamp>[]) => void } | null>;
   ma100SeriesRef: ReactMutableRefObject<{ setData: (data: LineData<UTCTimestamp>[]) => void } | null>;
@@ -35,12 +48,14 @@ type CoinChartLifecycleSyncProps = {
   didSetInitialDataRef: ReactMutableRefObject<boolean>;
   isProgrammaticRangeChangeRef: ReactMutableRefObject<boolean>;
   pendingRangeRef: ReactMutableRefObject<{ from: number; to: number } | null>;
+  priceScaleZoomRef: ReactMutableRefObject<number>;
   shouldResetPriceScaleRef: ReactMutableRefObject<boolean>;
   shouldFollowLatestRef: ReactMutableRefObject<boolean>;
 };
 
 export function useCoinChartLifecycleSync({
   chartData,
+  chartSeriesData,
   isChartReady,
   ma10Data,
   ma50Data,
@@ -62,9 +77,13 @@ export function useCoinChartLifecycleSync({
   didSetInitialDataRef,
   isProgrammaticRangeChangeRef,
   pendingRangeRef,
+  priceScaleZoomRef,
   shouldResetPriceScaleRef,
   shouldFollowLatestRef,
 }: CoinChartLifecycleSyncProps) {
+  const initialRangeResetTimeoutRef = useRef<number | null>(null);
+  const pendingRangeResetTimeoutRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!chartRef.current || !seriesRef.current || !isChartReady) {
       return;
@@ -83,7 +102,7 @@ export function useCoinChartLifecycleSync({
       return;
     }
 
-    seriesRef.current.setData(chartData);
+    seriesRef.current.setData(chartSeriesData);
     ma10SeriesRef.current?.setData(ma10Data);
     ma50SeriesRef.current?.setData(ma50Data);
     ma100SeriesRef.current?.setData(ma100Data);
@@ -97,13 +116,18 @@ export function useCoinChartLifecycleSync({
 
     if (shouldResetPriceScale) {
       shouldResetPriceScaleRef.current = false;
+      priceScaleZoomRef.current = 1;
       seriesRef.current.priceScale().applyOptions({ autoScale: true });
       scrollToLatestRef.current?.();
 
       if (!didSetInitialDataRef.current) {
         didSetInitialDataRef.current = true;
         isProgrammaticRangeChangeRef.current = true;
-        setTimeout(() => {
+        if (initialRangeResetTimeoutRef.current !== null) {
+          window.clearTimeout(initialRangeResetTimeoutRef.current);
+        }
+
+        initialRangeResetTimeoutRef.current = window.setTimeout(() => {
           isProgrammaticRangeChangeRef.current = false;
         }, 0);
       }
@@ -123,7 +147,11 @@ export function useCoinChartLifecycleSync({
           from: pendingRange.from + addedCount,
           to: pendingRange.to + addedCount,
         });
-        setTimeout(() => {
+        if (pendingRangeResetTimeoutRef.current !== null) {
+          window.clearTimeout(pendingRangeResetTimeoutRef.current);
+        }
+
+        pendingRangeResetTimeoutRef.current = window.setTimeout(() => {
           isProgrammaticRangeChangeRef.current = false;
         }, 0);
       }
@@ -139,6 +167,7 @@ export function useCoinChartLifecycleSync({
 
     previousDataLengthRef.current = chartData.length;
   }, [
+    chartSeriesData,
     chartData,
     isChartReady,
     ma10Data,
@@ -162,8 +191,21 @@ export function useCoinChartLifecycleSync({
     scrollToLatestRef,
     seriesRef,
     shouldFollowLatestRef,
+    priceScaleZoomRef,
     shouldResetPriceScaleRef,
     structureMarkersRef,
     syncPriceScaleRangeRef,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (initialRangeResetTimeoutRef.current !== null) {
+        window.clearTimeout(initialRangeResetTimeoutRef.current);
+      }
+
+      if (pendingRangeResetTimeoutRef.current !== null) {
+        window.clearTimeout(pendingRangeResetTimeoutRef.current);
+      }
+    };
+  }, []);
 }

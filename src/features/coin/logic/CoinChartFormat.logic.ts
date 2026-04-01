@@ -46,6 +46,26 @@ export function getDefaultVisibleBars(interval: CoinTimeframe) {
   }
 }
 
+export function getDefaultRightOffset(interval: CoinTimeframe) {
+  switch (interval) {
+    case '1m':
+      return 120;
+    case '5m':
+      return 96;
+    case '15m':
+      return 84;
+    case '30m':
+      return 72;
+    case '1h':
+      return 60;
+    case '4h':
+      return 48;
+    case '1d':
+    default:
+      return 36;
+  }
+}
+
 export function getDefaultPriceScaleConfig(interval: CoinTimeframe) {
   switch (interval) {
     case '1m':

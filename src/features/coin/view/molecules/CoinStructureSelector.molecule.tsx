@@ -24,12 +24,15 @@ export default function CoinStructureSelector<TValue extends string>({
       size="sm"
       styles={{
         root: {
-          backgroundColor: 'rgba(255,255,255,0.04)',
-          padding: 4,
+          backgroundColor: 'transparent',
+          padding: 0,
         },
         indicator: {
-          backgroundColor: 'rgba(87, 199, 166, 0.18)',
-          boxShadow: '0 0 0 1px rgba(87, 199, 166, 0.18)',
+          backgroundColor: 'rgba(255,255,255,0.08)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.08)',
+        },
+        control: {
+          borderRadius: 999,
         },
         label: {
           color: 'rgba(255,255,255,0.7)',

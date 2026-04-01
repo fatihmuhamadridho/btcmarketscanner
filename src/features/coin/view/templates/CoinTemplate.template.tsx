@@ -1,6 +1,8 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { Box, Container, Stack } from '@mantine/core';
+import { Box, Button, Container, Stack } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import AppFooter from '@components/atoms/AppFooter.atom';
 import AnalysisDisclaimer from '@components/atoms/AnalysisDisclaimer.atom';
 import CoinChart from '../organisms/CoinChart.organism';
@@ -86,6 +88,17 @@ export default function CoinTemplate({
       >
         <Container size="lg">
           <Stack gap="xl">
+            <Button
+              component={Link}
+              href="/"
+              variant="subtle"
+              color="gray"
+              leftSection={<IconArrowLeft size={16} />}
+              style={{ width: 'fit-content', paddingInline: 0 }}
+            >
+              Back to homepage
+            </Button>
+
             {isPageLoading ? (
               <CoinPageStateCard message="Loading symbol detail..." />
             ) : pageError ? (
@@ -106,14 +119,23 @@ export default function CoinTemplate({
                   displayVolume={marketSymbol.ticker?.displayVolume ?? 'n/a'}
                 />
 
-                <CoinStructureSelector
-                  data={structureTerms.map((item) => ({
-                    label: item.label,
-                    value: item.value,
-                  }))}
-                  value={structureTerm}
-                  onChange={setStructureTerm}
-                />
+                <Box
+                  p="xs"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 999,
+                  }}
+                >
+                  <CoinStructureSelector
+                    data={structureTerms.map((item) => ({
+                      label: item.label,
+                      value: item.value,
+                    }))}
+                    value={structureTerm}
+                    onChange={setStructureTerm}
+                  />
+                </Box>
 
                 <CoinTrendOverviewSection trendSummary={trendSummary} TrendIcon={TrendIcon} />
 

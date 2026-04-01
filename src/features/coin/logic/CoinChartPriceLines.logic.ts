@@ -161,18 +161,6 @@ export function useCoinChartPriceLines({
       }
     }
 
-    return () => {
-      if (!series) {
-        supportPriceLineRef.current = null;
-        resistancePriceLineRef.current = null;
-        strongSupportPriceLineRef.current = null;
-        strongResistancePriceLineRef.current = null;
-        return;
-      }
-
-      removeExistingPriceLines();
-      removeStrongPriceLines();
-    };
   }, [
     interval,
     isChartReady,

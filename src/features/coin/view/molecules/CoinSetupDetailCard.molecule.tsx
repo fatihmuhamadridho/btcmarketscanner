@@ -36,6 +36,7 @@ export default function CoinSetupDetailCard({
       radius="xl"
       p="lg"
       withBorder
+      h="100%"
       style={{
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderColor: 'rgba(255,255,255,0.08)',

@@ -6,17 +6,84 @@ import type {
   ISeriesApi,
   ISeriesMarkersPluginApi,
   LogicalRange,
+  TickMarkType,
   Time,
   UTCTimestamp,
 } from 'lightweight-charts';
 import { LineStyle, createSeriesMarkers } from 'lightweight-charts';
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
+import type { CoinTimeframe } from '../interface/CoinView.interface';
 import type { CoinChartActiveCandle, CoinChartCrosshairEvent } from '../interface/CoinChart.interface';
+import { getDefaultRightOffset } from './CoinChartFormat.logic';
+
+const chartTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const chartLocale = Intl.DateTimeFormat().resolvedOptions().locale;
+
+function getChartDate(time: Time) {
+  if (typeof time === 'string') {
+    return new Date(time);
+  }
+
+  if (typeof time === 'number') {
+    return new Date(time * 1000);
+  }
+
+  return new Date(Date.UTC(time.year, time.month - 1, time.day));
+}
+
+function formatChartCrosshairTime(time: Time) {
+  const date = getChartDate(time);
+
+  return new Intl.DateTimeFormat(chartLocale, {
+    timeZone: chartTimeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+}
+
+function formatChartTickMark(time: Time, tickMarkType: TickMarkType) {
+  const date = getChartDate(time);
+
+  if (tickMarkType === 3 || tickMarkType === 4) {
+    return new Intl.DateTimeFormat(chartLocale, {
+      timeZone: chartTimeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+  }
+
+  if (tickMarkType === 2) {
+    return new Intl.DateTimeFormat(chartLocale, {
+      timeZone: chartTimeZone,
+      day: '2-digit',
+      month: 'short',
+    }).format(date);
+  }
+
+  if (tickMarkType === 1) {
+    return new Intl.DateTimeFormat(chartLocale, {
+      timeZone: chartTimeZone,
+      month: 'short',
+      year: '2-digit',
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat(chartLocale, {
+    timeZone: chartTimeZone,
+    year: 'numeric',
+  }).format(date);
+}
 
 type CoinChartBootstrapChartProps = {
   candlesRef: MutableRefObject<FuturesKlineCandle[]>;
   chartRef: MutableRefObject<IChartApi | null>;
   containerRef: RefObject<HTMLDivElement | null>;
+  interval: CoinTimeframe;
   hasMoreOlderCandlesRef: MutableRefObject<boolean>;
   isLoadingMoreRef: MutableRefObject<boolean>;
   isProgrammaticRangeChangeRef: MutableRefObject<boolean>;
@@ -40,6 +107,7 @@ export function useCoinChartBootstrapChart({
   candlesRef,
   chartRef,
   containerRef,
+  interval,
   hasMoreOlderCandlesRef,
   isLoadingMoreRef,
   isProgrammaticRangeChangeRef,
@@ -59,16 +127,11 @@ export function useCoinChartBootstrapChart({
   structureMarkersRef,
 }: CoinChartBootstrapChartProps) {
   useEffect(() => {
-    const container = containerRef.current;
-
-    if (!container) {
-      return undefined;
-    }
-
     let chart: IChartApi | null = null;
     let series: ISeriesApi<'Candlestick'> | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let cancelled = false;
+    let initFrame: number | null = null;
     let handleCrosshairMove: ((param: CoinChartCrosshairEvent) => void) | null = null;
 
     const handleVisibleRangeChange = (range: LogicalRange | null) => {
@@ -120,15 +183,21 @@ export function useCoinChartBootstrapChart({
       })();
     };
 
-    const initChart = async () => {
+    const initChart = async (container: HTMLDivElement) => {
       const { CandlestickSeries, LineSeries, createChart } = await import('lightweight-charts');
 
-      if (cancelled || !container) {
+      if (cancelled) {
         return;
       }
 
       chart = createChart(container, {
-        autoSize: true,
+        autoSize: false,
+        width: container.clientWidth,
+        height: container.clientHeight,
+        localization: {
+          locale: chartLocale,
+          timeFormatter: formatChartCrosshairTime,
+        },
         layout: {
           background: { color: 'transparent' },
           textColor: 'rgba(255,255,255,0.7)',
@@ -138,13 +207,13 @@ export function useCoinChartBootstrapChart({
           horzLines: { color: 'rgba(255,255,255,0.06)' },
         },
         handleScale: {
-          mouseWheel: true,
+          mouseWheel: false,
           pinch: true,
           axisPressedMouseMove: false,
           axisDoubleClickReset: false,
         },
         handleScroll: {
-          mouseWheel: true,
+          mouseWheel: false,
           pressedMouseMove: true,
           horzTouchDrag: true,
           vertTouchDrag: true,
@@ -154,10 +223,11 @@ export function useCoinChartBootstrapChart({
           borderColor: 'rgba(255,255,255,0.08)',
         },
         timeScale: {
-          rightOffset: 0,
+          rightOffset: getDefaultRightOffset(interval),
           borderColor: 'rgba(255,255,255,0.08)',
           timeVisible: true,
           secondsVisible: false,
+          tickMarkFormatter: formatChartTickMark,
         },
         crosshair: {
           vertLine: {
@@ -235,7 +305,6 @@ export function useCoinChartBootstrapChart({
           hoveredData.low === undefined ||
           hoveredData.close === undefined
         ) {
-          setHoveredCandle(null);
           return;
         }
 
@@ -258,17 +327,35 @@ export function useCoinChartBootstrapChart({
 
       if (typeof ResizeObserver !== 'undefined') {
         resizeObserver = new ResizeObserver(() => {
-          chart?.applyOptions({ width: container.clientWidth });
+          if (cancelled || chartRef.current !== chart || !chart) {
+            return;
+          }
+
+          chart.resize(container.clientWidth, container.clientHeight);
         });
 
         resizeObserver.observe(container);
       }
     };
 
-    void initChart();
+    const scheduleInit = () => {
+      const container = containerRef.current;
+
+      if (!container) {
+        initFrame = window.requestAnimationFrame(scheduleInit);
+        return;
+      }
+
+      void initChart(container);
+    };
+
+    initFrame = window.requestAnimationFrame(scheduleInit);
 
     return () => {
       cancelled = true;
+      if (initFrame !== null) {
+        window.cancelAnimationFrame(initFrame);
+      }
       resizeObserver?.disconnect();
       if (chart) {
         chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
@@ -294,6 +381,7 @@ export function useCoinChartBootstrapChart({
     candlesRef,
     chartRef,
     containerRef,
+    interval,
     hasMoreOlderCandlesRef,
     isLoadingMoreRef,
     isProgrammaticRangeChangeRef,

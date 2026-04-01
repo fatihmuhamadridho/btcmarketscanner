@@ -1,4 +1,4 @@
-import { Card, Stack } from '@mantine/core';
+import { Card, SimpleGrid } from '@mantine/core';
 import CoinSetupDetailCard from '../molecules/CoinSetupDetailCard.molecule';
 import CoinSetupSectionHeader from '../molecules/CoinSetupSectionHeader.molecule';
 import type {
@@ -41,7 +41,7 @@ export default function CoinSetupSection({
         preferredLabel={preferredSetup.label}
       />
 
-      <Stack gap="md" mt="md">
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md" mt="md">
         <CoinSetupDetailCard
           formatDistanceFromEntry={formatDistanceFromEntry}
           formatPriceLevel={formatPriceLevel}
@@ -54,7 +54,7 @@ export default function CoinSetupSection({
           formatPriceZone={formatPriceZone}
           setup={shortSetup}
         />
-      </Stack>
+      </SimpleGrid>
     </Card>
   );
 }

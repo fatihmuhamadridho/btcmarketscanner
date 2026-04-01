@@ -3,9 +3,12 @@ import type {
   LineData,
   SeriesMarker,
   Time,
+  WhitespaceData,
   UTCTimestamp,
 } from 'lightweight-charts';
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
+import type { CoinTimeframe } from '../interface/CoinView.interface';
+import { getDefaultRightOffset } from './CoinChartFormat.logic';
 
 export function createPriceSeries(candles: FuturesKlineCandle[]): CandlestickData<UTCTimestamp>[] {
   return candles
@@ -37,6 +40,49 @@ export function createPriceSeries(candles: FuturesKlineCandle[]): CandlestickDat
 
       return acc;
     }, []);
+}
+
+export function getTimeframeInSeconds(interval: CoinTimeframe) {
+  switch (interval) {
+    case '1m':
+      return 60;
+    case '5m':
+      return 5 * 60;
+    case '15m':
+      return 15 * 60;
+    case '30m':
+      return 30 * 60;
+    case '1h':
+      return 60 * 60;
+    case '4h':
+      return 4 * 60 * 60;
+    case '1d':
+    default:
+      return 24 * 60 * 60;
+  }
+}
+
+export function extendWithFutureWhitespace(
+  candles: CandlestickData<UTCTimestamp>[],
+  interval: CoinTimeframe
+): Array<CandlestickData<UTCTimestamp> | WhitespaceData<UTCTimestamp>> {
+  if (candles.length === 0) {
+    return [];
+  }
+
+  const futureBars = getDefaultRightOffset(interval) * 2;
+
+  if (futureBars <= 0) {
+    return candles;
+  }
+
+  const step = getTimeframeInSeconds(interval);
+  const lastTime = Number(candles[candles.length - 1].time) as UTCTimestamp;
+  const futureWhitespace = Array.from({ length: futureBars }, (_, index) => ({
+    time: (lastTime + step * (index + 1)) as UTCTimestamp,
+  }));
+
+  return [...candles, ...futureWhitespace];
 }
 
 export function createMovingAverageSeries(

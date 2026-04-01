@@ -8,6 +8,7 @@ import type {
   Time,
 } from 'lightweight-charts';
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
+import type { CoinTimeframe } from './CoinView.interface';
 
 export type CoinChartActiveCandle = {
   close: number;
@@ -20,7 +21,9 @@ export type CoinChartActiveCandle = {
 export type CoinChartBootstrapProps = {
   candles: FuturesKlineCandle[];
   containerRef: RefObject<HTMLDivElement | null>;
+  interval: CoinTimeframe;
   priceScaleOverlayRef: RefObject<HTMLDivElement | null>;
+  wrapperRef: RefObject<HTMLDivElement | null>;
   isLoadingMore: boolean;
   hasMoreOlderCandles: boolean;
   onLoadOlderCandles: (beforeOpenTime: number) => Promise<boolean>;
@@ -44,6 +47,8 @@ export type CoinChartBootstrapProps = {
   isProgrammaticRangeChangeRef: MutableRefObject<boolean>;
   priceScaleZoomRef: MutableRefObject<number>;
   priceScaleWheelDeltaRef: MutableRefObject<number>;
+  timeScaleWheelDeltaRef: MutableRefObject<number>;
+  timeScaleZoomRef: MutableRefObject<number>;
   applyPriceScaleRangeRef: MutableRefObject<(options?: { scale?: number }) => void>;
   shouldFollowLatestRef: MutableRefObject<boolean>;
 };
