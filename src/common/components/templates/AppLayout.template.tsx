@@ -31,7 +31,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <Box
         mih="100vh"
         py={{ base: 24, sm: 36, lg: 56 }}
-        px={{ base: 10, sm: 24 }}
+        px={{ base: 6, sm: 24 }}
         style={{ backgroundColor: 'transparent' }}
       >
         <Container size="lg">{children}</Container>

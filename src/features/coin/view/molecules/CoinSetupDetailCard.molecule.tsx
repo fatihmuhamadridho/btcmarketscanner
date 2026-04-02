@@ -22,8 +22,8 @@ export default function CoinSetupDetailCard({
   formatPriceZone,
 }: CoinSetupDetailCardProps) {
   const setupColor = setup.direction === 'long' ? 'teal' : 'red';
-  const takeProfitColor = setup.direction === 'long' ? 'teal' : 'red';
-  const stopLossColor = setup.direction === 'long' ? 'red' : 'teal';
+  const takeProfitColor = 'teal';
+  const stopLossColor = 'red';
   const targets = [
     { label: 'TP1' as const, price: setup.takeProfits[0].price },
     { label: 'TP2' as const, price: setup.takeProfits[1].price },
@@ -34,7 +34,7 @@ export default function CoinSetupDetailCard({
   return (
     <Card
       radius="md"
-      p="lg"
+      p={{ base: 'sm', sm: 'lg' }}
       withBorder
       h="100%"
       style={{
@@ -43,18 +43,18 @@ export default function CoinSetupDetailCard({
       }}
     >
       <Stack gap="md">
-        <Group justify="space-between" align="flex-start">
-          <Stack gap={4}>
+        <Group justify="space-between" align="flex-start" wrap="wrap" gap="xs">
+          <Stack gap={4} style={{ flex: '1 1 180px' }}>
             <Badge color={setupColor} variant="light" size="lg">
               {setup.label}
             </Badge>
-            <Text c="dimmed" size="sm">
+            <Text c="dimmed" size="sm" lh={1.45}>
               {setup.marketCondition}
             </Text>
           </Stack>
         </Group>
 
-        <Group gap="xs" wrap="wrap">
+        <Group gap="xs" wrap="wrap" align="center">
           <Badge variant="light" color="gray">
             Entry zone {formatPriceZone(setup.entryZone)}
           </Badge>
@@ -70,6 +70,7 @@ export default function CoinSetupDetailCard({
 
         <CoinSetupTargetGrid
           entryMid={setup.entryMid}
+          direction={setup.direction}
           stopLossColor={stopLossColor}
           takeProfitColor={takeProfitColor}
           formatDistanceFromEntry={formatDistanceFromEntry}
@@ -85,7 +86,7 @@ export default function CoinSetupDetailCard({
 
         <Stack gap={6}>
           {setup.reasons.map((reason) => (
-            <Text key={reason} size="sm" c="dimmed">
+            <Text key={reason} size="sm" c="dimmed" lh={1.45}>
               • {reason}
             </Text>
           ))}

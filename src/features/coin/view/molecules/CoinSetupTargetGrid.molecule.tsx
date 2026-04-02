@@ -7,6 +7,7 @@ import type {
 
 type CoinSetupTargetGridProps = {
   entryMid: number | null;
+  direction: 'long' | 'short';
   formatDistanceFromEntry: CoinDistanceFromEntryFormatter;
   formatPriceLevel: CoinPriceLevelFormatter;
   stopLossColor: 'teal' | 'red';
@@ -16,6 +17,7 @@ type CoinSetupTargetGridProps = {
 
 export default function CoinSetupTargetGrid({
   entryMid,
+  direction,
   formatDistanceFromEntry,
   formatPriceLevel,
   stopLossColor,
@@ -23,7 +25,7 @@ export default function CoinSetupTargetGrid({
   targets,
 }: CoinSetupTargetGridProps) {
   return (
-    <SimpleGrid cols={4} spacing="sm">
+    <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="sm">
       {targets.map((target) => {
         const color = target.label === 'Stop loss' ? stopLossColor : takeProfitColor;
 
@@ -31,22 +33,22 @@ export default function CoinSetupTargetGrid({
           <Card
             key={target.label}
             radius="md"
-            p="sm"
+            p={{ base: 'xs', sm: 'sm' }}
             withBorder
             style={{
               backgroundColor: 'rgba(255,255,255,0.02)',
               borderColor: 'rgba(255,255,255,0.06)',
             }}
           >
-            <Stack gap={2}>
+            <Stack gap={4}>
               <Text c="dimmed" size="xs">
                 {target.label}
               </Text>
-              <Text fw={700} c={color}>
+              <Text fw={700} c={color} lh={1.2}>
                 {formatPriceLevel(target.price)}
               </Text>
-              <Text c={color} size="xs" fw={600}>
-                {formatDistanceFromEntry(target.price, entryMid)} from entry
+              <Text c={color} size="xs" fw={600} lh={1.25}>
+                {formatDistanceFromEntry(target.price, entryMid, direction)} from entry
               </Text>
             </Stack>
           </Card>

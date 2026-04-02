@@ -31,15 +31,17 @@ export function getChartPriceDecimals(value: number) {
     return 2;
   }
 
-  if (value >= 1) {
+  const normalizedValue = Math.abs(value);
+
+  if (normalizedValue >= 1) {
     return 2;
   }
 
-  if (value >= 0.1) {
+  if (normalizedValue >= 0.1) {
     return 4;
   }
 
-  if (value >= 0.01) {
+  if (normalizedValue >= 0.01) {
     return 5;
   }
 

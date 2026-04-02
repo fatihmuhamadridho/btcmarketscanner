@@ -2,6 +2,16 @@ import { useEffect, useRef } from 'react';
 import type { LineData, SeriesMarker, Time, UTCTimestamp, WhitespaceData } from 'lightweight-charts';
 import type { MutableRefObject as ReactMutableRefObject } from 'react';
 
+function clampPriceRange(from: number, to: number) {
+  const clampedFrom = Math.max(0, from);
+  const clampedTo = Math.max(clampedFrom + Number.EPSILON, to);
+
+  return {
+    from: clampedFrom,
+    to: clampedTo,
+  };
+}
+
 type CoinChartLifecycleSyncProps = {
   chartData: Array<{
     close: number;
@@ -129,10 +139,7 @@ export function useCoinChartLifecycleSync({
           recentCandles.reduce((total, candle) => total + (candle.high - candle.low), 0) /
           Math.max(recentCandles.length, 1);
         const padding = Math.max(averageRange * 1.5, latestPrice * 0.002, 0.00001);
-        const paddedRange = {
-          from: Math.max(0, latestPrice - padding),
-          to: latestPrice + padding,
-        };
+        const paddedRange = clampPriceRange(latestPrice - padding, latestPrice + padding);
 
         // Lightweight Charts can retain a stale price span when switching symbols.
         // Force low-price assets back to a range derived from the latest candles.

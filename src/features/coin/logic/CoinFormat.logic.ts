@@ -58,10 +58,17 @@ export function formatPriceZone(zone: { high: number | null; low: number | null 
   return `${formatPriceLevel(zone.low)} - ${formatPriceLevel(zone.high)}`;
 }
 
-export function formatDistanceFromEntry(price: number | null, entryPrice: number | null) {
+export function formatDistanceFromEntry(
+  price: number | null,
+  entryPrice: number | null,
+  direction: 'long' | 'short'
+) {
   if (price === null || entryPrice === null || entryPrice === 0) {
     return 'n/a';
   }
 
-  return formatSignedPercent(((price - entryPrice) / entryPrice) * 100);
+  const rawPercent = ((price - entryPrice) / entryPrice) * 100;
+  const signedPercent = direction === 'long' ? rawPercent : -rawPercent;
+
+  return formatSignedPercent(signedPercent);
 }

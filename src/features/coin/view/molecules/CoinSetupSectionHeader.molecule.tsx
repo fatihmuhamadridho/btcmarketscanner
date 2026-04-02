@@ -12,36 +12,50 @@ export default function CoinSetupSectionHeader({
   preferredLabel,
 }: CoinSetupSectionHeaderProps) {
   return (
-    <>
-      <Group justify="space-between" align="center" wrap="wrap">
-        <Stack gap={4}>
-          <Text c="dimmed" size="sm" tt="uppercase">
-            Setup levels
-          </Text>
-          <Title order={2} fz="h3">
-            Long and short setups
-          </Title>
-          <Text c="dimmed" size="sm">
-            A+ is the highest grade. Entry is shown as a zone, not a single price. The ideal flow is break, retest,
-            then rejection.
-          </Text>
-        </Stack>
+    <Stack gap="md">
+      <Stack gap={4}>
+        <Text c="dimmed" size="sm" tt="uppercase">
+          Setup levels
+        </Text>
+        <Title order={2} fz="h3">
+          Long and short setups
+        </Title>
+        <Text c="dimmed" size="sm" lh={1.5} maw={780}>
+          A+ is the highest grade. Entry is shown as a zone, not a single price. The ideal flow is break, retest,
+          then rejection.
+        </Text>
+      </Stack>
 
-        <Group gap="sm" wrap="nowrap">
+      <Stack gap="sm" hiddenFrom="sm">
+        <Group gap="sm" wrap="wrap" justify="flex-start">
           <Badge variant="light" color={preferredDirection === 'long' ? 'teal' : 'red'} size="lg">
             {preferredLabel}
           </Badge>
-          <Text c="dimmed" size="sm">
+          <Badge variant="light" color="gray">
+            Preferred: {preferredGrade}
+          </Badge>
+        </Group>
+      </Stack>
+
+      <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xl" visibleFrom="sm">
+        <Stack gap={6} style={{ flex: '1 1 360px', minWidth: 0 }}>
+          <Text c="dimmed" size="sm" tt="uppercase">
+            Setup focus
+          </Text>
+          <Text c="dimmed" size="sm" lh={1.35}>
             Best scoring setup in the current structure
           </Text>
-        </Group>
-      </Group>
+        </Stack>
 
-      <Group justify="space-between" align="center" wrap="wrap" mt="md">
-        <Badge variant="light" color="gray">
-          Preferred: {preferredGrade}
-        </Badge>
+        <Stack gap={6} style={{ flex: '0 0 300px', alignItems: 'flex-end' }}>
+          <Badge variant="light" color={preferredDirection === 'long' ? 'teal' : 'red'} size="lg">
+            {preferredLabel}
+          </Badge>
+          <Badge variant="light" color="gray">
+            Preferred: {preferredGrade}
+          </Badge>
+        </Stack>
       </Group>
-    </>
+    </Stack>
   );
 }

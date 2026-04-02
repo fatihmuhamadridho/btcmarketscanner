@@ -142,4 +142,8 @@ export type MarketStructureTermOption = {
 
 export type CoinPriceLevelFormatter = (value: number | null) => string;
 export type CoinPriceZoneFormatter = (zone: { high: number | null; low: number | null }) => string;
-export type CoinDistanceFromEntryFormatter = (price: number | null, entryPrice: number | null) => string;
+export type CoinDistanceFromEntryFormatter = (
+  price: number | null,
+  entryPrice: number | null,
+  direction: 'long' | 'short'
+) => string;

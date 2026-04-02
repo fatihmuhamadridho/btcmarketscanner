@@ -25,6 +25,16 @@ function normalizeWheelDeltaX(event: WheelEvent, fallbackSize: number) {
   return event.deltaX * fallbackSize;
 }
 
+function clampPriceRange(from: number, to: number) {
+  const clampedFrom = Math.max(0, from);
+  const clampedTo = Math.max(clampedFrom + Number.EPSILON, to);
+
+  return {
+    from: clampedFrom,
+    to: clampedTo,
+  };
+}
+
 export function useCoinChartBootstrapSync({
   candles,
   candlesRef,
@@ -146,10 +156,7 @@ export function useCoinChartBootstrapSync({
 
       const priceScale = series.priceScale();
       priceScale.applyOptions({ autoScale: false });
-      priceScale.setVisibleRange({
-        from: Math.max(0, dragStartCenter - nextSpan / 2),
-        to: dragStartCenter + nextSpan / 2,
-      });
+      priceScale.setVisibleRange(clampPriceRange(dragStartCenter - nextSpan / 2, dragStartCenter + nextSpan / 2));
     };
 
     const stopDrag = (event?: PointerEvent) => {
@@ -200,10 +207,7 @@ export function useCoinChartBootstrapSync({
         const zoomSensitivity = 1.15;
         const nextSpan = Math.max(currentSpan * Math.exp(normalizedDeltaRatio * zoomSensitivity), Number.EPSILON);
 
-        priceScale.setVisibleRange({
-          from: Math.max(0, currentCenter - nextSpan / 2),
-          to: currentCenter + nextSpan / 2,
-        });
+        priceScale.setVisibleRange(clampPriceRange(currentCenter - nextSpan / 2, currentCenter + nextSpan / 2));
 
         return;
       }

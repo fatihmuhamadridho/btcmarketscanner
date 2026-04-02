@@ -12,7 +12,7 @@ type CoinSetupPathGridProps = {
 
 export default function CoinSetupPathGrid({ path, setupColor }: CoinSetupPathGridProps) {
   return (
-    <SimpleGrid cols={3} spacing="sm">
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm">
       {path.map((step) => {
         const stepColor = step.status === 'done' ? setupColor : step.status === 'current' ? 'yellow' : 'gray';
 
@@ -20,7 +20,7 @@ export default function CoinSetupPathGrid({ path, setupColor }: CoinSetupPathGri
           <Card
             key={step.label}
             radius="md"
-            p="sm"
+            p={{ base: 'xs', sm: 'sm' }}
             withBorder
             style={{
               backgroundColor: 'rgba(255,255,255,0.02)',
@@ -31,7 +31,7 @@ export default function CoinSetupPathGrid({ path, setupColor }: CoinSetupPathGri
               <Badge variant="light" color={stepColor}>
                 {step.status === 'done' ? 'Done' : step.status === 'current' ? 'Now' : 'Wait'}
               </Badge>
-              <Text size="xs" c="dimmed" lh={1.3}>
+              <Text size="xs" c="dimmed" lh={1.35}>
                 {step.label}
               </Text>
             </Stack>

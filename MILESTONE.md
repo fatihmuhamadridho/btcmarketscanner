@@ -13,5 +13,5 @@
 13. Bot Training Sistem yang ngebuat bot semakin pintar, harus based on coin sih, tapi ada general bot nya juga
 14. Fullscreen chart (Done)
 15. Analisa kalau coin tersebut punya liquiditas yang sangat tinggi
-16. Buat agar mobile friendly
+16. Buat agar mobile friendly (Done)
 17. Buat user management system

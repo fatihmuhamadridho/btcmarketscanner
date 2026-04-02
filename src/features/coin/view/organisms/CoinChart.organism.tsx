@@ -5,6 +5,11 @@ import CoinChartHeader from '../molecules/CoinChartHeader.molecule';
 import CoinChartStats from '../molecules/CoinChartStats.molecule';
 import CoinChartViewport from '../atoms/CoinChartViewport.atom';
 
+type ScreenOrientationWithLock = ScreenOrientation & {
+  lock?: (orientation: string) => Promise<void>;
+  unlock?: () => void;
+};
+
 export default function CoinChart({
   chartData,
   chartError,
@@ -43,6 +48,10 @@ export default function CoinChart({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
+    const orientation = globalThis.screen?.orientation as ScreenOrientationWithLock | undefined;
+
+    void orientation?.lock?.('landscape').catch(() => undefined);
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsFullscreen(false);
@@ -53,6 +62,7 @@ export default function CoinChart({
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      orientation?.unlock?.();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isFullscreen]);
@@ -64,7 +74,10 @@ export default function CoinChart({
         inset: isFullscreen ? 0 : undefined,
         zIndex: isFullscreen ? 220 : 'auto',
         background: isFullscreen ? 'rgba(6, 11, 20, 0.96)' : 'transparent',
-        padding: isFullscreen ? '16px 20px' : 0,
+        overflowY: isFullscreen ? 'auto' : 'visible',
+        overscrollBehavior: isFullscreen ? 'contain' : undefined,
+        WebkitOverflowScrolling: isFullscreen ? 'touch' : undefined,
+        padding: isFullscreen ? '8px' : 0,
       }}
     >
       <Card
@@ -75,7 +88,9 @@ export default function CoinChart({
           backgroundColor: 'rgba(9, 18, 33, 0.88)',
           borderColor: 'rgba(255,255,255,0.08)',
           boxShadow: isFullscreen ? 'none' : undefined,
-          minHeight: isFullscreen ? '100%' : undefined,
+          minHeight: isFullscreen ? '100dvh' : undefined,
+          width: '100%',
+          margin: isFullscreen ? '0 auto' : undefined,
         }}
       >
       <Stack gap="md">
@@ -112,7 +127,7 @@ export default function CoinChart({
           interval={interval}
           isLoadingCandles={isLoadingCandles}
           priceScaleOverlayRef={priceScaleOverlayRef}
-          viewportHeight={isFullscreen ? 'calc(100vh - 220px)' : 360}
+          viewportHeight={isFullscreen ? 'calc(100dvh - 220px)' : 360}
           wrapperRef={wrapperRef}
         />
       </Stack>
