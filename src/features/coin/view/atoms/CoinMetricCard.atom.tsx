@@ -10,7 +10,7 @@ type CoinMetricCardProps = {
 export default function CoinMetricCard({ icon, label, value }: CoinMetricCardProps) {
   return (
     <Card
-      radius="lg"
+      radius="md"
       p="lg"
       withBorder
       style={{

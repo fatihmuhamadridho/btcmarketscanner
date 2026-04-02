@@ -28,7 +28,7 @@ type CoinTrendOverviewSectionProps = {
 export default function CoinTrendOverviewSection({ trendSummary, TrendIcon }: CoinTrendOverviewSectionProps) {
   return (
     <Card
-      radius="xl"
+      radius="lg"
       p={{ base: 20, sm: 28 }}
       withBorder
       style={{

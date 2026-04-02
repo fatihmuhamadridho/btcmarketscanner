@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     BINANCE_API_KEY: process.env.BINANCE_API_KEY,
     BINANCE_SECRET_KEY: process.env.BINANCE_SECRET_KEY,
   },
+  allowedDevOrigins: ['192.168.1.7'],
 };
 
 export default nextConfig;

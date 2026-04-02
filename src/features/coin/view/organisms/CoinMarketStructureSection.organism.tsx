@@ -18,7 +18,7 @@ type CoinMarketStructureSectionProps = {
 export default function CoinMarketStructureSection({ timeframeSupportResistance }: CoinMarketStructureSectionProps) {
   return (
     <Card
-      radius="xl"
+      radius="lg"
       p={{ base: 20, sm: 28 }}
       withBorder
       style={{

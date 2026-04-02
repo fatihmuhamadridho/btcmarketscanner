@@ -3,7 +3,7 @@ import { Badge, Paper, Stack, Text, Title } from '@mantine/core';
 export default function AnalysisDisclaimer() {
   return (
     <Paper
-      radius="xl"
+      radius="lg"
       p={{ base: 20, sm: 24 }}
       withBorder
       style={{

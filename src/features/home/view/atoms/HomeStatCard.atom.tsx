@@ -8,7 +8,7 @@ type HomeStatCardProps = {
 export default function HomeStatCard({ label, value }: HomeStatCardProps) {
   return (
     <Card
-      radius="lg"
+      radius="md"
       p="md"
       withBorder
       style={{

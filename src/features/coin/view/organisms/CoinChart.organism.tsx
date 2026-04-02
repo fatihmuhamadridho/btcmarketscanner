@@ -68,7 +68,7 @@ export default function CoinChart({
       }}
     >
       <Card
-        radius={isFullscreen ? 0 : 'xl'}
+        radius={isFullscreen ? 0 : 'lg'}
         p={{ base: 20, sm: 28 }}
         withBorder
         style={{

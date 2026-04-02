@@ -8,7 +8,7 @@ export default function HomeCoinsSortControl({ setActivePage, setSortMode, sortM
         Sort by
       </Text>
       <Paper
-        radius="xl"
+        radius="lg"
         p={6}
         withBorder
         style={{
@@ -32,7 +32,7 @@ export default function HomeCoinsSortControl({ setActivePage, setSortMode, sortM
             { label: 'Losers', value: 'losers' },
           ]}
           color="teal"
-          radius="xl"
+          radius="lg"
           size="sm"
           transitionDuration={180}
           withItemsBorders={false}

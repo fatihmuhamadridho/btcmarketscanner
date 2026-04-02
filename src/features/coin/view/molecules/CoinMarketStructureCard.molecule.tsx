@@ -16,7 +16,7 @@ export default function CoinMarketStructureCard({
 }: CoinMarketStructureCardProps) {
   return (
     <Card
-      radius="lg"
+      radius="md"
       p="lg"
       withBorder
       style={{

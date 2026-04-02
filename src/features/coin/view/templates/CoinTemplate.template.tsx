@@ -1,10 +1,11 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { Box, Button, Container, Stack } from '@mantine/core';
+import { Box, Button, Stack } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import AppFooter from '@components/atoms/AppFooter.atom';
 import AnalysisDisclaimer from '@components/atoms/AnalysisDisclaimer.atom';
+import AppLayout from '@components/templates/AppLayout.template';
 import CoinChart from '../organisms/CoinChart.organism';
 import CoinPageStateCard from '../atoms/CoinPageStateCard.atom';
 import CoinMarketStructureSection from '../organisms/CoinMarketStructureSection.organism';
@@ -80,86 +81,79 @@ export default function CoinTemplate({
         <title>{headTitle}</title>
         <meta name="description" content={headDescription} />
       </Head>
-      <Box
-        mih="100vh"
-        py={{ base: 24, sm: 36, lg: 56 }}
-        px={{ base: 16, sm: 24 }}
-        style={{ backgroundColor: 'transparent' }}
-      >
-        <Container size="lg">
-          <Stack gap="xl">
-            <Button
-              component={Link}
-              href="/"
-              variant="subtle"
-              color="gray"
-              leftSection={<IconArrowLeft size={16} />}
-              style={{ width: 'fit-content', paddingInline: 0 }}
-            >
-              Back to homepage
-            </Button>
+      <AppLayout>
+        <Stack gap="xl">
+          <Button
+            component={Link}
+            href="/"
+            variant="subtle"
+            color="gray"
+            leftSection={<IconArrowLeft size={16} />}
+            style={{ width: 'fit-content', paddingInline: 0 }}
+          >
+            Back to homepage
+          </Button>
 
-            {isPageLoading ? (
-              <CoinPageStateCard message="Loading symbol detail..." />
-            ) : pageError ? (
-              <CoinPageStateCard message="Failed to load market detail." />
-            ) : detail && marketSymbol && symbolInfo ? (
-              <>
-                <CoinSnapshotCard
-                  contractType={symbolInfo.contractType ?? marketSymbol.contractType ?? 'FUTURES'}
-                  displayName={marketSymbol.displayName ?? 'n/a'}
-                  pair={marketSymbol.pair ?? 'n/a'}
-                  quoteAsset={marketSymbol.quoteAsset ?? 'n/a'}
-                  baseAsset={marketSymbol.baseAsset ?? 'n/a'}
-                  status={marketSymbol.status ?? 'n/a'}
-                  onboardLabel={formatDate(symbolInfo.onboardDate ?? undefined)}
-                  symbol={marketSymbol.symbol ?? 'unknown'}
-                  displayLastPrice={marketSymbol.ticker?.displayLastPrice ?? 'n/a'}
-                  displayChange={marketSymbol.ticker?.displayChange ?? 'n/a'}
-                  displayVolume={marketSymbol.ticker?.displayVolume ?? 'n/a'}
+          {isPageLoading ? (
+            <CoinPageStateCard message="Loading symbol detail..." />
+          ) : pageError ? (
+            <CoinPageStateCard message="Failed to load market detail." />
+          ) : detail && marketSymbol && symbolInfo ? (
+            <>
+              <CoinSnapshotCard
+                contractType={symbolInfo.contractType ?? marketSymbol.contractType ?? 'FUTURES'}
+                displayName={marketSymbol.displayName ?? 'n/a'}
+                pair={marketSymbol.pair ?? 'n/a'}
+                quoteAsset={marketSymbol.quoteAsset ?? 'n/a'}
+                baseAsset={marketSymbol.baseAsset ?? 'n/a'}
+                status={marketSymbol.status ?? 'n/a'}
+                onboardLabel={formatDate(symbolInfo.onboardDate ?? undefined)}
+                symbol={marketSymbol.symbol ?? 'unknown'}
+                displayLastPrice={marketSymbol.ticker?.displayLastPrice ?? 'n/a'}
+                displayChange={marketSymbol.ticker?.displayChange ?? 'n/a'}
+                displayVolume={marketSymbol.ticker?.displayVolume ?? 'n/a'}
+              />
+
+              <Box
+                p="xs"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 20,
+                }}
+              >
+                <CoinStructureSelector
+                  data={structureTerms.map((item) => ({
+                    label: item.label,
+                    value: item.value,
+                  }))}
+                  value={structureTerm}
+                  onChange={setStructureTerm}
                 />
+              </Box>
 
-                <Box
-                  p="xs"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 999,
-                  }}
-                >
-                  <CoinStructureSelector
-                    data={structureTerms.map((item) => ({
-                      label: item.label,
-                      value: item.value,
-                    }))}
-                    value={structureTerm}
-                    onChange={setStructureTerm}
-                  />
-                </Box>
+              <CoinTrendOverviewSection trendSummary={trendSummary} TrendIcon={TrendIcon} />
 
-                <CoinTrendOverviewSection trendSummary={trendSummary} TrendIcon={TrendIcon} />
+              <CoinSetupSection
+                formatDistanceFromEntry={formatDistanceFromEntry}
+                formatPriceLevel={formatPriceLevel}
+                formatPriceZone={formatPriceZone}
+                longSetup={longSetup}
+                preferredSetup={preferredSetup}
+                shortSetup={shortSetup}
+              />
 
-                <CoinSetupSection
-                  formatDistanceFromEntry={formatDistanceFromEntry}
-                  formatPriceLevel={formatPriceLevel}
-                  formatPriceZone={formatPriceZone}
-                  longSetup={longSetup}
-                  preferredSetup={preferredSetup}
-                  shortSetup={shortSetup}
-                />
+              <CoinChart {...coinChart} symbol={marketSymbol.symbol ?? 'unknown'} />
 
-                <CoinChart {...coinChart} symbol={marketSymbol.symbol ?? 'unknown'} />
+              <CoinMarketStructureSection timeframeSupportResistance={timeframeSupportResistance} />
 
-                <CoinMarketStructureSection timeframeSupportResistance={timeframeSupportResistance} />
+              <AnalysisDisclaimer />
 
-                <AnalysisDisclaimer />
-
-                <AppFooter />
-              </>
-            ) : null}
-          </Stack>
-        </Container>
-      </Box>
+              <AppFooter />
+            </>
+          ) : null}
+        </Stack>
+      </AppLayout>
     </>
   );
 }

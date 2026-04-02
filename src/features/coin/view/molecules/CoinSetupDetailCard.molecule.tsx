@@ -33,7 +33,7 @@ export default function CoinSetupDetailCard({
 
   return (
     <Card
-      radius="xl"
+      radius="md"
       p="lg"
       withBorder
       h="100%"

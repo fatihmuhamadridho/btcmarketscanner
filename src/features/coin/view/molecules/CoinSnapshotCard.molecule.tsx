@@ -29,7 +29,7 @@ export default function CoinSnapshotCard({
 }: CoinSnapshotCardProps) {
   return (
     <Card
-      radius="xl"
+      radius="lg"
       p={{ base: 20, sm: 28 }}
       withBorder
       shadow="xl"
@@ -64,7 +64,7 @@ export default function CoinSnapshotCard({
             Latest snapshot
           </Text>
           <Card
-            radius="lg"
+            radius="md"
             p="lg"
             withBorder
             style={{

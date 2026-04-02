@@ -1,7 +1,8 @@
 import Head from 'next/head';
-import { Box, Container, Stack } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import AppFooter from '@components/atoms/AppFooter.atom';
 import AnalysisDisclaimer from '@components/atoms/AnalysisDisclaimer.atom';
+import AppLayout from '@components/templates/AppLayout.template';
 import HomeCoinsSection from '../organisms/HomeCoinsSection.organism';
 import HomeHero from '../molecules/HomeHero.molecule';
 import type { HomeCoinCardViewModel, HomeSortMode } from '../../interface/HomeView.interface';
@@ -37,31 +38,28 @@ export default function HomeTemplate({
         <title>{headTitle}</title>
         <meta name="description" content={headDescription} />
       </Head>
+      <AppLayout>
+        <Stack gap="xl">
+          <HomeHero
+            badgeLabel="BTC Market Scanner"
+            title="Scan the market from one clean coin list."
+            description="Click a coin card to open the detail page. The list below is laid out in a single column so it is easier to scan from top to bottom."
+          />
 
-      <Box mih="100vh" py={{ base: 24, sm: 36, lg: 56 }} px={{ base: 16, sm: 24 }} style={{ backgroundColor: 'transparent' }}>
-        <Container size="lg">
-          <Stack gap="xl">
-            <HomeHero
-              badgeLabel="BTC Market Scanner"
-              title="Scan the market from one clean coin list."
-              description="Click a coin card to open the detail page. The list below is laid out in a single column so it is easier to scan from top to bottom."
-            />
+          <HomeCoinsSection
+            currentPage={currentPage}
+            coinCards={coinCards}
+            marketItems={marketItems}
+            setActivePage={setActivePage}
+            setSortMode={setSortMode}
+            sortMode={sortMode}
+            totalPages={totalPages}
+          />
 
-            <HomeCoinsSection
-              currentPage={currentPage}
-              coinCards={coinCards}
-              marketItems={marketItems}
-              setActivePage={setActivePage}
-              setSortMode={setSortMode}
-              sortMode={sortMode}
-              totalPages={totalPages}
-            />
-
-            <AnalysisDisclaimer />
-            <AppFooter />
-          </Stack>
-        </Container>
-      </Box>
+          <AnalysisDisclaimer />
+          <AppFooter />
+        </Stack>
+      </AppLayout>
     </>
   );
 }

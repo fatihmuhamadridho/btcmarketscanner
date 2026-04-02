@@ -7,7 +7,7 @@ type CoinPageStateCardProps = {
 export default function CoinPageStateCard({ message }: CoinPageStateCardProps) {
   return (
     <Paper
-      radius="xl"
+      radius="lg"
       p={{ base: 20, sm: 28 }}
       withBorder
       style={{

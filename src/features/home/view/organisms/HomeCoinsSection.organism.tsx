@@ -18,7 +18,7 @@ export default function HomeCoinsSection({
 
   return (
     <Paper
-      radius="xl"
+      radius="lg"
       p={0}
       withBorder
       shadow="xl"
@@ -27,7 +27,7 @@ export default function HomeCoinsSection({
         backdropFilter: 'blur(18px)',
       }}
     >
-      <Group justify="space-between" align="flex-start" gap="md" px={{ base: 16, sm: 24 }} py={16} wrap="wrap">
+      <Group justify="space-between" align="flex-start" gap="md" px={{ base: 12, sm: 24 }} py={16} wrap="wrap">
         <HomeCoinsSectionHeader marketItemCount={marketItemCount} />
         <HomeCoinsSortControl setActivePage={setActivePage} setSortMode={setSortMode} sortMode={sortMode} />
       </Group>

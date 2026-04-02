@@ -27,7 +27,7 @@ export default function CoinSetupSection({
 }: CoinSetupSectionProps) {
   return (
     <Card
-      radius="xl"
+      radius="lg"
       p={{ base: 20, sm: 28 }}
       withBorder
       style={{

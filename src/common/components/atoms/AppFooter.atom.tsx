@@ -6,7 +6,7 @@ export default function AppFooter() {
 
   return (
     <Paper
-      radius="xl"
+      radius="lg"
       p={{ base: 18, sm: 22 }}
       withBorder
       style={{

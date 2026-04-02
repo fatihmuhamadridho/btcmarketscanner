@@ -123,7 +123,7 @@ export default function AppNavbarSearchModal({
       radius="md"
       size="lg"
       padding="xl"
-      yOffset="12vh"
+      yOffset="6vh"
       overlayProps={{ blur: 10, opacity: 0.55 }}
       styles={{
         content: {
