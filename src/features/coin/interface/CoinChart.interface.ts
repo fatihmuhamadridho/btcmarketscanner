@@ -23,6 +23,8 @@ export type CoinChartBootstrapProps = {
   containerRef: RefObject<HTMLDivElement | null>;
   interval: CoinTimeframe;
   priceScaleOverlayRef: RefObject<HTMLDivElement | null>;
+  priceScaleLatestPriceRef: MutableRefObject<number | null>;
+  priceScaleAverageCandleRangeRef: MutableRefObject<number | null>;
   wrapperRef: RefObject<HTMLDivElement | null>;
   isLoadingMore: boolean;
   hasMoreOlderCandles: boolean;

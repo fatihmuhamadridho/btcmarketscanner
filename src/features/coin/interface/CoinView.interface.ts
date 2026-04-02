@@ -2,6 +2,10 @@ import type { RefObject } from 'react';
 
 export type CoinTimeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d';
 
+export type CoinPageProps = {
+  symbol?: string;
+};
+
 export type CoinTimeframeOption = {
   label: string;
   value: CoinTimeframe;

@@ -85,3 +85,48 @@ export function getDefaultPriceScaleConfig(interval: CoinTimeframe) {
       return { bars: 20, padding: 0.08, candleRangeMultiplier: 6 };
   }
 }
+
+export function getPriceScaleWheelProfile(latestPrice: number | null, averageCandleRange: number | null) {
+  const safeLatestPrice = latestPrice !== null && Number.isFinite(latestPrice) ? latestPrice : null;
+  const safeAverageRange = averageCandleRange !== null && Number.isFinite(averageCandleRange) ? averageCandleRange : 0;
+
+  if (safeLatestPrice === null || safeLatestPrice <= 0) {
+    return {
+      baseStep: 1,
+      maxSpan: 100,
+      minSpan: 1,
+      magnitudeMultiplier: 2,
+    };
+  }
+
+  if (safeLatestPrice < 1) {
+    const baseStep = Math.max(safeAverageRange * 0.2, safeLatestPrice * 0.0001, 0.00001);
+
+    return {
+      baseStep,
+      maxSpan: baseStep * 120,
+      minSpan: baseStep * 6,
+      magnitudeMultiplier: 4,
+    };
+  }
+
+  if (safeLatestPrice < 1000) {
+    const baseStep = Math.max(safeAverageRange * 0.16, safeLatestPrice * 0.00008, 0.05);
+
+    return {
+      baseStep,
+      maxSpan: baseStep * 140,
+      minSpan: baseStep * 6,
+      magnitudeMultiplier: 3.2,
+    };
+  }
+
+  const baseStep = Math.max(safeAverageRange * 0.12, safeLatestPrice * 0.00005, 1);
+
+  return {
+    baseStep,
+    maxSpan: baseStep * 140,
+    minSpan: baseStep * 6,
+    magnitudeMultiplier: 3,
+  };
+}

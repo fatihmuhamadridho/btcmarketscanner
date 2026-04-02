@@ -60,6 +60,8 @@ export type CoinChartLifecycleReturn = {
   isLoadingCandles: boolean;
   isLoadingMore: boolean;
   priceScaleOverlayRef: RefObject<HTMLDivElement | null>;
+  priceScaleLatestPriceRef: RefObject<number | null>;
+  priceScaleAverageCandleRangeRef: RefObject<number | null>;
   wrapperRef: RefObject<HTMLDivElement | null>;
   chartDataLength: number;
   chartRef: RefObject<IChartApi | null>;
@@ -115,6 +117,8 @@ export function useCoinChartLifecycle({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const priceScaleOverlayRef = useRef<HTMLDivElement | null>(null);
+  const priceScaleLatestPriceRef = useRef<number | null>(null);
+  const priceScaleAverageCandleRangeRef = useRef<number | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const ma10SeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -185,9 +189,12 @@ export function useCoinChartLifecycle({
   syncPriceScaleRangeRef.current = (data = chartDataRef.current) => {
     if (data.length === 0) {
       priceScaleBaseRangeRef.current = null;
+      priceScaleLatestPriceRef.current = null;
       return;
     }
 
+    const latestPrice = data[data.length - 1]?.close ?? null;
+    priceScaleLatestPriceRef.current = latestPrice;
     const config = getDefaultPriceScaleConfig(interval);
     const windowSize = Math.min(data.length, config.bars);
     const windowData = data.slice(-windowSize);
@@ -196,13 +203,22 @@ export function useCoinChartLifecycle({
     const maxPrice = windowData.reduce((max, candle) => Math.max(max, candle.high), Number.NEGATIVE_INFINITY);
     const averageCandleRange =
       windowData.reduce((total, candle) => total + (candle.high - candle.low), 0) / Math.max(windowData.length, 1);
+    priceScaleAverageCandleRangeRef.current = averageCandleRange;
     const span = Math.max(maxPrice - minPrice, 1);
     const effectiveSpan = Math.max(span, averageCandleRange * config.candleRangeMultiplier);
     const scaledPadding = effectiveSpan * config.padding;
+    const isLowPricedAsset = latestPrice !== null && latestPrice > 0 && latestPrice < 1;
+    const lowPricePadding =
+      latestPrice !== null
+        ? Math.max(averageCandleRange * 1.5, latestPrice * 0.002, 0.00001)
+        : scaledPadding;
 
     priceScaleBaseRangeRef.current = {
-      from: minPrice - scaledPadding,
-      to: maxPrice + scaledPadding,
+      from:
+        isLowPricedAsset && latestPrice !== null
+          ? Math.max(0, latestPrice - lowPricePadding)
+          : minPrice - scaledPadding,
+      to: isLowPricedAsset && latestPrice !== null ? latestPrice + lowPricePadding : maxPrice + scaledPadding,
     };
   };
 
@@ -215,13 +231,20 @@ export function useCoinChartLifecycle({
     const baseRange = priceScaleBaseRangeRef.current;
     const currentRange = priceScale.getVisibleRange() ?? baseRange;
     const currentSpan = Math.max(currentRange.to - currentRange.from, 1);
-    const nextSpan = Math.max(currentSpan * scale, 1);
+    const baseSpan = Math.max(baseRange.to - baseRange.from, 1);
+    const latestPrice = priceScaleLatestPriceRef.current;
+    const isLowPricedAsset = latestPrice !== null && latestPrice > 0 && latestPrice < 1;
+    const minSpan = isLowPricedAsset
+      ? Math.max(baseSpan * 0.04, (latestPrice ?? 0) * 0.00001, 0.00001)
+      : Math.max(baseSpan * 0.55, 1);
+    const maxSpan = isLowPricedAsset ? Math.max(baseSpan * 1.4, minSpan) : Math.max(baseSpan * 1.6, minSpan);
+    const nextSpan = Math.min(Math.max(currentSpan * scale, minSpan), maxSpan);
     const center = (currentRange.from + currentRange.to) / 2;
     const halfSpan = nextSpan / 2;
 
     priceScale.setVisibleRange({
-      from: center - halfSpan,
-      to: center + halfSpan,
+      from: Math.max(baseRange.from, center - halfSpan),
+      to: Math.min(baseRange.to, center + halfSpan),
     });
   };
 
@@ -294,6 +317,8 @@ export function useCoinChartLifecycle({
     pivotHighSeriesRef,
     pivotLowSeriesRef,
     priceScaleOverlayRef,
+    priceScaleLatestPriceRef,
+    priceScaleAverageCandleRangeRef,
     priceScaleWheelDeltaRef,
     priceScaleZoomRef,
     timeScaleWheelDeltaRef,
@@ -360,6 +385,8 @@ export function useCoinChartLifecycle({
     isLoadingCandles: false,
     isLoadingMore,
     priceScaleOverlayRef,
+    priceScaleLatestPriceRef,
+    priceScaleAverageCandleRangeRef,
     wrapperRef,
     chartDataLength: chartData.length,
     chartRef,

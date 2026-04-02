@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { CoinChartBootstrapProps } from '../interface/CoinChart.interface';
+import { getPriceScaleWheelProfile } from './CoinChartFormat.logic';
 
 function normalizeWheelDelta(event: WheelEvent, fallbackSize: number) {
   if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
@@ -35,8 +36,8 @@ export function useCoinChartBootstrapSync({
   onLoadOlderCandles,
   onLoadOlderCandlesRef,
   priceScaleOverlayRef,
-  priceScaleWheelDeltaRef,
-  priceScaleZoomRef,
+  priceScaleLatestPriceRef,
+  priceScaleAverageCandleRangeRef,
   timeScaleWheelDeltaRef,
   timeScaleZoomRef,
   wrapperRef,
@@ -54,8 +55,8 @@ export function useCoinChartBootstrapSync({
   | 'onLoadOlderCandles'
   | 'onLoadOlderCandlesRef'
   | 'priceScaleOverlayRef'
-  | 'priceScaleWheelDeltaRef'
-  | 'priceScaleZoomRef'
+  | 'priceScaleLatestPriceRef'
+  | 'priceScaleAverageCandleRangeRef'
   | 'timeScaleWheelDeltaRef'
   | 'timeScaleZoomRef'
   | 'wrapperRef'
@@ -91,52 +92,58 @@ export function useCoinChartBootstrapSync({
         return;
       }
 
+      const normalizedHorizontalDelta = normalizeWheelDeltaX(event, wrapper.clientWidth);
+      const normalizedDelta = normalizeWheelDelta(event, wrapper.clientHeight);
       const overlay = priceScaleOverlayRef.current;
       const overlayRect = overlay?.getBoundingClientRect();
       const isPriceArea = overlayRect ? event.clientX >= overlayRect.left : false;
 
-      event.preventDefault();
-      event.stopPropagation();
-
-      const normalizedHorizontalDelta = normalizeWheelDeltaX(event, wrapper.clientWidth);
-      const normalizedDelta = normalizeWheelDelta(event, wrapper.clientHeight);
-      const horizontalMagnitude = Math.abs(normalizedHorizontalDelta);
-      const verticalMagnitude = Math.abs(normalizedDelta);
-      const zoomStepThreshold = 10;
-      const zoomStep = 1.02;
-
       if (isPriceArea) {
-        priceScaleWheelDeltaRef.current += normalizedDelta;
+        event.preventDefault();
+        event.stopPropagation();
 
-        let nextZoom = priceScaleZoomRef.current;
-        let shouldApply = false;
-
-        while (priceScaleWheelDeltaRef.current <= -zoomStepThreshold) {
-          nextZoom = nextZoom * zoomStep;
-          priceScaleWheelDeltaRef.current += zoomStepThreshold;
-          shouldApply = true;
-        }
-
-        while (priceScaleWheelDeltaRef.current >= zoomStepThreshold) {
-          nextZoom = nextZoom / zoomStep;
-          priceScaleWheelDeltaRef.current -= zoomStepThreshold;
-          shouldApply = true;
-        }
-
-        if (!shouldApply) {
+        const series = seriesRef.current;
+        const currentRange = series?.priceScale().getVisibleRange();
+        if (!currentRange) {
           return;
         }
 
-        const previousZoom = priceScaleZoomRef.current;
-        priceScaleZoomRef.current = nextZoom;
-        seriesRef.current?.priceScale().applyOptions({ autoScale: false });
+        if (!series) {
+          return;
+        }
 
-        applyPriceScaleRangeRef.current({
-          scale: previousZoom / nextZoom,
+        const latestPrice = priceScaleLatestPriceRef.current;
+        const averageCandleRange = priceScaleAverageCandleRangeRef.current;
+        const profile = getPriceScaleWheelProfile(latestPrice, averageCandleRange);
+        const priceScale = series.priceScale();
+        priceScale.applyOptions({ autoScale: false });
+        const currentSpan = Math.max(currentRange.to - currentRange.from, profile.minSpan);
+        const currentCenter = (currentRange.from + currentRange.to) / 2;
+        const direction = normalizedDelta >= 0 ? 1 : -1;
+        const magnitude = Math.min(
+          Math.max((Math.abs(normalizedDelta) / Math.max(wrapper.clientHeight, 1)) * profile.magnitudeMultiplier, 0.15),
+          3
+        );
+        const nextSpan = Math.min(
+          Math.max(currentSpan + direction * magnitude * profile.baseStep, profile.minSpan),
+          profile.maxSpan
+        );
+
+        priceScale.setVisibleRange({
+          from: Math.max(0, currentCenter - nextSpan / 2),
+          to: currentCenter + nextSpan / 2,
         });
 
         return;
       }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const horizontalMagnitude = Math.abs(normalizedHorizontalDelta);
+      const verticalMagnitude = Math.abs(normalizedDelta);
+      const zoomStepThreshold = 10;
+      const zoomStep = 1.02;
 
       if (horizontalMagnitude > verticalMagnitude && normalizedHorizontalDelta !== 0) {
         const visibleRange = chart.timeScale().getVisibleLogicalRange();
@@ -221,11 +228,10 @@ export function useCoinChartBootstrapSync({
       }
     };
   }, [
-    applyPriceScaleRangeRef,
     chartRef,
+    priceScaleAverageCandleRangeRef,
     priceScaleOverlayRef,
-    priceScaleWheelDeltaRef,
-    priceScaleZoomRef,
+    priceScaleLatestPriceRef,
     seriesRef,
     timeScaleWheelDeltaRef,
     timeScaleZoomRef,

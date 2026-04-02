@@ -33,7 +33,10 @@ type CoinChartLifecycleSyncProps = {
   chartRef: ReactMutableRefObject<{ timeScale: () => { scrollPosition: () => number; setVisibleLogicalRange: (range: { from: number; to: number }) => void } } | null>;
   seriesRef: ReactMutableRefObject<{
     setData: (data: Array<{ close: number; high: number; low: number; open: number; time: UTCTimestamp } | WhitespaceData<UTCTimestamp>>) => void;
-    priceScale: () => { applyOptions: (options: { autoScale: boolean }) => void };
+    priceScale: () => {
+      applyOptions: (options: { autoScale: boolean }) => void;
+      setVisibleRange: (range: { from: number; to: number }) => void;
+    };
   } | null>;
   ma10SeriesRef: ReactMutableRefObject<{ setData: (data: LineData<UTCTimestamp>[]) => void } | null>;
   ma50SeriesRef: ReactMutableRefObject<{ setData: (data: LineData<UTCTimestamp>[]) => void } | null>;
@@ -118,6 +121,25 @@ export function useCoinChartLifecycleSync({
       shouldResetPriceScaleRef.current = false;
       priceScaleZoomRef.current = 1;
       seriesRef.current.priceScale().applyOptions({ autoScale: true });
+
+      const latestPrice = chartData[chartData.length - 1]?.close ?? null;
+      if (latestPrice !== null && latestPrice > 0 && latestPrice < 1) {
+        const recentCandles = chartData.slice(-Math.min(chartData.length, 20));
+        const averageRange =
+          recentCandles.reduce((total, candle) => total + (candle.high - candle.low), 0) /
+          Math.max(recentCandles.length, 1);
+        const padding = Math.max(averageRange * 1.5, latestPrice * 0.002, 0.00001);
+        const paddedRange = {
+          from: Math.max(0, latestPrice - padding),
+          to: latestPrice + padding,
+        };
+
+        // Lightweight Charts can retain a stale price span when switching symbols.
+        // Force low-price assets back to a range derived from the latest candles.
+        seriesRef.current.priceScale().applyOptions({ autoScale: false });
+        seriesRef.current.priceScale().setVisibleRange(paddedRange);
+      }
+
       scrollToLatestRef.current?.();
 
       if (!didSetInitialDataRef.current) {

@@ -18,7 +18,7 @@ import {
 import { analyzeSetupSide } from './CoinSetup.logic';
 import { analyzeTrend } from './CoinTrend.logic';
 import type { CoinTimeframe, MarketStructureTerm } from './CoinFormat.logic';
-import type { CoinSetupPreferred } from '../interface/CoinView.interface';
+import type { CoinPageProps, CoinSetupPreferred } from '../interface/CoinView.interface';
 
 export { MARKET_STRUCTURE_TERMS, TIMEFRAMES, formatDate, formatDistanceFromEntry, formatPriceLevel, formatPriceZone, formatSignedPercent };
 
@@ -28,10 +28,10 @@ const MARKET_STRUCTURE_WINDOW_SIZES: Record<MarketStructureTerm, number> = {
   long: 100,
 };
 
-export function useCoinDetailPageLogic() {
+export function useCoinDetailPageLogic(initialSymbol?: CoinPageProps['symbol']) {
   const router = useRouter();
   const symbolParam = router.query.symbol;
-  const symbol = typeof symbolParam === 'string' ? symbolParam : undefined;
+  const symbol = typeof symbolParam === 'string' ? symbolParam : initialSymbol;
   const [interval, setInterval] = useState<CoinTimeframe>('1d');
   const [structureTerm, setStructureTerm] = useState<MarketStructureTerm>('short');
   const {

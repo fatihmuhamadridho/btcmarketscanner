@@ -1,8 +1,9 @@
 import CoinTemplate from '../templates/CoinTemplate.template';
 import { formatDate, useCoinDetailPageLogic } from '../../logic/Coin.logic';
 import { useCoinChartLogic } from '../../logic/CoinChart.logic';
+import type { CoinPageProps } from '../../interface/CoinView.interface';
 
-export default function CoinPage() {
+export default function CoinPage({ symbol: initialSymbol }: CoinPageProps) {
   const {
     candles,
     candlesError,
@@ -33,7 +34,7 @@ export default function CoinPage() {
     timeframes,
     trendSummary,
     TrendIcon,
-  } = useCoinDetailPageLogic();
+  } = useCoinDetailPageLogic(initialSymbol);
 
   const coinChart = useCoinChartLogic({
     candles,
