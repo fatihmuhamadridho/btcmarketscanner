@@ -82,9 +82,10 @@ export default function CoinChartViewport({
           right: 0,
           bottom: 0,
           width: 80,
-          pointerEvents: 'none',
+          pointerEvents: 'auto',
           cursor: 'ns-resize',
           background: 'transparent',
+          touchAction: 'none',
           zIndex: 2,
         }}
       />

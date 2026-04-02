@@ -131,8 +131,6 @@ export function getPriceScaleWheelProfile(latestPrice: number | null, averageCan
   if (safeLatestPrice === null || safeLatestPrice <= 0) {
     return {
       baseStep: 1,
-      maxSpan: 100,
-      minSpan: 1,
       magnitudeMultiplier: 2,
     };
   }
@@ -142,8 +140,6 @@ export function getPriceScaleWheelProfile(latestPrice: number | null, averageCan
 
     return {
       baseStep,
-      maxSpan: baseStep * 120,
-      minSpan: baseStep * 6,
       magnitudeMultiplier: 4,
     };
   }
@@ -153,8 +149,6 @@ export function getPriceScaleWheelProfile(latestPrice: number | null, averageCan
 
     return {
       baseStep,
-      maxSpan: baseStep * 140,
-      minSpan: baseStep * 6,
       magnitudeMultiplier: 3.2,
     };
   }
@@ -163,8 +157,6 @@ export function getPriceScaleWheelProfile(latestPrice: number | null, averageCan
 
   return {
     baseStep,
-    maxSpan: baseStep * 140,
-    minSpan: baseStep * 6,
     magnitudeMultiplier: 3,
   };
 }

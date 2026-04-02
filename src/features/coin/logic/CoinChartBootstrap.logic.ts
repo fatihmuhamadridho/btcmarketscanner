@@ -7,8 +7,6 @@ export function useCoinChartBootstrap({
   containerRef,
   interval,
   priceScaleOverlayRef,
-  priceScaleLatestPriceRef,
-  priceScaleAverageCandleRangeRef,
   wrapperRef,
   isLoadingMore,
   hasMoreOlderCandles,
@@ -33,7 +31,6 @@ export function useCoinChartBootstrap({
   isProgrammaticRangeChangeRef,
   timeScaleWheelDeltaRef,
   timeScaleZoomRef,
-  applyPriceScaleRangeRef,
   shouldFollowLatestRef,
 }: CoinChartBootstrapProps) {
   useCoinChartBootstrapSync({
@@ -46,14 +43,11 @@ export function useCoinChartBootstrap({
     onLoadOlderCandles,
     onLoadOlderCandlesRef,
     priceScaleOverlayRef,
-    priceScaleLatestPriceRef,
-    priceScaleAverageCandleRangeRef,
     timeScaleWheelDeltaRef,
     timeScaleZoomRef,
     wrapperRef,
     chartRef,
     seriesRef,
-    applyPriceScaleRangeRef,
   });
 
   useCoinChartBootstrapChart({

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import type { CoinChartBootstrapProps } from '../interface/CoinChart.interface';
-import { getPriceScaleWheelProfile } from './CoinChartFormat.logic';
 
 function normalizeWheelDelta(event: WheelEvent, fallbackSize: number) {
   if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
@@ -36,14 +35,11 @@ export function useCoinChartBootstrapSync({
   onLoadOlderCandles,
   onLoadOlderCandlesRef,
   priceScaleOverlayRef,
-  priceScaleLatestPriceRef,
-  priceScaleAverageCandleRangeRef,
   timeScaleWheelDeltaRef,
   timeScaleZoomRef,
   wrapperRef,
   chartRef,
   seriesRef,
-  applyPriceScaleRangeRef,
 }: Pick<
   CoinChartBootstrapProps,
   | 'candles'
@@ -55,14 +51,11 @@ export function useCoinChartBootstrapSync({
   | 'onLoadOlderCandles'
   | 'onLoadOlderCandlesRef'
   | 'priceScaleOverlayRef'
-  | 'priceScaleLatestPriceRef'
-  | 'priceScaleAverageCandleRangeRef'
   | 'timeScaleWheelDeltaRef'
   | 'timeScaleZoomRef'
   | 'wrapperRef'
   | 'chartRef'
   | 'seriesRef'
-  | 'applyPriceScaleRangeRef'
 >) {
   useEffect(() => {
     candlesRef.current = candles;
@@ -82,52 +75,130 @@ export function useCoinChartBootstrapSync({
 
   useEffect(() => {
     let frameId: number | null = null;
+    let overlayFrameId: number | null = null;
     let attachedWrapper: HTMLDivElement | null = null;
+    let attachedOverlay: HTMLDivElement | null = null;
+    let wheelFrameId: number | null = null;
+    let pendingNormalizedDelta = 0;
+    let pendingNormalizedHorizontalDelta = 0;
+    let pendingWheelEvent: WheelEvent | null = null;
+    let pendingIsPriceArea = false;
+    let isDraggingPriceScale = false;
+    let dragStartY = 0;
+    let dragStartSpan = 0;
+    let dragStartCenter = 0;
+    let dragPointerId: number | null = null;
 
-    const handleWheel = (event: WheelEvent) => {
-      const wrapper = attachedWrapper;
-      const chart = chartRef.current;
+    const handleOverlayPointerDown = (event: PointerEvent) => {
+      const overlay = attachedOverlay;
 
-      if (!wrapper || !chart) {
+      if (!overlay || event.button !== 0) {
         return;
       }
 
-      const normalizedHorizontalDelta = normalizeWheelDeltaX(event, wrapper.clientWidth);
-      const normalizedDelta = normalizeWheelDelta(event, wrapper.clientHeight);
-      const overlay = priceScaleOverlayRef.current;
-      const overlayRect = overlay?.getBoundingClientRect();
-      const isPriceArea = overlayRect ? event.clientX >= overlayRect.left : false;
+      event.preventDefault();
+      event.stopPropagation();
+
+      isDraggingPriceScale = true;
+      dragPointerId = event.pointerId;
+      dragStartY = event.clientY;
+
+      const currentRange = seriesRef.current?.priceScale().getVisibleRange();
+
+      if (!currentRange) {
+        return;
+      }
+
+      dragStartSpan = Math.max(currentRange.to - currentRange.from, Number.EPSILON);
+      dragStartCenter = (currentRange.from + currentRange.to) / 2;
+
+      try {
+        overlay.setPointerCapture(event.pointerId);
+      } catch {
+        // Ignore pointer capture failures on transient remounts.
+      }
+    };
+
+    const handleOverlayPointerMove = (event: PointerEvent) => {
+      if (!isDraggingPriceScale || dragPointerId !== event.pointerId) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const overlay = attachedOverlay;
+
+      if (!overlay) {
+        return;
+      }
+
+      const deltaY = event.clientY - dragStartY;
+      const ratio = deltaY / Math.max(overlay.clientHeight, 1);
+      const zoomSensitivity = 1.15;
+      const nextSpan = Math.max(dragStartSpan * Math.exp(ratio * zoomSensitivity), Number.EPSILON);
+
+      const series = seriesRef.current;
+
+      if (!series) {
+        return;
+      }
+
+      const priceScale = series.priceScale();
+      priceScale.applyOptions({ autoScale: false });
+      priceScale.setVisibleRange({
+        from: Math.max(0, dragStartCenter - nextSpan / 2),
+        to: dragStartCenter + nextSpan / 2,
+      });
+    };
+
+    const stopDrag = (event?: PointerEvent) => {
+      if (event && dragPointerId !== event.pointerId) {
+        return;
+      }
+
+      isDraggingPriceScale = false;
+      dragPointerId = null;
+      dragStartY = 0;
+      dragStartSpan = 0;
+      dragStartCenter = 0;
+    };
+
+    const flushWheel = () => {
+      wheelFrameId = null;
+
+      const event = pendingWheelEvent;
+      const normalizedDelta = pendingNormalizedDelta;
+      const normalizedHorizontalDelta = pendingNormalizedHorizontalDelta;
+      const isPriceArea = pendingIsPriceArea;
+
+      pendingWheelEvent = null;
+      pendingNormalizedDelta = 0;
+      pendingNormalizedHorizontalDelta = 0;
+      pendingIsPriceArea = false;
+
+      const wrapper = attachedWrapper;
+      const chart = chartRef.current;
+
+      if (!wrapper || !chart || !event) {
+        return;
+      }
 
       if (isPriceArea) {
-        event.preventDefault();
-        event.stopPropagation();
-
         const series = seriesRef.current;
         const currentRange = series?.priceScale().getVisibleRange();
-        if (!currentRange) {
+
+        if (!series || !currentRange) {
           return;
         }
 
-        if (!series) {
-          return;
-        }
-
-        const latestPrice = priceScaleLatestPriceRef.current;
-        const averageCandleRange = priceScaleAverageCandleRangeRef.current;
-        const profile = getPriceScaleWheelProfile(latestPrice, averageCandleRange);
         const priceScale = series.priceScale();
         priceScale.applyOptions({ autoScale: false });
-        const currentSpan = Math.max(currentRange.to - currentRange.from, profile.minSpan);
+        const currentSpan = Math.max(currentRange.to - currentRange.from, Number.EPSILON);
         const currentCenter = (currentRange.from + currentRange.to) / 2;
-        const direction = normalizedDelta >= 0 ? 1 : -1;
-        const magnitude = Math.min(
-          Math.max((Math.abs(normalizedDelta) / Math.max(wrapper.clientHeight, 1)) * profile.magnitudeMultiplier, 0.15),
-          3
-        );
-        const nextSpan = Math.min(
-          Math.max(currentSpan + direction * magnitude * profile.baseStep, profile.minSpan),
-          profile.maxSpan
-        );
+        const normalizedDeltaRatio = normalizedDelta / Math.max(wrapper.clientHeight, 1);
+        const zoomSensitivity = 1.15;
+        const nextSpan = Math.max(currentSpan * Math.exp(normalizedDeltaRatio * zoomSensitivity), Number.EPSILON);
 
         priceScale.setVisibleRange({
           from: Math.max(0, currentCenter - nextSpan / 2),
@@ -136,9 +207,6 @@ export function useCoinChartBootstrapSync({
 
         return;
       }
-
-      event.preventDefault();
-      event.stopPropagation();
 
       const horizontalMagnitude = Math.abs(normalizedHorizontalDelta);
       const verticalMagnitude = Math.abs(normalizedDelta);
@@ -204,6 +272,31 @@ export function useCoinChartBootstrapSync({
       });
     };
 
+    const handleWheel = (event: WheelEvent) => {
+      const wrapper = attachedWrapper;
+      const chart = chartRef.current;
+
+      if (!wrapper || !chart) {
+        return;
+      }
+
+      const overlay = priceScaleOverlayRef.current;
+      const overlayRect = overlay?.getBoundingClientRect();
+      const isPriceArea = overlayRect ? event.clientX >= overlayRect.left : false;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      pendingWheelEvent = event;
+      pendingNormalizedHorizontalDelta += normalizeWheelDeltaX(event, wrapper.clientWidth);
+      pendingNormalizedDelta += normalizeWheelDelta(event, wrapper.clientHeight);
+      pendingIsPriceArea = pendingIsPriceArea || isPriceArea;
+
+      if (wheelFrameId === null) {
+        wheelFrameId = window.requestAnimationFrame(flushWheel);
+      }
+    };
+
     const attach = () => {
       const wrapper = wrapperRef.current;
 
@@ -216,22 +309,53 @@ export function useCoinChartBootstrapSync({
       wrapper.addEventListener('wheel', handleWheel, { passive: false });
     };
 
+    const attachOverlay = () => {
+      const overlay = priceScaleOverlayRef.current;
+
+      if (!overlay) {
+        overlayFrameId = window.requestAnimationFrame(attachOverlay);
+        return;
+      }
+
+      attachedOverlay = overlay;
+      overlay.addEventListener('pointerdown', handleOverlayPointerDown);
+      overlay.addEventListener('pointermove', handleOverlayPointerMove);
+      overlay.addEventListener('pointerup', stopDrag);
+      overlay.addEventListener('pointercancel', stopDrag);
+      overlay.addEventListener('lostpointercapture', stopDrag);
+    };
+
     frameId = window.requestAnimationFrame(attach);
+    overlayFrameId = window.requestAnimationFrame(attachOverlay);
 
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
       }
 
+      if (overlayFrameId !== null) {
+        window.cancelAnimationFrame(overlayFrameId);
+      }
+
+      if (wheelFrameId !== null) {
+        window.cancelAnimationFrame(wheelFrameId);
+      }
+
       if (attachedWrapper) {
         attachedWrapper.removeEventListener('wheel', handleWheel);
+      }
+
+      if (attachedOverlay) {
+        attachedOverlay.removeEventListener('pointerdown', handleOverlayPointerDown);
+        attachedOverlay.removeEventListener('pointermove', handleOverlayPointerMove);
+        attachedOverlay.removeEventListener('pointerup', stopDrag);
+        attachedOverlay.removeEventListener('pointercancel', stopDrag);
+        attachedOverlay.removeEventListener('lostpointercapture', stopDrag);
       }
     };
   }, [
     chartRef,
-    priceScaleAverageCandleRangeRef,
     priceScaleOverlayRef,
-    priceScaleLatestPriceRef,
     seriesRef,
     timeScaleWheelDeltaRef,
     timeScaleZoomRef,
