@@ -41,14 +41,20 @@ export default function AppNavbarSearchModal({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [searchValue, setSearchValue] = useState('');
 
+  const focusSearchInput = () => {
+    window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    });
+  };
+
   useEffect(() => {
     if (!opened) {
       return undefined;
     }
 
     const timeoutId = window.setTimeout(() => {
-      searchInputRef.current?.focus();
-      searchInputRef.current?.select();
+      focusSearchInput();
     }, 0);
 
     return () => {
@@ -112,6 +118,7 @@ export default function AppNavbarSearchModal({
     <Modal
       opened={opened}
       onClose={closeSearch}
+      onEnterTransitionEnd={focusSearchInput}
       title="Search coin"
       radius="md"
       size="lg"
@@ -164,6 +171,8 @@ export default function AppNavbarSearchModal({
 
         <Autocomplete
           ref={searchInputRef}
+          autoFocus
+          data-autofocus
           data={searchOptions}
           value={searchValue}
           onChange={setSearchValue}

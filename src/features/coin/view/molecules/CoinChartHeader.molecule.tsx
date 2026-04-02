@@ -1,9 +1,10 @@
-import { Badge, Button, Group, Stack, Text, ThemeIcon } from '@mantine/core';
-import { IconChartLine } from '@tabler/icons-react';
+import { ActionIcon, Badge, Button, Group, Stack, Text, ThemeIcon, Tooltip } from '@mantine/core';
+import { IconChartLine, IconMaximize, IconMinimize } from '@tabler/icons-react';
 import type { CoinTimeframe } from '../../interface/CoinView.interface';
 
 type CoinChartHeaderProps = {
   hasMoreOlderCandles: boolean;
+  isFullscreen: boolean;
   interval: CoinTimeframe;
   intervals: ReadonlyArray<{
     label: string;
@@ -11,15 +12,18 @@ type CoinChartHeaderProps = {
   }>;
   isLoadingMore: boolean;
   onIntervalChange: (interval: CoinTimeframe) => void;
+  onToggleFullscreen: () => void;
   symbol: string;
 };
 
 export default function CoinChartHeader({
   hasMoreOlderCandles,
+  isFullscreen,
   interval,
   intervals,
   isLoadingMore,
   onIntervalChange,
+  onToggleFullscreen,
   symbol,
 }: CoinChartHeaderProps) {
   return (
@@ -56,23 +60,38 @@ export default function CoinChartHeader({
               </Button>
             );
           })}
+
+          <Tooltip label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} withArrow>
+            <ActionIcon
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              color="cyan"
+              onClick={onToggleFullscreen}
+              radius="xl"
+              size="lg"
+              variant="light"
+            >
+              {isFullscreen ? <IconMinimize size={16} /> : <IconMaximize size={16} />}
+            </ActionIcon>
+          </Tooltip>
         </Group>
       </Group>
 
-      <Group justify="space-between" align="center" wrap="wrap">
-        <Group gap="xs">
-          {isLoadingMore ? (
-            <Badge variant="light" color="teal">
-              Loading older candles
-            </Badge>
-          ) : null}
-          {!hasMoreOlderCandles ? (
-            <Badge variant="light" color="gray">
-              No older candles
-            </Badge>
-          ) : null}
+      {isLoadingMore || !hasMoreOlderCandles ? (
+        <Group justify="space-between" align="center" wrap="wrap">
+          <Group gap="xs">
+            {isLoadingMore ? (
+              <Badge variant="light" color="teal">
+                Loading older candles
+              </Badge>
+            ) : null}
+            {!hasMoreOlderCandles ? (
+              <Badge variant="light" color="gray">
+                No older candles
+              </Badge>
+            ) : null}
+          </Group>
         </Group>
-      </Group>
+      ) : null}
     </>
   );
 }

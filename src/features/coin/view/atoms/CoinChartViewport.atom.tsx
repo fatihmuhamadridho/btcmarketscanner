@@ -8,6 +8,7 @@ type CoinChartViewportProps = {
   interval: string;
   isLoadingCandles: boolean;
   priceScaleOverlayRef: RefObject<HTMLDivElement | null>;
+  viewportHeight: number | string;
   wrapperRef: RefObject<HTMLDivElement | null>;
 };
 
@@ -18,6 +19,7 @@ export default function CoinChartViewport({
   interval,
   isLoadingCandles,
   priceScaleOverlayRef,
+  viewportHeight,
   wrapperRef,
 }: CoinChartViewportProps) {
   return (
@@ -25,7 +27,7 @@ export default function CoinChartViewport({
       ref={wrapperRef}
       style={{
         position: 'relative',
-        height: 360,
+        height: viewportHeight,
         width: '100%',
       }}
     >
