@@ -1,5 +1,7 @@
 export type HomeCardChangeBadgeColor = 'green' | 'red' | 'gray';
 
+export type HomeSortMode = 'volume' | 'gainers' | 'losers';
+
 export type HomeCoinCardViewModel = {
   changeBadgeColor: HomeCardChangeBadgeColor;
   baseAsset?: string | null;
@@ -7,9 +9,7 @@ export type HomeCoinCardViewModel = {
   displayChange?: string | null;
   displayLastPrice?: string | null;
   displayName?: string | null;
-  pair?: string | null;
   quoteAsset?: string | null;
-  status?: string | null;
   symbol: string;
 };
 

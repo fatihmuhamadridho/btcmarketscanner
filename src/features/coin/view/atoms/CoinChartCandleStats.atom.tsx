@@ -1,5 +1,5 @@
-import { Text } from '@mantine/core';
-import { formatDecimalString } from '@utils/format-number.util';
+import { Group, Text } from '@mantine/core';
+import { formatChartPrice, formatChartSignedPrice } from '../../logic/CoinChartFormat.logic';
 
 type DisplayedCandle = {
   close: number;
@@ -18,7 +18,6 @@ type CoinChartCandleStatsProps = {
   displayedCandle: DisplayedCandle | null;
   formatChartTime: (value?: number) => string;
   formatPercent: (value: number) => string;
-  formatSignedDecimal: (value: number) => string;
 };
 
 export default function CoinChartCandleStats({
@@ -30,53 +29,52 @@ export default function CoinChartCandleStats({
   displayedCandle,
   formatChartTime,
   formatPercent,
-  formatSignedDecimal,
 }: CoinChartCandleStatsProps) {
   if (!displayedCandle) {
     return null;
   }
 
   return (
-    <>
+    <Group gap="xs" wrap="wrap" align="center">
       <Text size="xs" c="dimmed">
         {formatChartTime(displayedCandle.time * 1000)}
       </Text>
       <Text size="xs">
         Open{' '}
         <Text component="span" c={candleTextColor} fw={600}>
-          {formatDecimalString(displayedCandle.open.toFixed(2))}
+          {formatChartPrice(displayedCandle.open)}
         </Text>
       </Text>
       <Text size="xs">
         High{' '}
         <Text component="span" c={candleTextColor} fw={600}>
-          {formatDecimalString(displayedCandle.high.toFixed(2))}
+          {formatChartPrice(displayedCandle.high)}
         </Text>
       </Text>
       <Text size="xs">
         Low{' '}
         <Text component="span" c={candleTextColor} fw={600}>
-          {formatDecimalString(displayedCandle.low.toFixed(2))}
+          {formatChartPrice(displayedCandle.low)}
         </Text>
       </Text>
       <Text size="xs">
         Close{' '}
         <Text component="span" c={candleTextColor} fw={600}>
-          {formatDecimalString(displayedCandle.close.toFixed(2))}
+          {formatChartPrice(displayedCandle.close)}
         </Text>
       </Text>
       <Text size="xs">
         Change{' '}
         <Text component="span" c={candleTextColor} fw={600}>
-          {formatSignedDecimal(candleChange)} ({formatPercent(candleChangePercent)})
+          {formatChartSignedPrice(candleChange)} ({formatPercent(candleChangePercent)})
         </Text>
       </Text>
       <Text size="xs">
         Range{' '}
         <Text component="span" c={candleTextColor} fw={600}>
-          {formatDecimalString(candleRange.toFixed(2))} ({formatPercent(candleRangePercent)})
+          {formatChartPrice(candleRange)} ({formatPercent(candleRangePercent)})
         </Text>
       </Text>
-    </>
+    </Group>
   );
 }

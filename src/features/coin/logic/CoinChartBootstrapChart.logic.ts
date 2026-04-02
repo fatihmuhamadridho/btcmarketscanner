@@ -14,7 +14,7 @@ import { LineStyle, createSeriesMarkers } from 'lightweight-charts';
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
 import type { CoinTimeframe } from '../interface/CoinView.interface';
 import type { CoinChartActiveCandle, CoinChartCrosshairEvent } from '../interface/CoinChart.interface';
-import { getDefaultRightOffset } from './CoinChartFormat.logic';
+import { formatChartPrice, getDefaultRightOffset } from './CoinChartFormat.logic';
 
 const chartTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const chartLocale = Intl.DateTimeFormat().resolvedOptions().locale;
@@ -77,6 +77,15 @@ function formatChartTickMark(time: Time, tickMarkType: TickMarkType) {
     timeZone: chartTimeZone,
     year: 'numeric',
   }).format(date);
+}
+
+function createChartPriceFormat() {
+  return {
+    type: 'custom' as const,
+    minMove: 0.000001,
+    formatter: (price: number) => formatChartPrice(price),
+    tickmarksFormatter: (prices: readonly number[]) => prices.map((price) => formatChartPrice(price)),
+  };
 }
 
 type CoinChartBootstrapChartProps = {
@@ -244,6 +253,7 @@ export function useCoinChartBootstrapChart({
         downColor: 'rgba(237, 85, 101, 1)',
         borderVisible: false,
         wickVisible: true,
+        priceFormat: createChartPriceFormat(),
       });
 
       ma10SeriesRef.current = chart.addSeries(LineSeries, {
@@ -251,24 +261,28 @@ export function useCoinChartBootstrapChart({
         lineWidth: 1,
         lastValueVisible: true,
         priceLineVisible: false,
+        priceFormat: createChartPriceFormat(),
       });
       ma50SeriesRef.current = chart.addSeries(LineSeries, {
         color: 'rgba(255, 92, 168, 1)',
         lineWidth: 1,
         lastValueVisible: true,
         priceLineVisible: false,
+        priceFormat: createChartPriceFormat(),
       });
       ma100SeriesRef.current = chart.addSeries(LineSeries, {
         color: 'rgba(159, 122, 234, 1)',
         lineWidth: 1,
         lastValueVisible: true,
         priceLineVisible: false,
+        priceFormat: createChartPriceFormat(),
       });
       ma200SeriesRef.current = chart.addSeries(LineSeries, {
         color: 'rgba(119, 110, 255, 1)',
         lineWidth: 1,
         lastValueVisible: true,
         priceLineVisible: false,
+        priceFormat: createChartPriceFormat(),
       });
       pivotHighSeriesRef.current = chart.addSeries(LineSeries, {
         color: 'rgba(251, 146, 60, 0.95)',
@@ -276,6 +290,7 @@ export function useCoinChartBootstrapChart({
         lineStyle: LineStyle.Solid,
         lastValueVisible: false,
         priceLineVisible: false,
+        priceFormat: createChartPriceFormat(),
       });
       pivotLowSeriesRef.current = chart.addSeries(LineSeries, {
         color: 'rgba(103, 232, 249, 0.95)',
@@ -283,6 +298,7 @@ export function useCoinChartBootstrapChart({
         lineStyle: LineStyle.Solid,
         lastValueVisible: false,
         priceLineVisible: false,
+        priceFormat: createChartPriceFormat(),
       });
       structureMarkersRef.current = createSeriesMarkers(series, [], {
         autoScale: true,

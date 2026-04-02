@@ -13,5 +13,5 @@ export const getServerSideProps: GetServerSideProps<CoinPageProps> = async (cont
 };
 
 export default function CoinRoutePage(props: CoinPageProps) {
-  return <CoinPage {...props} />;
+  return <CoinPage key={props.symbol ?? 'unknown'} {...props} />;
 }

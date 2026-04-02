@@ -11,7 +11,6 @@ export default function CoinChart({
   displayedCandle,
   formatChartTime,
   formatPercent,
-  formatSignedDecimal,
   hasMoreOlderCandles,
   interval,
   intervals,
@@ -63,7 +62,6 @@ export default function CoinChart({
           displayedCandle={displayedCandle}
           formatChartTime={formatChartTime}
           formatPercent={formatPercent}
-          formatSignedDecimal={formatSignedDecimal}
           ma10Value={ma10Value}
           ma50Value={ma50Value}
           ma100Value={ma100Value}

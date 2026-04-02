@@ -52,9 +52,6 @@ export default function CoinSetupDetailCard({
               {setup.marketCondition}
             </Text>
           </Stack>
-          <Badge variant="light" color="gray">
-            {setup.grade}
-          </Badge>
         </Group>
 
         <Group gap="xs" wrap="wrap">

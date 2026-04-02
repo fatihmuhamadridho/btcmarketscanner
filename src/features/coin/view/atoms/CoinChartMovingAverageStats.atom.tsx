@@ -1,5 +1,5 @@
 import { Group, Text } from '@mantine/core';
-import { formatDecimalString } from '@utils/format-number.util';
+import { formatChartPrice } from '../../logic/CoinChartFormat.logic';
 
 type CoinChartMovingAverageStatsProps = {
   ma10Value: number | null;
@@ -19,25 +19,25 @@ export default function CoinChartMovingAverageStats({
       <Text size="xs">
         MA(10){' '}
         <Text component="span" c="yellow" fw={600}>
-          {formatDecimalString(ma10Value?.toFixed(2))}
+          {formatChartPrice(ma10Value)}
         </Text>
       </Text>
       <Text size="xs">
         MA(50){' '}
         <Text component="span" c="pink" fw={600}>
-          {formatDecimalString(ma50Value?.toFixed(2))}
+          {formatChartPrice(ma50Value)}
         </Text>
       </Text>
       <Text size="xs">
         MA(100){' '}
         <Text component="span" c="grape" fw={600}>
-          {formatDecimalString(ma100Value?.toFixed(2))}
+          {formatChartPrice(ma100Value)}
         </Text>
       </Text>
       <Text size="xs">
         MA(200){' '}
         <Text component="span" c="indigo" fw={600}>
-          {formatDecimalString(ma200Value?.toFixed(2))}
+          {formatChartPrice(ma200Value)}
         </Text>
       </Text>
     </Group>

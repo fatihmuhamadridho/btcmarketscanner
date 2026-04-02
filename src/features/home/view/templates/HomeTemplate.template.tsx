@@ -3,35 +3,32 @@ import { Box, Container, Stack } from '@mantine/core';
 import AppFooter from '@components/atoms/AppFooter.atom';
 import AnalysisDisclaimer from '@components/atoms/AnalysisDisclaimer.atom';
 import HomeCoinsSection from '../organisms/HomeCoinsSection.organism';
-import HomeExchangeInfoSection from '../organisms/HomeExchangeInfoSection.organism';
 import HomeHero from '../molecules/HomeHero.molecule';
-import type { HomeCoinCardViewModel, HomeExchangeInfo } from '../../interface/HomeView.interface';
+import type { HomeCoinCardViewModel, HomeSortMode } from '../../interface/HomeView.interface';
 
 type HomeTemplateProps = {
   currentPage: number;
-  error: boolean | null;
-  exchangeInfo: HomeExchangeInfo;
   headDescription: string;
   headTitle: string;
   coinCards: HomeCoinCardViewModel[];
-  isLoading: boolean;
   marketItems: {
     symbol: string;
   }[];
   setActivePage: (page: number) => void;
+  setSortMode: (mode: HomeSortMode) => void;
+  sortMode: HomeSortMode;
   totalPages: number;
 };
 
 export default function HomeTemplate({
   currentPage,
-  error,
-  exchangeInfo,
   headDescription,
   headTitle,
   coinCards,
-  isLoading,
   marketItems,
   setActivePage,
+  setSortMode,
+  sortMode,
   totalPages,
 }: HomeTemplateProps) {
   return (
@@ -50,13 +47,13 @@ export default function HomeTemplate({
               description="Click a coin card to open the detail page. The list below is laid out in a single column so it is easier to scan from top to bottom."
             />
 
-            <HomeExchangeInfoSection error={Boolean(error)} exchangeInfo={exchangeInfo} isLoading={isLoading} />
-
             <HomeCoinsSection
               currentPage={currentPage}
               coinCards={coinCards}
               marketItems={marketItems}
               setActivePage={setActivePage}
+              setSortMode={setSortMode}
+              sortMode={sortMode}
               totalPages={totalPages}
             />
 

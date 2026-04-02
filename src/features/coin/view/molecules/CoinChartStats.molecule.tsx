@@ -1,4 +1,4 @@
-import { Group } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import CoinChartCandleStats from '../atoms/CoinChartCandleStats.atom';
 import CoinChartMovingAverageStats from '../atoms/CoinChartMovingAverageStats.atom';
 
@@ -17,7 +17,6 @@ type CoinChartStatsProps = {
   } | null;
   formatChartTime: (value?: number) => string;
   formatPercent: (value: number) => string;
-  formatSignedDecimal: (value: number) => string;
   ma10Value: number | null;
   ma50Value: number | null;
   ma100Value: number | null;
@@ -33,7 +32,6 @@ export default function CoinChartStats({
   displayedCandle,
   formatChartTime,
   formatPercent,
-  formatSignedDecimal,
   ma10Value,
   ma50Value,
   ma100Value,
@@ -44,9 +42,9 @@ export default function CoinChartStats({
   }
 
   return (
-    <Group
-      gap="xs"
-      wrap="wrap"
+    <Stack
+      gap={4}
+      align="flex-start"
       style={{
         borderTop: '1px solid rgba(255,255,255,0.08)',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
@@ -64,7 +62,6 @@ export default function CoinChartStats({
         displayedCandle={displayedCandle}
         formatChartTime={formatChartTime}
         formatPercent={formatPercent}
-        formatSignedDecimal={formatSignedDecimal}
       />
       <CoinChartMovingAverageStats
         ma10Value={ma10Value}
@@ -72,6 +69,6 @@ export default function CoinChartStats({
         ma100Value={ma100Value}
         ma200Value={ma200Value}
       />
-    </Group>
+    </Stack>
   );
 }

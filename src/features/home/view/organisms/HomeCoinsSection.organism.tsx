@@ -1,24 +1,21 @@
-import { Divider, Group, Pagination, Paper, Stack, Text, Title } from '@mantine/core';
-import HomeCard from '../molecules/HomeCard.molecule';
-import type { HomeCoinCardViewModel } from '../../interface/HomeView.interface';
-
-type HomeCoinsSectionProps = {
-  currentPage: number;
-  coinCards: HomeCoinCardViewModel[];
-  marketItems: {
-    symbol: string;
-  }[];
-  setActivePage: (page: number) => void;
-  totalPages: number;
-};
+import { Divider, Group, Paper } from '@mantine/core';
+import HomeCoinsList from '../molecules/HomeCoinsList.molecule';
+import HomeCoinsPagination from '../molecules/HomeCoinsPagination.molecule';
+import HomeCoinsSectionHeader from '../molecules/HomeCoinsSectionHeader.molecule';
+import HomeCoinsSortControl from '../molecules/HomeCoinsSortControl.molecule';
+import type { HomeCoinsSectionProps } from '../../interface/HomeCoinsSection.interface';
 
 export default function HomeCoinsSection({
   currentPage,
   coinCards,
   marketItems,
   setActivePage,
+  setSortMode,
+  sortMode,
   totalPages,
 }: HomeCoinsSectionProps) {
+  const marketItemCount = marketItems.length;
+
   return (
     <Paper
       radius="xl"
@@ -30,34 +27,22 @@ export default function HomeCoinsSection({
         backdropFilter: 'blur(18px)',
       }}
     >
-      <Group justify="space-between" px={{ base: 16, sm: 24 }} py={16}>
-        <Title order={2} fz="h3">
-          Coins
-        </Title>
-        <Text size="sm" c="dimmed">
-          {marketItems.length} coins total · 10 per page
-        </Text>
+      <Group justify="space-between" align="flex-start" gap="md" px={{ base: 16, sm: 24 }} py={16} wrap="wrap">
+        <HomeCoinsSectionHeader marketItemCount={marketItemCount} />
+        <HomeCoinsSortControl setActivePage={setActivePage} setSortMode={setSortMode} sortMode={sortMode} />
       </Group>
 
       <Divider color="rgba(255,255,255,0.1)" />
 
-      <Stack gap={0}>
-        {coinCards.map(({ changeBadgeColor, ...coin }) => (
-          <HomeCard key={coin.symbol} changeBadgeColor={changeBadgeColor} {...coin} />
-        ))}
-      </Stack>
+      <HomeCoinsList coinCards={coinCards} />
 
-      {totalPages > 1 ? (
-        <>
-          <Divider color="rgba(255,255,255,0.1)" />
-          <Group justify="space-between" px={{ base: 16, sm: 24 }} py={16}>
-            <Text size="sm" c="dimmed">
-              Showing {coinCards.length} of {marketItems.length} coins
-            </Text>
-            <Pagination value={currentPage} onChange={setActivePage} total={totalPages} color="teal" size="sm" />
-          </Group>
-        </>
-      ) : null}
+      <HomeCoinsPagination
+        currentPage={currentPage}
+        marketItemCount={marketItemCount}
+        setActivePage={setActivePage}
+        totalPages={totalPages}
+        visibleCount={coinCards.length}
+      />
     </Paper>
   );
 }

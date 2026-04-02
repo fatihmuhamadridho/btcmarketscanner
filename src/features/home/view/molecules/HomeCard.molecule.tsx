@@ -10,9 +10,7 @@ type HomeCardProps = {
   displayChange?: string | null;
   displayLastPrice?: string | null;
   displayName?: string | null;
-  pair?: string | null;
   quoteAsset?: string | null;
-  status?: string | null;
   symbol: string;
 };
 
@@ -23,9 +21,7 @@ export default function HomeCard({
   displayChange,
   displayLastPrice,
   displayName,
-  pair,
   quoteAsset,
-  status,
   symbol,
 }: HomeCardProps) {
   return (
@@ -61,10 +57,7 @@ export default function HomeCard({
             </Text>
             <Text size="sm">{contractType ?? 'Futures contract'}</Text>
             <Text size="sm" c="dimmed">
-              Pair: {pair ?? 'n/a'} · Base asset: {baseAsset ?? 'n/a'} · Quote asset: {quoteAsset ?? 'n/a'}
-            </Text>
-            <Text size="sm" c="dimmed">
-              Status: {status ?? 'n/a'}
+              Base asset: {baseAsset ?? 'n/a'} · Quote asset: {quoteAsset ?? 'n/a'}
             </Text>
           </Stack>
         </Group>

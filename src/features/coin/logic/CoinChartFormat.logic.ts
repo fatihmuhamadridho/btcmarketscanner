@@ -26,6 +26,44 @@ export function formatSignedDecimal(value: number) {
   return `${sign}${formatDecimalString(Math.abs(value).toFixed(2))}`;
 }
 
+export function getChartPriceDecimals(value: number) {
+  if (!Number.isFinite(value)) {
+    return 2;
+  }
+
+  if (value >= 1) {
+    return 2;
+  }
+
+  if (value >= 0.1) {
+    return 4;
+  }
+
+  if (value >= 0.01) {
+    return 5;
+  }
+
+  return 6;
+}
+
+export function formatChartPrice(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return 'n/a';
+  }
+
+  return formatDecimalString(value.toFixed(getChartPriceDecimals(value)));
+}
+
+export function formatChartSignedPrice(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return 'n/a';
+  }
+
+  const sign = value > 0 ? '+' : '';
+
+  return `${sign}${formatChartPrice(Math.abs(value))}`;
+}
+
 export function getDefaultVisibleBars(interval: CoinTimeframe) {
   switch (interval) {
     case '1m':
