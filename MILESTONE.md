@@ -15,3 +15,5 @@
 15. Analisa kalau coin tersebut punya liquiditas yang sangat tinggi
 16. Buat agar mobile friendly (Done)
 17. Buat user management system
+18. Fixing pindah halaman dari detail coin ke homepage seharunsya tidak lagging
+19. Tambahin guard dimana kalo orang yang akses belom pake cloudflare guard atau something vpn maka munculin alert dan tunggu sampe si user udah pake guard itu

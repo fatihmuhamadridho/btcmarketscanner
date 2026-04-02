@@ -1,0 +1,44 @@
+{
+  "symbol": "BTCUSDT",
+  "timeframe": "15m",
+  "higher_timeframes": {
+    "1h": {
+      "trend": "bullish",
+      "ema_alignment": "bullish",
+      "key_levels": {
+        "support": 67800,
+        "resistance": 68550
+      }
+    }
+  },
+  "current_context": {
+    "price": 68290.3,
+    "trend": "bullish",
+    "volume_condition": "increasing",
+    "volatility": "normal"
+  },
+  "recent_candles": [
+    {
+      "timestamp": "2026-04-03T00:15:00Z",
+      "open": 68120,
+      "high": 68210,
+      "low": 68080,
+      "close": 68195,
+      "volume": 210.5
+    }
+  ],
+  "indicators": {
+    "ema20": 68195.2,
+    "ema50": 67980.4,
+    "ema200": 67120.7,
+    "rsi14": 61.4,
+    "atr14": 145.8
+  },
+  "setup_candidate": {
+    "type": "breakout_retest_long",
+    "entry_zone": [68180, 68220],
+    "stop_loss": 67990,
+    "take_profit": [68480, 68750],
+    "risk_reward": 2.1
+  }
+}
