@@ -1,4 +1,4 @@
-import { BASE_API_WEBSOCKET_BINANCE } from "@/common/configs/base";
+import { BASE_API_WEBSOCKET_BINANCE } from '@configs/base.config';
 
 export type WebsocketEventHandler = (event: MessageEvent<string>) => void;
 
@@ -16,28 +16,23 @@ export class WebsocketService {
     this.options = { ...options };
   }
 
-  private resolveUrl(path = "") {
-    if (path.startsWith("ws://") || path.startsWith("wss://")) {
+  private resolveUrl(path = '') {
+    if (path.startsWith('ws://') || path.startsWith('wss://')) {
       return path;
     }
 
-    const baseUrl =
-      this.options.baseURL ??
-      BASE_API_WEBSOCKET_BINANCE ??
-      "wss://fstream.binance.com/ws";
-    const normalizedBaseUrl = baseUrl.endsWith("/")
-      ? baseUrl.slice(0, -1)
-      : baseUrl;
+    const baseUrl = this.options.baseURL ?? BASE_API_WEBSOCKET_BINANCE ?? '';
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     if (!path) return normalizedBaseUrl;
 
-    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
     return `${normalizedBaseUrl}${normalizedPath}`;
   }
 
-  connect(path = "") {
+  connect(path = '') {
     if (globalThis.window === undefined) {
-      throw new Error("WebSocket is only available in the browser.");
+      throw new Error('WebSocket is only available in the browser.');
     }
 
     if (this.socket && this.socket.readyState <= WebSocket.OPEN) {
@@ -45,7 +40,7 @@ export class WebsocketService {
     }
 
     this.socket = new WebSocket(this.resolveUrl(path), this.options.protocols);
-    this.socket.addEventListener("message", this.handleMessage);
+    this.socket.addEventListener('message', this.handleMessage);
 
     return this.socket;
   }
@@ -66,16 +61,16 @@ export class WebsocketService {
 
   send(data: string | Record<string, unknown>) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      throw new Error("WebSocket connection is not open.");
+      throw new Error('WebSocket connection is not open.');
     }
 
-    this.socket.send(typeof data === "string" ? data : JSON.stringify(data));
+    this.socket.send(typeof data === 'string' ? data : JSON.stringify(data));
   }
 
   close(code?: number, reason?: string) {
     if (!this.socket) return;
 
-    this.socket.removeEventListener("message", this.handleMessage);
+    this.socket.removeEventListener('message', this.handleMessage);
     this.socket.close(code, reason);
     this.socket = null;
     this.messageHandlers.clear();

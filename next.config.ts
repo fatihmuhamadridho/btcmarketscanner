@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -11,8 +11,8 @@ const nextConfig: NextConfig = {
     BASE_API_WEBSOCKET_BINANCE: process.env.BASE_API_WEBSOCKET_BINANCE,
     BINANCE_API_KEY: process.env.BINANCE_API_KEY,
     BINANCE_SECRET_KEY: process.env.BINANCE_SECRET_KEY,
-    BINANCE_RECV_WINDOW: process.env.BINANCE_RECV_WINDOW,
   },
+  allowedDevOrigins: ['192.168.1.7'],
 };
 
 export default nextConfig;

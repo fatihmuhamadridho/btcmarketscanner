@@ -1,19 +1,19 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { WebsocketService } from "@/common/services/websocket.service";
-import type { FuturesKlineCandle } from "../domain/models/futuresMarket.model";
-import { FuturesMarketController } from "../domain/futuresMarket.controller";
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { WebsocketService } from '@services/websocket.service';
+import type { FuturesKlineCandle } from '../domain/futuresMarket.model';
+import { FuturesMarketController } from '../domain/futuresMarket.controller';
 
 const futuresMarketController = new FuturesMarketController();
 const futuresWebsocketService = new WebsocketService();
 const MARKET_TIMEFRAMES = [
-  { label: "1m", value: "1m" },
-  { label: "5m", value: "5m" },
-  { label: "15m", value: "15m" },
-  { label: "30m", value: "30m" },
-  { label: "1H", value: "1h" },
-  { label: "4H", value: "4h" },
-  { label: "1D", value: "1d" },
+  { label: '1m', value: '1m' },
+  { label: '5m', value: '5m' },
+  { label: '15m', value: '15m' },
+  { label: '30m', value: '30m' },
+  { label: '1H', value: '1h' },
+  { label: '4H', value: '4h' },
+  { label: '1D', value: '1d' },
 ] as const;
 
 function getSupportResistance(candles: FuturesKlineCandle[], windowSize: number) {
@@ -46,17 +46,13 @@ type BinanceKlineStreamEvent = {
   };
 };
 
-function parseKlineStreamCandle(
-  rawMessage: string,
-  symbol: string,
-  interval: string,
-): FuturesKlineCandle | null {
+function parseKlineStreamCandle(rawMessage: string, symbol: string, interval: string): FuturesKlineCandle | null {
   try {
     const parsed = JSON.parse(rawMessage) as BinanceKlineStreamEvent;
     const kline = parsed.k;
 
     if (
-      parsed.e !== "kline" ||
+      parsed.e !== 'kline' ||
       parsed.s?.toUpperCase() !== symbol.toUpperCase() ||
       kline?.s?.toUpperCase() !== symbol.toUpperCase() ||
       kline?.i?.toLowerCase() !== interval.toLowerCase() ||
@@ -85,10 +81,7 @@ function parseKlineStreamCandle(
   }
 }
 
-function mergeCandlesByOpenTime(
-  current: FuturesKlineCandle[],
-  nextCandles: FuturesKlineCandle[],
-) {
+function mergeCandlesByOpenTime(current: FuturesKlineCandle[], nextCandles: FuturesKlineCandle[]) {
   const merged = new Map<number, FuturesKlineCandle>();
 
   current.forEach((candle) => {
@@ -99,9 +92,7 @@ function mergeCandlesByOpenTime(
     merged.set(candle.openTime, candle);
   });
 
-  return Array.from(merged.values()).sort(
-    (left, right) => left.openTime - right.openTime,
-  );
+  return Array.from(merged.values()).sort((left, right) => left.openTime - right.openTime);
 }
 
 export type TimeframeSupportResistance = {
@@ -114,22 +105,18 @@ export type TimeframeSupportResistance = {
 
 export function useFuturesMarketOverview() {
   return useQuery({
-    queryKey: ["futures-market-overview"],
+    queryKey: ['futures-market-overview'],
     queryFn: () => futuresMarketController.getMarketOverview(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 }
 
-export function useFuturesMarketSymbolDetail(
-  symbol?: string,
-  interval = "1d",
-) {
+export function useFuturesMarketSymbolDetail(symbol?: string, interval = '1d') {
   return useQuery({
-    queryKey: ["futures-market-symbol-detail", symbol, interval],
-    queryFn: () =>
-      futuresMarketController.getMarketSymbolDetail(symbol ?? "", interval),
-    enabled: typeof symbol === "string" && symbol.length > 0,
+    queryKey: ['futures-market-symbol-detail', symbol, interval],
+    queryFn: () => futuresMarketController.getMarketSymbolDetail(symbol ?? '', interval),
+    enabled: typeof symbol === 'string' && symbol.length > 0,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -137,40 +124,32 @@ export function useFuturesMarketSymbolDetail(
 
 export function useFuturesMarketSymbolSnapshot(symbol?: string) {
   return useQuery({
-    queryKey: ["futures-market-symbol-snapshot", symbol],
-    queryFn: () => futuresMarketController.getMarketSymbolSnapshot(symbol ?? ""),
-    enabled: typeof symbol === "string" && symbol.length > 0,
+    queryKey: ['futures-market-symbol-snapshot', symbol],
+    queryFn: () => futuresMarketController.getMarketSymbolSnapshot(symbol ?? ''),
+    enabled: typeof symbol === 'string' && symbol.length > 0,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
 }
 
-export function useFuturesMarketSymbolInitialCandles(
-  symbol?: string,
-  interval = "1d",
-) {
+export function useFuturesMarketSymbolInitialCandles(symbol?: string, interval = '1d') {
   return useQuery({
-    queryKey: ["futures-market-symbol-initial-candles", symbol, interval],
-    queryFn: () =>
-      futuresMarketController.getMarketInitialCandles(symbol ?? "", interval),
-    enabled: typeof symbol === "string" && symbol.length > 0,
+    queryKey: ['futures-market-symbol-initial-candles', symbol, interval],
+    queryFn: () => futuresMarketController.getMarketInitialCandles(symbol ?? '', interval),
+    enabled: typeof symbol === 'string' && symbol.length > 0,
     staleTime: 0,
     refetchOnWindowFocus: false,
   });
 }
 
-export function useFuturesMarketSymbolCandles(
-  symbol?: string,
-  initialCandles: FuturesKlineCandle[] = [],
-  interval = "1d",
-) {
+export function useFuturesMarketSymbolCandles(symbol?: string, initialCandles: FuturesKlineCandle[] = [], interval = '1d') {
   const [candles, setCandles] = useState(initialCandles);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreOlderCandles, setHasMoreOlderCandles] = useState(true);
-  const datasetKeyRef = useRef<string>("");
+  const datasetKeyRef = useRef<string>('');
 
   useEffect(() => {
-    const nextDatasetKey = `${symbol ?? ""}-${interval}`;
+    const nextDatasetKey = `${symbol ?? ''}-${interval}`;
 
     if (datasetKeyRef.current !== nextDatasetKey) {
       datasetKeyRef.current = nextDatasetKey;
@@ -261,12 +240,7 @@ export function useFuturesMarketSymbolCandles(
     setIsLoadingMore(true);
 
     try {
-      const olderCandles = await futuresMarketController.getOlderMarketCandles(
-        symbol,
-        beforeOpenTime,
-        interval,
-        limit,
-      );
+      const olderCandles = await futuresMarketController.getOlderMarketCandles(symbol, beforeOpenTime, interval, limit);
 
       if (olderCandles.length === 0) {
         setHasMoreOlderCandles(false);
@@ -275,9 +249,7 @@ export function useFuturesMarketSymbolCandles(
 
       setCandles((current) => {
         const existingOpenTimes = new Set(current.map((item) => item.openTime));
-        const dedupedOlderCandles = olderCandles.filter(
-          (item) => !existingOpenTimes.has(item.openTime),
-        );
+        const dedupedOlderCandles = olderCandles.filter((item) => !existingOpenTimes.has(item.openTime));
 
         if (dedupedOlderCandles.length === 0) {
           setHasMoreOlderCandles(false);
@@ -307,25 +279,12 @@ export function useFuturesMarketSymbolCandles(
   };
 }
 
-export function useFuturesMarketTimeframeSupportResistance(
-  symbol?: string,
-  windowSize = 20,
-) {
+export function useFuturesMarketTimeframeSupportResistance(symbol?: string, windowSize = 20) {
   const queries = useQueries({
     queries: MARKET_TIMEFRAMES.map((timeframe) => ({
-      queryKey: [
-        "futures-market-timeframe-support-resistance",
-        symbol,
-        timeframe.value,
-        windowSize,
-      ],
-      queryFn: () =>
-        futuresMarketController.getMarketInitialCandles(
-          symbol ?? "",
-          timeframe.value,
-          120,
-        ),
-      enabled: typeof symbol === "string" && symbol.length > 0,
+      queryKey: ['futures-market-timeframe-support-resistance', symbol, timeframe.value, windowSize],
+      queryFn: () => futuresMarketController.getMarketInitialCandles(symbol ?? '', timeframe.value, 120),
+      enabled: typeof symbol === 'string' && symbol.length > 0,
       staleTime: 0,
       refetchOnWindowFocus: false,
     })),

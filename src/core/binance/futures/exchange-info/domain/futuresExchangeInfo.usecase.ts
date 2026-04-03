@@ -1,15 +1,9 @@
-import { FuturesExchangeInfo } from "./models/futuresExchangeInfo.model";
-import {
-  FuturesExchangeInfoResponse,
-  FuturesExchangeInfoResult,
-  FuturesExchangeInfoSummaryResult,
-} from "./futuresExchangeInfo.type";
-import { FuturesExchangeInfoRepository } from "./futuresExchangeInfo.repository";
+import { FuturesExchangeInfo } from './futuresExchangeInfo.model';
+import { FuturesExchangeInfoResponse, FuturesExchangeInfoResult, FuturesExchangeInfoSummaryResult } from './futuresExchangeInfo.interface';
+import { FuturesExchangeInfoRepository } from './futuresExchangeInfo.repository';
 
 export class GetFuturesExchangeInfoUseCase {
-  constructor(
-    private readonly futuresExchangeInfoRepository: FuturesExchangeInfoRepository,
-  ) {}
+  constructor(private readonly futuresExchangeInfoRepository: FuturesExchangeInfoRepository) {}
 
   async execute(): Promise<FuturesExchangeInfoResult> {
     const response = await this.futuresExchangeInfoRepository.getExchangeInfo();
@@ -21,15 +15,11 @@ export class GetFuturesExchangeInfoUseCase {
 }
 
 export class GetFuturesExchangeInfoSummaryUseCase {
-  constructor(
-    private readonly futuresExchangeInfoRepository: FuturesExchangeInfoRepository,
-  ) {}
+  constructor(private readonly futuresExchangeInfoRepository: FuturesExchangeInfoRepository) {}
 
   async execute(): Promise<FuturesExchangeInfoSummaryResult> {
     const response = await this.futuresExchangeInfoRepository.getExchangeInfo();
-    const exchangeInfo = new FuturesExchangeInfo(
-      response as FuturesExchangeInfoResponse,
-    );
+    const exchangeInfo = new FuturesExchangeInfo(response as FuturesExchangeInfoResponse);
 
     return {
       data: exchangeInfo.summary,
