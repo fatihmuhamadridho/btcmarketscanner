@@ -22,6 +22,7 @@ export type CoinChartBootstrapProps = {
   candles: FuturesKlineCandle[];
   containerRef: RefObject<HTMLDivElement | null>;
   interval: CoinTimeframe;
+  isChartEnabled: boolean;
   priceScaleOverlayRef: RefObject<HTMLDivElement | null>;
   wrapperRef: RefObject<HTMLDivElement | null>;
   isLoadingMore: boolean;

@@ -22,6 +22,7 @@ export default function CoinChart({
   intervals,
   isLoadingCandles,
   isLoadingMore,
+  isChartEnabled,
   ma100Value,
   ma10Value,
   ma200Value,
@@ -66,6 +67,7 @@ export default function CoinChart({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isFullscreen]);
+  const shouldMountChart = isFullscreen || isChartEnabled;
 
   return (
     <Box
@@ -125,6 +127,7 @@ export default function CoinChart({
           chartError={chartError}
           containerRef={containerRef}
           interval={interval}
+          isChartEnabled={shouldMountChart}
           isLoadingCandles={isLoadingCandles}
           priceScaleOverlayRef={priceScaleOverlayRef}
           viewportHeight={isFullscreen ? 'calc(100dvh - 220px)' : 360}

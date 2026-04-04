@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { TimeframeSupportResistance } from '@core/binance/futures/market/infrastructure/futuresMarket.hook';
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
 import type { CoinTimeframe } from '../interface/CoinView.interface';
@@ -61,12 +61,14 @@ export function useCoinChartLogic(props: CoinChartProps) {
   const ma100Data = useMemo(() => createMovingAverageSeries(chartData, 100), [chartData]);
   const ma200Data = useMemo(() => createMovingAverageSeries(chartData, 200), [chartData]);
   const structureSeries = useMemo(() => getStructureSeries(chartData, 3), [chartData]);
+  const [chartEnabled, setChartEnabled] = useState(false);
   const lifecycle = useCoinChartLifecycle({
     candles,
     chartData,
     chartSeriesData,
     hasMoreOlderCandles,
     interval,
+    isChartEnabled: chartEnabled,
     isLoadingMore,
     ma100Data,
     ma10Data,
@@ -78,6 +80,54 @@ export function useCoinChartLogic(props: CoinChartProps) {
     supportResistance,
     symbol,
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    let frameId = 0;
+    let detachListeners: (() => void) | null = null;
+
+    const attachVisibilityTracking = () => {
+      const wrapper = lifecycle.wrapperRef.current;
+
+      if (!wrapper) {
+        if (!cancelled) {
+          frameId = window.requestAnimationFrame(attachVisibilityTracking);
+        }
+        return;
+      }
+
+      const evaluateVisibility = () => {
+        const rect = wrapper.getBoundingClientRect();
+        const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+        const ratio = visibleHeight / Math.max(rect.height, 1);
+        setChartEnabled(ratio >= 0.15);
+      };
+
+      const onScroll = () => evaluateVisibility();
+      const onResize = () => evaluateVisibility();
+      const resizeObserver =
+        typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => evaluateVisibility()) : null;
+
+      evaluateVisibility();
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onResize);
+      resizeObserver?.observe(wrapper);
+
+      detachListeners = () => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onResize);
+        resizeObserver?.disconnect();
+      };
+    };
+
+    frameId = window.requestAnimationFrame(attachVisibilityTracking);
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frameId);
+      detachListeners?.();
+    };
+  }, [lifecycle.wrapperRef]);
 
   const displayedCandle = lifecycle.displayedCandle;
   const displayedCandleIndex = displayedCandle
@@ -101,6 +151,7 @@ export function useCoinChartLogic(props: CoinChartProps) {
     intervals,
     isLoadingCandles,
     isLoadingMore: lifecycle.isLoadingMore,
+    isChartEnabled: chartEnabled,
     ma10Value,
     ma50Value,
     ma100Value,

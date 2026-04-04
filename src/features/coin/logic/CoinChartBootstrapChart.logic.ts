@@ -93,6 +93,7 @@ type CoinChartBootstrapChartProps = {
   chartRef: MutableRefObject<IChartApi | null>;
   containerRef: RefObject<HTMLDivElement | null>;
   interval: CoinTimeframe;
+  isChartEnabled: boolean;
   hasMoreOlderCandlesRef: MutableRefObject<boolean>;
   isLoadingMoreRef: MutableRefObject<boolean>;
   isProgrammaticRangeChangeRef: MutableRefObject<boolean>;
@@ -117,6 +118,7 @@ export function useCoinChartBootstrapChart({
   chartRef,
   containerRef,
   interval,
+  isChartEnabled,
   hasMoreOlderCandlesRef,
   isLoadingMoreRef,
   isProgrammaticRangeChangeRef,
@@ -136,6 +138,22 @@ export function useCoinChartBootstrapChart({
   structureMarkersRef,
 }: CoinChartBootstrapChartProps) {
   useEffect(() => {
+    if (!isChartEnabled) {
+      chartRef.current?.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+      ma10SeriesRef.current = null;
+      ma50SeriesRef.current = null;
+      ma100SeriesRef.current = null;
+      ma200SeriesRef.current = null;
+      pivotHighSeriesRef.current = null;
+      pivotLowSeriesRef.current = null;
+      structureMarkersRef.current = null;
+      setIsChartReady(false);
+      setHoveredCandle(null);
+      return undefined;
+    }
+
     let chart: IChartApi | null = null;
     let series: ISeriesApi<'Candlestick'> | null = null;
     let resizeObserver: ResizeObserver | null = null;
@@ -398,6 +416,7 @@ export function useCoinChartBootstrapChart({
     chartRef,
     containerRef,
     interval,
+    isChartEnabled,
     hasMoreOlderCandlesRef,
     isLoadingMoreRef,
     isProgrammaticRangeChangeRef,

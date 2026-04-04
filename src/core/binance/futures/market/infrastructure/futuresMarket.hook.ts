@@ -101,6 +101,14 @@ function mergeCandlesByOpenTime(current: FuturesKlineCandle[], nextCandles: Futu
   return Array.from(merged.values()).sort((left, right) => left.openTime - right.openTime);
 }
 
+function capCandles(candles: FuturesKlineCandle[], limit = 500) {
+  if (candles.length <= limit) {
+    return candles;
+  }
+
+  return candles.slice(-limit);
+}
+
 export type TimeframeSupportResistance = {
   interval: string;
   label: string;
@@ -166,7 +174,7 @@ export function useFuturesMarketSymbolCandles(symbol?: string, initialCandles: F
 
     if (datasetKeyRef.current !== nextDatasetKey) {
       datasetKeyRef.current = nextDatasetKey;
-      setCandles(initialCandles);
+      setCandles(capCandles(initialCandles));
       setHasMoreOlderCandles(true);
       futuresWebsocketService.close();
       return;
@@ -178,10 +186,10 @@ export function useFuturesMarketSymbolCandles(symbol?: string, initialCandles: F
 
     setCandles((current) => {
       if (current.length === 0) {
-        return initialCandles;
+        return capCandles(initialCandles);
       }
 
-      return mergeCandlesByOpenTime(current, initialCandles);
+      return capCandles(mergeCandlesByOpenTime(current, initialCandles));
     });
   }, [initialCandles, interval, symbol]);
 
@@ -221,7 +229,7 @@ export function useFuturesMarketSymbolCandles(symbol?: string, initialCandles: F
         }
 
         if (nextCandle.openTime > lastCandle.openTime + 1) {
-          return mergeCandlesByOpenTime(current, [nextCandle]);
+          return capCandles(mergeCandlesByOpenTime(current, [nextCandle]));
         }
 
         if (nextCandle.openTime === lastCandle.openTime) {
@@ -233,7 +241,7 @@ export function useFuturesMarketSymbolCandles(symbol?: string, initialCandles: F
         const nextCandles = [...current];
         nextCandles.push(nextCandle);
 
-        return nextCandles;
+        return capCandles(nextCandles);
       });
     };
 
@@ -269,7 +277,7 @@ export function useFuturesMarketSymbolCandles(symbol?: string, initialCandles: F
           return current;
         }
 
-        return [...dedupedOlderCandles, ...current];
+        return capCandles([...dedupedOlderCandles, ...current]);
       });
 
       if (olderCandles.length < limit) {

@@ -6,6 +6,7 @@ type CoinChartViewportProps = {
   chartError?: string | null;
   containerRef: RefObject<HTMLDivElement | null>;
   interval: string;
+  isChartEnabled: boolean;
   isLoadingCandles: boolean;
   priceScaleOverlayRef: RefObject<HTMLDivElement | null>;
   viewportHeight: number | string;
@@ -17,6 +18,7 @@ export default function CoinChartViewport({
   chartError,
   containerRef,
   interval,
+  isChartEnabled,
   isLoadingCandles,
   priceScaleOverlayRef,
   viewportHeight,
@@ -31,7 +33,25 @@ export default function CoinChartViewport({
         width: '100%',
       }}
     >
-      {isLoadingCandles && chartDataLength === 0 ? (
+      {!isChartEnabled ? (
+        <div
+          style={{
+            alignItems: 'center',
+            backgroundColor: 'rgba(9, 18, 33, 0.4)',
+            borderRadius: 16,
+            border: '1px dashed rgba(255,255,255,0.08)',
+            display: 'flex',
+            inset: 0,
+            justifyContent: 'center',
+            position: 'absolute',
+            zIndex: 3,
+          }}
+        >
+          <Text c="dimmed" size="sm">
+            Chart paused while this section is offscreen
+          </Text>
+        </div>
+      ) : isLoadingCandles && chartDataLength === 0 ? (
         <div
           style={{
             alignItems: 'center',
@@ -68,29 +88,33 @@ export default function CoinChartViewport({
           </Text>
         </div>
       ) : null}
-      <div
-        ref={containerRef}
-        style={{
-          height: '100%',
-          width: '100%',
-        }}
-      />
-      <div
-        aria-hidden="true"
-        ref={priceScaleOverlayRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 80,
-          pointerEvents: 'auto',
-          cursor: 'ns-resize',
-          background: 'transparent',
-          touchAction: 'none',
-          zIndex: 2,
-        }}
-      />
+      {isChartEnabled ? (
+        <>
+          <div
+            ref={containerRef}
+            style={{
+              height: '100%',
+              width: '100%',
+            }}
+          />
+          <div
+            aria-hidden="true"
+            ref={priceScaleOverlayRef}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: 80,
+              pointerEvents: 'auto',
+              cursor: 'ns-resize',
+              background: 'transparent',
+              touchAction: 'none',
+              zIndex: 2,
+            }}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

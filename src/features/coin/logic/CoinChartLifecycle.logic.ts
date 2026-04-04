@@ -26,6 +26,7 @@ export type CoinChartLifecycleProps = {
   chartSeriesData: Array<CandlestickData<UTCTimestamp> | { time: UTCTimestamp }>;
   hasMoreOlderCandles: boolean;
   interval: CoinTimeframe;
+  isChartEnabled: boolean;
   isLoadingMore: boolean;
   ma10Data: LineData<UTCTimestamp>[];
   ma50Data: LineData<UTCTimestamp>[];
@@ -100,6 +101,7 @@ export function useCoinChartLifecycle({
   chartSeriesData,
   hasMoreOlderCandles,
   interval,
+  isChartEnabled,
   isLoadingMore,
   ma10Data,
   ma50Data,
@@ -239,6 +241,7 @@ export function useCoinChartLifecycle({
     candlesRef,
     containerRef,
     interval,
+    isChartEnabled,
     hasMoreOlderCandles,
     hasMoreOlderCandlesRef,
     isLoadingMore,

@@ -38,6 +38,7 @@ export type CoinChartViewModel = {
   intervals: ReadonlyArray<CoinTimeframeOption>;
   isLoadingCandles: boolean;
   isLoadingMore: boolean;
+  isChartEnabled: boolean;
   ma10Value: number | null;
   ma50Value: number | null;
   ma100Value: number | null;
