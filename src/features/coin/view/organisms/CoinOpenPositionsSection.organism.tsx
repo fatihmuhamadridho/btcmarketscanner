@@ -85,21 +85,21 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                 horizontalSpacing="sm"
                 verticalSpacing="sm"
                 striped
-                style={{ minWidth: 1640 }}
+                style={{ minWidth: 1760 }}
               >
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th style={{ width: 110 }}>Side</Table.Th>
+                    <Table.Th style={{ width: 130 }}>Side</Table.Th>
                     <Table.Th>Size</Table.Th>
                     <Table.Th>Entry</Table.Th>
                     <Table.Th>Mark</Table.Th>
                     <Table.Th>Liq.</Table.Th>
-                    <Table.Th style={{ width: 160 }}>PnL</Table.Th>
+                    <Table.Th style={{ width: 180 }}>PnL</Table.Th>
                     <Table.Th>Lev</Table.Th>
                     <Table.Th>Margin</Table.Th>
                     <Table.Th>Notional</Table.Th>
                     <Table.Th>Margin type</Table.Th>
-                    <Table.Th style={{ minWidth: 440 }}>Protections</Table.Th>
+                    <Table.Th style={{ minWidth: 560 }}>Protections</Table.Th>
                     <Table.Th>Action</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -116,7 +116,7 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                               : 'rgba(255,255,255,0.03)',
                       }}
                     >
-                      <Table.Td>
+                      <Table.Td style={{ width: 130 }}>
                         <Badge variant="light" color={sideColor(position.positionSideLabel)} style={{ whiteSpace: 'nowrap' }}>
                           {position.positionSideLabel}
                         </Badge>
@@ -141,7 +141,7 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                           {position.liquidationPriceLabel}
                         </Text>
                       </Table.Td>
-                      <Table.Td>
+                      <Table.Td style={{ width: 180 }}>
                         <Badge variant="light" color={pnlColor(position.unrealizedPnlLabel)} style={{ whiteSpace: 'nowrap' }}>
                           {position.unrealizedPnlLabel}
                         </Badge>
@@ -166,15 +166,19 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                           {position.marginTypeLabel}
                         </Text>
                       </Table.Td>
-                      <Table.Td>
+                      <Table.Td style={{ minWidth: 560 }}>
                         {position.protectionTargets.length === 0 ? (
                           <Text size="sm" c="dimmed">
                             n/a
                           </Text>
                         ) : (
-                          <Group gap={10} wrap="wrap" style={{ minWidth: 380 }}>
+                          <Group gap={12} wrap="wrap" style={{ minWidth: 520 }}>
                             {position.protectionTargets.map((target) => (
-                              <Stack key={`${position.positionSideLabel}-${target.label}-${target.priceLabel}`} gap={2} style={{ minWidth: 110 }}>
+                              <Stack
+                                key={`${position.positionSideLabel}-${target.label}-${target.priceLabel}`}
+                                gap={2}
+                                style={{ minWidth: 122 }}
+                              >
                                 <Badge variant="light" color={protectionColor(target.label)} style={{ whiteSpace: 'nowrap' }}>
                                   {target.label}
                                 </Badge>

@@ -113,10 +113,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   if (req.method === 'GET') {
     await futuresAutoBotService.recordProgress(symbol);
+    const bot = futuresAutoBotService.get(symbol);
     return res.status(200).json({
       ok: true,
-      bot: futuresAutoBotService.get(symbol),
-      logs: await futuresAutoBotService.getLogs(symbol),
+      bot,
+      logs: await futuresAutoBotService.getLogs(symbol, {
+        preferMemoryOnly: bot?.status === 'entry_placed',
+      }),
     });
   }
 
@@ -133,8 +136,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   if (req.method === 'DELETE') {
-    const current = await futuresAutoBotService.stop(symbol);
-    return res.status(200).json({ ok: true, bot: current, logs: await futuresAutoBotService.getLogs(symbol) });
+    const current = futuresAutoBotService.get(symbol);
+    const stopped = await futuresAutoBotService.stop(symbol);
+    return res.status(200).json({
+      ok: true,
+      bot: stopped,
+      logs: await futuresAutoBotService.getLogs(symbol, {
+        preferMemoryOnly: current?.status === 'entry_placed',
+      }),
+    });
   }
 
   return res.status(405).json({ ok: false, error: 'Method not allowed.' });

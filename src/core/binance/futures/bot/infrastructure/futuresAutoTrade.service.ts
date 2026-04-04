@@ -270,54 +270,83 @@ export class FuturesAutoTradeService {
   }
 
   async closePosition(symbol: string, positionSide?: 'BOTH' | 'LONG' | 'SHORT') {
-    const [account, positions] = await Promise.all([this.getAccount(), this.getOpenPositions(symbol)]);
-    const targetPosition =
-      positions.find((position) => {
-        if (position.symbol !== symbol || parseNumber(position.positionAmt) === 0) {
-          return false;
-        }
+    const symbolInfo = await this.getSymbolInfo(symbol);
+    const stepSize = extractStepSize(symbolInfo ?? undefined);
+    const [account] = await Promise.all([this.getAccount()]);
+    const dualSidePosition = Boolean(account.dualSidePosition);
+    const resolveTargetPosition = async () => {
+      const positions = await this.getOpenPositions(symbol);
 
-        if (!positionSide || positionSide === 'BOTH') {
-          return true;
-        }
+      return (
+        positions.find((position) => {
+          if (position.symbol !== symbol || parseNumber(position.positionAmt) === 0) {
+            return false;
+          }
 
-        const rawQuantity = parseNumber(position.positionAmt) ?? 0;
+          if (!positionSide || positionSide === 'BOTH') {
+            return true;
+          }
 
-        if (account.dualSidePosition) {
-          return position.positionSide === positionSide;
-        }
+          const rawQuantity = parseNumber(position.positionAmt) ?? 0;
 
-        return positionSide === 'LONG' ? rawQuantity > 0 : rawQuantity < 0;
-      }) ?? null;
+          if (dualSidePosition) {
+            return position.positionSide === positionSide;
+          }
+
+          return positionSide === 'LONG' ? rawQuantity > 0 : rawQuantity < 0;
+        }) ?? null
+      );
+    };
+
+    let targetPosition = await resolveTargetPosition();
 
     if (!targetPosition) {
       throw new Error(`No open position found for ${symbol}.`);
     }
 
-    const rawQuantity = Math.abs(parseNumber(targetPosition.positionAmt) ?? 0);
-    const symbolInfo = await this.getSymbolInfo(symbol);
-    const stepSize = extractStepSize(symbolInfo ?? undefined);
-    const quantity = roundDownToStep(rawQuantity, stepSize);
-    const exitSide: FuturesOrderSide =
-      (parseNumber(targetPosition.positionAmt) ?? 0) > 0 ? 'SELL' : 'BUY';
-    const dualSidePosition = Boolean(account.dualSidePosition);
-    const params = {
-      symbol,
-      side: exitSide,
-      type: 'MARKET',
-      quantity,
-      ...(dualSidePosition ? { positionSide: targetPosition.positionSide ?? positionSide ?? 'BOTH' } : { reduceOnly: true }),
-      newOrderRespType: 'RESULT',
-    };
+    await this.cancelProtectionOrders(symbol, targetPosition.positionSide ?? positionSide ?? 'BOTH');
 
-    return this.request<FuturesOrderResponse>('/fapi/v1/order', {
-      method: 'POST',
-      params,
-      signed: true,
-    }).then(async (orderResponse) => {
-      await this.cancelProtectionOrders(symbol, targetPosition.positionSide ?? positionSide ?? 'BOTH');
-      return orderResponse;
-    });
+    let lastOrderResponse: FuturesOrderResponse | null = null;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      targetPosition = await resolveTargetPosition();
+
+      if (!targetPosition) {
+        break;
+      }
+
+      const rawQuantity = Math.abs(parseNumber(targetPosition.positionAmt) ?? 0);
+      const quantity = roundDownToStep(rawQuantity, stepSize);
+
+      if (quantity <= 0) {
+        break;
+      }
+
+      const exitSide: FuturesOrderSide = (parseNumber(targetPosition.positionAmt) ?? 0) > 0 ? 'SELL' : 'BUY';
+      const params = {
+        symbol,
+        side: exitSide,
+        type: 'MARKET',
+        quantity,
+        ...(dualSidePosition ? { positionSide: targetPosition.positionSide ?? positionSide ?? 'BOTH' } : { reduceOnly: true }),
+        newOrderRespType: 'RESULT',
+      };
+
+      lastOrderResponse = await this.request<FuturesOrderResponse>('/fapi/v1/order', {
+        method: 'POST',
+        params,
+        signed: true,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    if (!lastOrderResponse) {
+      throw new Error(`Unable to close position for ${symbol}.`);
+    }
+
+    await this.cancelProtectionOrders(symbol, positionSide ?? 'BOTH');
+    return lastOrderResponse;
   }
 
   async cancelProtectionOrders(symbol: string, positionSide?: 'BOTH' | 'LONG' | 'SHORT') {

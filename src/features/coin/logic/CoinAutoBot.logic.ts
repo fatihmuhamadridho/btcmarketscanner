@@ -269,6 +269,7 @@ export function useCoinAutoBotLogic({
   const [allocationUnit, setAllocationUnit] = useState<CoinAutoBotAllocationUnit>('percent');
   const [allocationValue, setAllocationValue] = useState(12);
   const [leverage, setLeverage] = useState(10);
+  const [logs, setLogs] = useState<Array<{ id: string; level: 'info' | 'success' | 'warn' | 'error'; message: string; timestamp: string }>>([]);
 
   const { data: botResponse } = useQuery({
     queryKey: ['coin-auto-bot', symbol],
@@ -280,6 +281,7 @@ export function useCoinAutoBotLogic({
         throw new Error(payload.ok ? 'Unable to read bot state' : payload.error);
       }
 
+      setLogs(payload.logs ?? []);
       return payload;
     },
     enabled: symbol.length > 0,
@@ -458,7 +460,6 @@ export function useCoinAutoBotLogic({
 
   const status = botResponse?.bot?.status ?? 'idle';
   const isActive = status !== 'idle' && status !== 'stopped';
-  const logs = botResponse?.logs ?? [];
   const openOrdersRaw = openOrdersResponse?.openOrders ?? [];
   const openOrders = openOrdersRaw.map((order) => ({
     clientOrderId: order.clientOrderId,

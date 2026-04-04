@@ -32,10 +32,16 @@ function getLogStorageKey(symbol: string) {
   return `btcmarketscanner:auto-bot:logs:${symbol}`;
 }
 
-async function appendLog(symbol: string, log: FuturesAutoBotLogEntry) {
-  if (HAS_REDIS_REST_CONNECTION) {
+async function storeLogEntry(
+  symbol: string,
+  log: FuturesAutoBotLogEntry,
+  persistToRedis = true
+) {
+  if (persistToRedis && HAS_REDIS_REST_CONNECTION) {
     try {
       await redisPushTrimList(getLogStorageKey(symbol), JSON.stringify(log), 50);
+      const currentLogs = inMemoryLogs.get(symbol) ?? [];
+      inMemoryLogs.set(symbol, [...currentLogs, log].slice(-50));
       return;
     } catch {
       // Fall back to memory in local/dev mode or if Redis is temporarily unavailable.
@@ -124,8 +130,8 @@ export class FuturesAutoBotService {
     return inMemoryBots.get(symbol) ?? null;
   }
 
-  async getLogs(symbol: string) {
-    if (HAS_REDIS_REST_CONNECTION) {
+  async getLogs(symbol: string, options?: { preferMemoryOnly?: boolean }) {
+    if (!options?.preferMemoryOnly && HAS_REDIS_REST_CONNECTION) {
       try {
         const entries = await redisRestCommand<string[]>('lrange', getLogStorageKey(symbol), 0, 49);
         const parsedEntries = entries
@@ -179,6 +185,8 @@ export class FuturesAutoBotService {
       const activePositionSide = activePosition ? getPositionSideFromAmount(activePositionAmt, activePosition.positionSide) : null;
       const isPositionOpen = current.status === 'entry_placed' || Boolean(activePosition);
 
+      const shouldPersistLogs = !isPositionOpen && current.status !== 'entry_placed';
+
       if (!isPositionOpen && consensus.consensusSetup) {
         const consensusSetupChanged =
           current.plan.setupLabel !== consensus.consensusSetup.label || current.plan.setupGradeRank !== consensus.consensusSetup.gradeRank;
@@ -194,7 +202,7 @@ export class FuturesAutoBotService {
         };
 
         if (consensusSetupChanged) {
-          await appendLog(
+          await storeLogEntry(
             symbol,
             createLog(
               'info',
@@ -203,7 +211,7 @@ export class FuturesAutoBotService {
           );
         }
       } else if (!isPositionOpen && !consensus.consensusSetup) {
-        await appendLog(
+        await storeLogEntry(
           symbol,
           createLog('warn', `Consensus unavailable for ${symbol}. Keeping current plan until enough market data loads.`)
         );
@@ -226,7 +234,7 @@ export class FuturesAutoBotService {
         ? `Position open for ${symbol}: price ${formatLogPrice(currentPrice)}, tracking market bias ${consensus.consensusSetup ? formatDirectionLabel(consensus.consensusSetup.direction) : 'n/a'} from ${consensus.executionConsensusLabel}. Keeping focus on this position and making sure TP/SL stay attached.`
         : `Progress check for ${symbol}: price ${formatLogPrice(currentPrice)}, entry zone ${formatLogPriceRange(entryMin, entryMax)}, TP1 ${formatLogPrice(current.plan.takeProfits[0]?.price)}, SL ${formatLogPrice(current.plan.stopLoss)}.`;
 
-      await appendLog(symbol, createLog('info', scanMessage));
+      await storeLogEntry(symbol, createLog('info', scanMessage), shouldPersistLogs);
 
       const scannedState: FuturesAutoBotState = {
         ...nextState,
@@ -263,23 +271,22 @@ export class FuturesAutoBotService {
           };
 
           inMemoryBots.set(symbol, protectionState);
-          await appendLog(
+          await storeLogEntry(
             symbol,
             createLog(
               'success',
               `Existing position detected for ${symbol}. TP/SL were missing, so protection orders were attached and the bot will keep tracking this trade only.`
-            )
-          );
+            ),
+          false
+        );
 
           return protectionState;
         }
 
-        await appendLog(
+        await storeLogEntry(
           symbol,
-          createLog(
-            'info',
-            `Existing position detected for ${symbol}. TP/SL already attached, so the bot will keep tracking this trade only.`
-          )
+          createLog('info', `Existing position detected for ${symbol}. TP/SL already attached, so the bot will keep tracking this trade only.`),
+          false
         );
 
         return focusedState;
@@ -310,7 +317,7 @@ export class FuturesAutoBotService {
           };
 
           inMemoryBots.set(symbol, filledState);
-          await appendLog(
+          await storeLogEntry(
             symbol,
             createLog(
               'success',
@@ -322,7 +329,7 @@ export class FuturesAutoBotService {
         }
 
         inMemoryBots.set(symbol, scannedState);
-        await appendLog(
+        await storeLogEntry(
           symbol,
           createLog(
             'info',
@@ -343,7 +350,7 @@ export class FuturesAutoBotService {
         return scannedState;
       }
 
-      await appendLog(
+      await storeLogEntry(
         symbol,
         createLog(
           'success',
@@ -382,14 +389,15 @@ export class FuturesAutoBotService {
 
       inMemoryBots.set(symbol, executedState);
 
-      await appendLog(
+      await storeLogEntry(
         symbol,
         createLog(
           'success',
           execution.entryFilled
             ? `Entry filled for ${symbol}. Entry order #${executionRecord.entryOrderId}, TP algo orders ${executionRecord.takeProfitAlgoOrderIds.join(', ') || 'n/a'}, SL algo order ${executionRecord.stopLossAlgoOrderId ?? 'n/a'}.`
             : `Limit entry placed for ${symbol} at ${formatLogPrice(executionRecord.entryPrice)}. Waiting for fill before placing TP/SL.`
-        )
+        ),
+        shouldPersistLogs
       );
 
       return executedState;
@@ -402,7 +410,11 @@ export class FuturesAutoBotService {
       };
 
       inMemoryBots.set(symbol, erroredState);
-      await appendLog(symbol, createLog('error', `Auto bot execution failed for ${symbol}: ${errorMessage}`));
+      await storeLogEntry(
+        symbol,
+        createLog('error', `Auto bot execution failed for ${symbol}: ${errorMessage}`),
+        current?.status !== 'entry_placed'
+      );
 
       return erroredState;
     } finally {
@@ -430,7 +442,7 @@ export class FuturesAutoBotService {
     };
 
     inMemoryBots.set(input.symbol, state);
-    await appendLog(input.symbol, createLog('success', logMessage));
+    await storeLogEntry(input.symbol, createLog('success', logMessage), true);
 
     return state;
   }
@@ -439,17 +451,21 @@ export class FuturesAutoBotService {
     const current = inMemoryBots.get(symbol);
 
     if (!current) {
-      await appendLog(symbol, createLog('warn', `Stop requested for ${symbol}, but no active bot was found.`));
+      await storeLogEntry(symbol, createLog('warn', `Stop requested for ${symbol}, but no active bot was found.`), true);
       return null;
     }
 
     if (current.execution || current.status === 'entry_placed') {
       try {
         await futuresAutoTradeService.cancelOpenOrders(symbol);
-        await appendLog(symbol, createLog('success', `Cancelled open orders for ${symbol}.`));
+        await storeLogEntry(symbol, createLog('success', `Cancelled open orders for ${symbol}.`), current.status !== 'entry_placed');
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown cancellation error.';
-        await appendLog(symbol, createLog('error', `Failed to cancel open orders for ${symbol}: ${errorMessage}`));
+        await storeLogEntry(
+          symbol,
+          createLog('error', `Failed to cancel open orders for ${symbol}: ${errorMessage}`),
+          current.status !== 'entry_placed'
+        );
       }
     }
 
@@ -460,7 +476,11 @@ export class FuturesAutoBotService {
     };
 
     inMemoryBots.set(symbol, nextState);
-    await appendLog(symbol, createLog('info', `Auto bot stopped for ${symbol}. Active watch loop ended.`));
+    await storeLogEntry(
+      symbol,
+      createLog('info', `Auto bot stopped for ${symbol}. Active watch loop ended.`),
+      current.status !== 'entry_placed'
+    );
 
     return nextState;
   }
