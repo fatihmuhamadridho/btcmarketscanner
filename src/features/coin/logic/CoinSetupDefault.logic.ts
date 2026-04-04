@@ -6,6 +6,7 @@ export function buildEmptySetupInsight(side: 'long' | 'short'): SetupInsight {
     direction: side,
     entryMid: null,
     entryZone: { high: null, low: null },
+    atr14: null,
     grade: 'C',
     gradeRank: 0,
     label: `${side === 'long' ? 'Long' : 'Short'} setup`,
@@ -25,5 +26,6 @@ export function buildEmptySetupInsight(side: 'long' | 'short'): SetupInsight {
     riskReward: null,
     stopLoss: null,
     takeProfit: null,
+    rsi14: null,
   };
 }

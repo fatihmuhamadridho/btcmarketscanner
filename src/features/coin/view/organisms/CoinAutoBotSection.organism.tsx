@@ -26,6 +26,7 @@ export default function CoinAutoBotSection({
   allocationUnit,
   allocationValue,
   allocationLabel,
+  atr14Label,
   botStatusColor,
   botStatusLabel,
   currentPriceLabel,
@@ -47,6 +48,7 @@ export default function CoinAutoBotSection({
   onStart,
   onStop,
   previewLabel,
+  rsi14Label,
   riskRewardLabel,
   setupGrade,
   setupLabel,
@@ -181,6 +183,12 @@ export default function CoinAutoBotSection({
                       <Badge variant="light" color="gray">
                         RR {item.riskRewardLabel}
                       </Badge>
+                      <Badge variant="light" color="gray">
+                        ATR14 {item.atrLabel}
+                      </Badge>
+                      <Badge variant="light" color="gray">
+                        RSI14 {item.rsiLabel}
+                      </Badge>
                     </Group>
 
                     <Stack gap={2}>
@@ -246,6 +254,12 @@ export default function CoinAutoBotSection({
                 </Badge>
                 <Badge variant="light" color="gray">
                   RR {riskRewardLabel}
+                </Badge>
+                <Badge variant="light" color="gray">
+                  ATR14 {atr14Label}
+                </Badge>
+                <Badge variant="light" color="gray">
+                  RSI14 {rsi14Label}
                 </Badge>
               </Group>
             </Group>

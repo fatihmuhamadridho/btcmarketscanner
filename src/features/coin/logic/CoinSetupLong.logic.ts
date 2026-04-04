@@ -6,6 +6,7 @@ import { getGradeFromScore, buildTakeProfitSteps, buildZone } from './CoinSetupS
 export function analyzeLongSetup(context: CoinSetupAnalysisContext): SetupInsight {
   const {
     breakoutLong,
+    rsi14,
     maScore,
     nearSupport,
     pathMode,
@@ -59,12 +60,29 @@ export function analyzeLongSetup(context: CoinSetupAnalysisContext): SetupInsigh
   const risk = Math.max(entryMid - stopLoss, zoneBuffer);
   const takeProfits = buildTakeProfitSteps('long', entryMid, risk, supportResistance, targetBuffer);
   const takeProfit = takeProfits[2].price;
+
+  if (rsi14 !== null) {
+    if (rsi14 <= 35) {
+      score += 1;
+      reasons.push(`RSI14 is oversold at ${rsi14.toFixed(2)} and supports a long rebound`);
+    } else if (rsi14 >= 65) {
+      score -= 1;
+      reasons.push(`RSI14 is overbought at ${rsi14.toFixed(2)} and is less attractive for a long`);
+    } else if (rsi14 >= 50) {
+      score += 1;
+      reasons.push(`RSI14 momentum is supportive at ${rsi14.toFixed(2)}`);
+    } else {
+      reasons.push(`RSI14 is still weak at ${rsi14.toFixed(2)} but not extreme`);
+    }
+  }
+
   const grade = getGradeFromScore(score);
 
   return {
     direction: 'long',
     entryMid,
     entryZone,
+    atr14: context.atr14,
     grade,
     gradeRank: score,
     label: `${grade} Long Setup`,
@@ -78,6 +96,8 @@ export function analyzeLongSetup(context: CoinSetupAnalysisContext): SetupInsigh
     reasons: [
       'Trend bias is bullish',
       `MA alignment: ${maScore}/3`,
+      context.atr14 !== null ? `ATR14 volatility: ${context.atr14.toFixed(2)}` : 'ATR14 volatility is not available',
+      rsi14 !== null ? `RSI14 signal: ${rsi14.toFixed(2)}` : 'RSI14 signal is not available',
       ...reasons.slice(0, 2),
       trendSummary.volumeRatio !== null
         ? `Volume ratio: x${trendSummary.volumeRatio.toFixed(2)}`
@@ -86,5 +106,6 @@ export function analyzeLongSetup(context: CoinSetupAnalysisContext): SetupInsigh
     riskReward: risk > 0 ? (takeProfit - entryMid) / risk : null,
     stopLoss,
     takeProfit,
+    rsi14,
   };
 }

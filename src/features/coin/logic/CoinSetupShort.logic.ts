@@ -6,6 +6,7 @@ import { getGradeFromScore, buildTakeProfitSteps, buildZone } from './CoinSetupS
 export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsight {
   const {
     breakdownShort,
+    rsi14,
     maScore,
     nearResistance,
     pathMode,
@@ -53,12 +54,29 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
   const risk = Math.max(stopLoss - entryMid, zoneBuffer);
   const takeProfits = buildTakeProfitSteps('short', entryMid, risk, supportResistance, targetBuffer);
   const takeProfit = takeProfits[2].price;
+
+  if (rsi14 !== null) {
+    if (rsi14 >= 65) {
+      score += 1;
+      reasons.push(`RSI14 is overbought at ${rsi14.toFixed(2)} and supports a short fade`);
+    } else if (rsi14 <= 35) {
+      score -= 1;
+      reasons.push(`RSI14 is oversold at ${rsi14.toFixed(2)} and is less attractive for a short`);
+    } else if (rsi14 <= 50) {
+      score += 1;
+      reasons.push(`RSI14 momentum is supportive at ${rsi14.toFixed(2)}`);
+    } else {
+      reasons.push(`RSI14 is still firm at ${rsi14.toFixed(2)} but not extreme`);
+    }
+  }
+
   const grade = getGradeFromScore(score);
 
   return {
     direction: 'short',
     entryMid,
     entryZone,
+    atr14: context.atr14,
     grade,
     gradeRank: score,
     label: `${grade} Short Setup`,
@@ -72,6 +90,8 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
     reasons: [
       'Trend bias is bearish',
       `MA alignment: ${maScore}/3`,
+      context.atr14 !== null ? `ATR14 volatility: ${context.atr14.toFixed(2)}` : 'ATR14 volatility is not available',
+      rsi14 !== null ? `RSI14 signal: ${rsi14.toFixed(2)}` : 'RSI14 signal is not available',
       ...reasons.slice(0, 2),
       trendSummary.volumeRatio !== null
         ? `Volume ratio: x${trendSummary.volumeRatio.toFixed(2)}`
@@ -80,5 +100,6 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
     riskReward: risk > 0 ? (entryMid - takeProfit) / risk : null,
     stopLoss,
     takeProfit,
+    rsi14,
   };
 }

@@ -19,10 +19,12 @@ export type TrendInsight = {
   direction: TrendDirection;
   endPrice: number | null;
   icon: import('@tabler/icons-react').TablerIcon;
+  atr14: number | null;
   label: string;
   ma20: number | null;
   ma50: number | null;
   ma200: number | null;
+  rsi14: number | null;
   reasons: string[];
   rangePercent: number;
   score: number;
@@ -52,6 +54,8 @@ export type SetupInsight = {
   marketCondition: string;
   pathMode: 'breakout' | 'continuation';
   path: SetupPathStep[];
+  atr14: number | null;
+  rsi14: number | null;
   takeProfits: Array<{
     label: 'TP1' | 'TP2' | 'TP3';
     price: number | null;

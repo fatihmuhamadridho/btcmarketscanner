@@ -9,7 +9,7 @@
 9. Bikin sistem auto trading
 10. Perbaiki analisa setup
 11. Setup prompt untuk validasi analisa setup ke Codex SDK
-12. Auto entry, set SL, set TP, set TS
+12. Auto entry, set SL, set TP, set TS (Done)
 13. Bot Training Sistem yang ngebuat bot semakin pintar, harus based on coin sih, tapi ada general bot nya juga
 14. Fullscreen chart (Done)
 15. Analisa kalau coin tersebut punya liquiditas yang sangat tinggi

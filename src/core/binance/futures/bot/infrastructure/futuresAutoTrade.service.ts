@@ -159,7 +159,7 @@ function matchesPositionSide(
     return true;
   }
 
-  return orderPositionSide === positionSide;
+  return orderPositionSide === positionSide || orderPositionSide === 'BOTH';
 }
 
 function getEntryLimitPrice(plan: FuturesAutoBotPlan, currentPrice: number) {

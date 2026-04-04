@@ -16,6 +16,10 @@ function pnlColor(value: string) {
   return value.startsWith('-') ? 'red' : 'teal';
 }
 
+function protectionColor(label: string) {
+  return label.startsWith('TP') ? 'teal' : 'red';
+}
+
 export default function CoinOpenPositionsSection({ positions, onClosePosition, symbol }: CoinOpenPositionsSectionProps) {
   const longCount = positions.filter((position) => position.positionSideLabel === 'LONG').length;
   const shortCount = positions.filter((position) => position.positionSideLabel === 'SHORT').length;
@@ -81,20 +85,21 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                 horizontalSpacing="sm"
                 verticalSpacing="sm"
                 striped
-                style={{ minWidth: 1180 }}
+                style={{ minWidth: 1640 }}
               >
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th>Side</Table.Th>
+                    <Table.Th style={{ width: 110 }}>Side</Table.Th>
                     <Table.Th>Size</Table.Th>
                     <Table.Th>Entry</Table.Th>
                     <Table.Th>Mark</Table.Th>
                     <Table.Th>Liq.</Table.Th>
-                    <Table.Th>PnL</Table.Th>
+                    <Table.Th style={{ width: 160 }}>PnL</Table.Th>
                     <Table.Th>Lev</Table.Th>
                     <Table.Th>Margin</Table.Th>
                     <Table.Th>Notional</Table.Th>
                     <Table.Th>Margin type</Table.Th>
+                    <Table.Th style={{ minWidth: 440 }}>Protections</Table.Th>
                     <Table.Th>Action</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -112,7 +117,7 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                       }}
                     >
                       <Table.Td>
-                        <Badge variant="light" color={sideColor(position.positionSideLabel)}>
+                        <Badge variant="light" color={sideColor(position.positionSideLabel)} style={{ whiteSpace: 'nowrap' }}>
                           {position.positionSideLabel}
                         </Badge>
                       </Table.Td>
@@ -137,7 +142,7 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                         </Text>
                       </Table.Td>
                       <Table.Td>
-                        <Badge variant="light" color={pnlColor(position.unrealizedPnlLabel)}>
+                        <Badge variant="light" color={pnlColor(position.unrealizedPnlLabel)} style={{ whiteSpace: 'nowrap' }}>
                           {position.unrealizedPnlLabel}
                         </Badge>
                       </Table.Td>
@@ -160,6 +165,29 @@ export default function CoinOpenPositionsSection({ positions, onClosePosition, s
                         <Text size="sm" c="dimmed">
                           {position.marginTypeLabel}
                         </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        {position.protectionTargets.length === 0 ? (
+                          <Text size="sm" c="dimmed">
+                            n/a
+                          </Text>
+                        ) : (
+                          <Group gap={10} wrap="wrap" style={{ minWidth: 380 }}>
+                            {position.protectionTargets.map((target) => (
+                              <Stack key={`${position.positionSideLabel}-${target.label}-${target.priceLabel}`} gap={2} style={{ minWidth: 110 }}>
+                                <Badge variant="light" color={protectionColor(target.label)} style={{ whiteSpace: 'nowrap' }}>
+                                  {target.label}
+                                </Badge>
+                                <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                                  {target.priceLabel}
+                                </Text>
+                                <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                                  {target.percentLabel}
+                                </Text>
+                              </Stack>
+                            ))}
+                          </Group>
+                        )}
                       </Table.Td>
                       <Table.Td>
                         <Button

@@ -105,6 +105,10 @@ type CoinBinanceOpenOrdersApiResponse =
         orderLeverageLabel: string;
         orderModeLabel: string;
         orderId: number | null;
+        orderPnLLabel: string;
+        orderPnLPercentLabel: string;
+        orderPriceValue: number | null;
+        orderPriceMovePercentLabel: string;
         orderPriceLabel: string;
         orderNotionalLabel: string;
         orderPositionSideLabel: string;
@@ -170,6 +174,85 @@ function getExecutionEndpointLabel() {
   }
 
   return 'Configured Binance API';
+}
+
+function matchesPositionSide(orderPositionSide: string, positionSide: 'BOTH' | 'LONG' | 'SHORT') {
+  if (positionSide === 'BOTH') {
+    return true;
+  }
+
+  return orderPositionSide === positionSide || orderPositionSide === 'BOTH';
+}
+
+function getDirectionalDistance(entryPrice: number, targetPrice: number, positionSide: 'BOTH' | 'LONG' | 'SHORT') {
+  return positionSide === 'SHORT' ? entryPrice - targetPrice : targetPrice - entryPrice;
+}
+
+function formatDirectionalMovePercentLabel(
+  entryPrice: number | null,
+  targetPrice: number | null,
+  positionSide: 'BOTH' | 'LONG' | 'SHORT',
+  purpose: 'Entry' | 'Take profit' | 'Stop loss' | 'Other'
+) {
+  if (entryPrice === null || targetPrice === null || purpose === 'Entry' || purpose === 'Other') {
+    return 'n/a';
+  }
+
+  const percent = (getDirectionalDistance(entryPrice, targetPrice, positionSide) / entryPrice) * 100;
+  const sign = percent >= 0 ? '+' : '';
+  return `${sign}${formatDecimalString(percent.toFixed(2))}%`;
+}
+
+function buildProtectionTargets(params: {
+  entryPrice: number | null;
+  openOrders: Array<{
+    orderPositionSideLabel: string;
+    orderPriceValue: number | null;
+    orderPurposeLabel: 'Entry' | 'Take profit' | 'Stop loss' | 'Other';
+  }>;
+  positionSide: 'BOTH' | 'LONG' | 'SHORT';
+}) {
+  const { entryPrice, openOrders, positionSide } = params;
+
+  if (entryPrice === null) {
+    return [];
+  }
+
+  const takeProfitPrices = openOrders
+    .filter((order) => order.orderPurposeLabel === 'Take profit' && matchesPositionSide(order.orderPositionSideLabel, positionSide))
+    .map((order) => order.orderPriceValue)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+    .filter((value) => getDirectionalDistance(entryPrice, value, positionSide) > 0)
+    .sort((left, right) => getDirectionalDistance(entryPrice, left, positionSide) - getDirectionalDistance(entryPrice, right, positionSide))
+    .slice(0, 3);
+
+  const stopLossPrice = openOrders
+    .filter((order) => order.orderPurposeLabel === 'Stop loss' && matchesPositionSide(order.orderPositionSideLabel, positionSide))
+    .map((order) => order.orderPriceValue)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+    .filter((value) => getDirectionalDistance(entryPrice, value, positionSide) < 0)
+    .sort((left, right) => Math.abs(getDirectionalDistance(entryPrice, left, positionSide)) - Math.abs(getDirectionalDistance(entryPrice, right, positionSide)))[0];
+
+  return [
+    ...takeProfitPrices.map((price, index) => {
+      const label: 'TP1' | 'TP2' | 'TP3' = index === 0 ? 'TP1' : index === 1 ? 'TP2' : 'TP3';
+
+      return {
+        label,
+        priceLabel: `${formatDecimalString(price.toFixed(2))} USDT`,
+        percentLabel: `${formatDirectionalMovePercentLabel(entryPrice, price, positionSide, 'Take profit')} from entry`,
+      };
+    }),
+    ...(stopLossPrice !== undefined
+      ? [
+          {
+            label: 'SL' as const,
+            priceLabel: `${formatDecimalString(stopLossPrice.toFixed(2))} USDT`,
+            percentLabel: `${formatDirectionalMovePercentLabel(entryPrice, stopLossPrice, positionSide, 'Stop loss')} from entry`,
+          },
+        ]
+      : []),
+  ];
 }
 
 export function useCoinAutoBotLogic({
@@ -376,23 +459,8 @@ export function useCoinAutoBotLogic({
   const status = botResponse?.bot?.status ?? 'idle';
   const isActive = status !== 'idle' && status !== 'stopped';
   const logs = botResponse?.logs ?? [];
-  const openPositions: CoinAutoBotOpenPosition[] = (positionsResponse?.positions ?? [])
-    .filter((position) => position.positionAmt !== 0)
-    .map((position) => ({
-      entryPriceLabel: formatPriceLevel(position.entryPrice),
-      isolatedMarginLabel:
-        position.isolatedMargin !== null ? `${formatDecimalString(position.isolatedMargin.toFixed(2))} USDT` : 'n/a',
-      leverageLabel: position.leverage !== null ? `${position.leverage}x` : 'n/a',
-      liquidationPriceLabel: formatPriceLevel(position.liquidationPrice),
-      marginTypeLabel: position.marginType,
-      markPriceLabel: formatPriceLevel(position.markPrice),
-      notionalLabel: position.notional !== null ? `${formatDecimalString(position.notional.toFixed(2))} USDT` : 'n/a',
-      positionAmtLabel: `${position.positionAmt > 0 ? '+' : ''}${formatDecimalString(position.positionAmt.toFixed(4))}`,
-      positionSideLabel: position.positionSide,
-      unrealizedPnlLabel:
-        position.unrealizedPnl !== null ? `${formatDecimalString(position.unrealizedPnl.toFixed(2))} USDT` : 'n/a',
-    }));
-  const openOrders: CoinAutoBotOpenOrder[] = (openOrdersResponse?.openOrders ?? []).map((order) => ({
+  const openOrdersRaw = openOrdersResponse?.openOrders ?? [];
+  const openOrders = openOrdersRaw.map((order) => ({
     clientOrderId: order.clientOrderId,
     algoId: order.algoId,
     orderEntryPriceLabel: order.orderEntryPriceLabel,
@@ -400,6 +468,10 @@ export function useCoinAutoBotLogic({
     orderLeverageLabel: order.orderLeverageLabel,
     orderModeLabel: order.orderModeLabel,
     orderId: order.orderId,
+    orderPnLLabel: order.orderPnLLabel,
+    orderPnLPercentLabel: order.orderPnLPercentLabel,
+    orderPriceValue: order.orderPriceValue,
+    orderPriceMovePercentLabel: order.orderPriceMovePercentLabel,
     orderPriceLabel: order.orderPriceLabel,
     orderNotionalLabel: order.orderNotionalLabel,
     orderPositionSideLabel: order.orderPositionSideLabel,
@@ -412,8 +484,32 @@ export function useCoinAutoBotLogic({
     orderTriggerPriceLabel: order.orderTriggerPriceLabel,
     orderTypeLabel: order.orderTypeLabel,
   }));
+  const openPositions: CoinAutoBotOpenPosition[] = (positionsResponse?.positions ?? [])
+    .filter((position) => position.positionAmt !== 0)
+    .map((position) => {
+      return {
+        entryPriceLabel: formatPriceLevel(position.entryPrice),
+        isolatedMarginLabel:
+          position.isolatedMargin !== null ? `${formatDecimalString(position.isolatedMargin.toFixed(2))} USDT` : 'n/a',
+        leverageLabel: position.leverage !== null ? `${position.leverage}x` : 'n/a',
+        liquidationPriceLabel: formatPriceLevel(position.liquidationPrice),
+        marginTypeLabel: position.marginType,
+        markPriceLabel: formatPriceLevel(position.markPrice),
+        notionalLabel: position.notional !== null ? `${formatDecimalString(position.notional.toFixed(2))} USDT` : 'n/a',
+        positionAmtLabel: `${position.positionAmt > 0 ? '+' : ''}${formatDecimalString(position.positionAmt.toFixed(4))}`,
+        positionSideLabel: position.positionSide,
+        protectionTargets: buildProtectionTargets({
+          entryPrice: position.entryPrice,
+          openOrders: openOrdersRaw,
+          positionSide: position.positionSide,
+        }),
+        unrealizedPnlLabel:
+          position.unrealizedPnl !== null ? `${formatDecimalString(position.unrealizedPnl.toFixed(2))} USDT` : 'n/a',
+      };
+    });
 
   return {
+    atr14Label: activeSetup.atr14 !== null ? formatPriceLevel(activeSetup.atr14) : 'n/a',
     allocationLabel: allocationUnit === 'percent' ? `${allocationValue}% of wallet` : `${allocationValue} USDT margin`,
     allocationUnit,
     allocationValue,
@@ -457,6 +553,7 @@ export function useCoinAutoBotLogic({
     },
     previewLabel: executionConsensusLabel,
     riskRewardLabel: activeSetup.riskReward !== null ? `1:${activeSetup.riskReward.toFixed(2)}` : 'n/a',
+    rsi14Label: activeSetup.rsi14 !== null ? activeSetup.rsi14.toFixed(2) : 'n/a',
     setupGrade: activeSetup.grade,
     setupLabel: activeSetup.label,
     stopLossLabel: formatPriceLevel(activeSetup.stopLoss),

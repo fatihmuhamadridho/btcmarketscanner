@@ -4,24 +4,10 @@ import CoinTrendReasonList from '../atoms/CoinTrendReasonList.atom';
 import CoinTrendOverviewBadges from '../molecules/CoinTrendOverviewBadges.molecule';
 import CoinTrendOverviewHeader from '../molecules/CoinTrendOverviewHeader.molecule';
 import CoinTrendOverviewStats from '../molecules/CoinTrendOverviewStats.molecule';
+import type { CoinTrendSummary } from '../../interface/CoinView.interface';
 
 type CoinTrendOverviewSectionProps = {
-  trendSummary: {
-    changePercent: number;
-    color: 'teal' | 'red' | 'gray';
-    endPrice: number | null;
-    label: string;
-    ma20: number | null;
-    ma50: number | null;
-    ma200: number | null;
-    reasons: string[];
-    rangePercent: number;
-    score: number;
-    startPrice: number | null;
-    structurePattern: 'HH/HL' | 'LH/LL' | 'Mixed';
-    structure: string;
-    volumeRatio: number | null;
-  };
+  trendSummary: CoinTrendSummary;
   TrendIcon: ComponentType<{ size?: number }>;
 };
 
@@ -46,8 +32,10 @@ export default function CoinTrendOverviewSection({ trendSummary, TrendIcon }: Co
       <Divider color="rgba(255,255,255,0.08)" my="md" />
 
       <CoinTrendOverviewStats
+        atr14={trendSummary.atr14}
         endPrice={trendSummary.endPrice}
         rangePercent={trendSummary.rangePercent}
+        rsi14={trendSummary.rsi14}
         startPrice={trendSummary.startPrice}
       />
 
@@ -55,10 +43,12 @@ export default function CoinTrendOverviewSection({ trendSummary, TrendIcon }: Co
 
       <Stack gap="sm">
         <CoinTrendOverviewBadges
+          atr14={trendSummary.atr14}
           color={trendSummary.color}
           ma20={trendSummary.ma20}
           ma50={trendSummary.ma50}
           ma200={trendSummary.ma200}
+          rsi14={trendSummary.rsi14}
           score={trendSummary.score}
           structure={trendSummary.structure}
           structurePattern={trendSummary.structurePattern}

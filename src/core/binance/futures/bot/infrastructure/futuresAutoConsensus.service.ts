@@ -1,6 +1,7 @@
 import { FuturesMarketController } from '@core/binance/futures/market/domain/futuresMarket.controller';
 import { analyzeSetupSide } from '@features/coin/logic/CoinSetup.logic';
 import { analyzeTrend } from '@features/coin/logic/CoinTrend.logic';
+import { formatDecimalString } from '@utils/format-number.util';
 import type { CoinAutoBotTimeframeSummary } from '@features/coin/interface/CoinView.interface';
 import type { SetupCandle, SupportResistance, TrendInsight } from '@features/coin/interface/CoinLogic.interface';
 import type { CoinSetupDetail } from '@features/coin/interface/CoinView.interface';
@@ -35,16 +36,18 @@ function getSupportResistance(candles: SetupCandle[], windowSize: number): Suppo
 }
 
 function formatPrice(value: number | null) {
-  return value === null ? 'n/a' : value.toFixed(2);
+  return value === null ? 'n/a' : formatDecimalString(value.toFixed(2));
 }
 
 function buildSummary(interval: ExecutionTimeframe, trend: TrendInsight, setup: CoinSetupDetail): CoinAutoBotTimeframeSummary {
   return {
     direction: setup.direction,
+    atrLabel: setup.atr14 !== null ? formatPrice(setup.atr14) : 'n/a',
     entryZoneLabel: `${formatPrice(setup.entryZone.low)} - ${formatPrice(setup.entryZone.high)}`,
     interval,
     isConsensus: false,
     marketConditionLabel: setup.marketCondition,
+    rsiLabel: setup.rsi14 !== null ? setup.rsi14.toFixed(2) : 'n/a',
     riskRewardLabel: setup.riskReward !== null ? `1:${setup.riskReward.toFixed(2)}` : 'n/a',
     setupGrade: setup.grade,
     setupLabel: setup.label,

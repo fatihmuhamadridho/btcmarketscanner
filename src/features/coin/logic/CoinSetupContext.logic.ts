@@ -1,6 +1,6 @@
 import type { CoinSetupAnalysisContext, CoinSetupSide } from '../interface/CoinSetup.interface';
 import type { SetupCandle, SupportResistance, TrendInsight } from '../interface/CoinLogic.interface';
-import { getAverageTrueRange } from './CoinSetupShared.logic';
+import { getAverageTrueRange, getRelativeStrengthIndex } from './CoinSetupShared.logic';
 import { getSetupPathStatus } from './CoinSetupPath.logic';
 
 export function buildCoinSetupAnalysisContext(
@@ -12,6 +12,7 @@ export function buildCoinSetupAnalysisContext(
   const orderedCandles = [...candles].sort((left, right) => left.openTime - right.openTime);
   const lastPrice = orderedCandles[orderedCandles.length - 1].close;
   const atr = getAverageTrueRange(orderedCandles, 14);
+  const rsi14 = getRelativeStrengthIndex(orderedCandles, 14);
   const range = Math.max(supportResistance.resistance - supportResistance.support, 1);
   const zoneBuffer = Math.max(atr ?? range * 0.1, lastPrice * 0.002, 1);
   const stopBuffer = Math.max(zoneBuffer * 0.9, lastPrice * 0.003);
@@ -102,6 +103,7 @@ export function buildCoinSetupAnalysisContext(
 
   return {
     atr,
+    atr14: atr,
     breakdownShort,
     breakoutLong,
     bearishStructure,
@@ -124,6 +126,7 @@ export function buildCoinSetupAnalysisContext(
     targetBuffer,
     trendBiasScore,
     trendSummary,
+    rsi14,
     volumeScore,
     zoneBuffer,
   };

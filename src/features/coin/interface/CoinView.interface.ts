@@ -74,6 +74,8 @@ export type CoinSetupDetail = {
   marketCondition: string;
   pathMode: 'breakout' | 'continuation';
   path: CoinSetupPathStep[];
+  atr14: number | null;
+  rsi14: number | null;
   takeProfits: Array<{
     label: 'TP1' | 'TP2' | 'TP3';
     price: number | null;
@@ -91,9 +93,11 @@ export type CoinTrendSummary = {
   color: 'teal' | 'red' | 'gray';
   endPrice: number | null;
   label: string;
+  atr14: number | null;
   ma20: number | null;
   ma50: number | null;
   ma200: number | null;
+  rsi14: number | null;
   reasons: string[];
   rangePercent: number;
   score: number;
@@ -157,10 +161,12 @@ export type CoinAutoBotStatus = 'idle' | 'watching' | 'entry_pending' | 'entry_p
 
 export type CoinAutoBotTimeframeSummary = {
   direction: 'long' | 'short';
+  atrLabel: string;
   entryZoneLabel: string;
   interval: CoinTimeframe;
   isConsensus: boolean;
   marketConditionLabel: string;
+  rsiLabel: string;
   riskRewardLabel: string;
   setupGrade: 'A+' | 'A' | 'B' | 'C';
   setupLabel: string;
@@ -183,6 +189,11 @@ export type CoinAutoBotOpenPosition = {
   notionalLabel: string;
   positionAmtLabel: string;
   positionSideLabel: 'BOTH' | 'LONG' | 'SHORT';
+  protectionTargets: Array<{
+    label: 'TP1' | 'TP2' | 'TP3' | 'SL';
+    priceLabel: string;
+    percentLabel: string;
+  }>;
   unrealizedPnlLabel: string;
 };
 
@@ -194,9 +205,12 @@ export type CoinAutoBotOpenOrder = {
   orderLeverageLabel: string;
   orderModeLabel: string;
   orderId: number | null;
+  orderPnLLabel: string;
+  orderPnLPercentLabel: string;
   orderNotionalLabel: string;
   orderPositionSideLabel: string;
   orderPurposeLabel: 'Entry' | 'Take profit' | 'Stop loss' | 'Other';
+  orderPriceMovePercentLabel: string;
   orderPriceLabel: string;
   orderQuantityLabel: string;
   orderReduceOnlyLabel: string;
@@ -208,6 +222,7 @@ export type CoinAutoBotOpenOrder = {
 };
 
 export type CoinAutoBotSectionViewModel = {
+  atr14Label: string;
   allocationLabel: string;
   allocationUnit: CoinAutoBotAllocationUnit;
   allocationValue: number;
@@ -246,6 +261,7 @@ export type CoinAutoBotSectionViewModel = {
   riskRewardLabel: string;
   setupGrade: 'A+' | 'A' | 'B' | 'C';
   setupLabel: string;
+  rsi14Label: string;
   stopLossLabel: string;
   symbol: string;
   takeProfitLabels: Array<{

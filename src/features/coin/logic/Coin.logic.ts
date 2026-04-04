@@ -95,11 +95,13 @@ function getConsensusSetupSummaries(
 
     return {
       direction: chosenSetup.direction,
+      atrLabel: chosenSetup.atr14 !== null ? formatPriceLevel(chosenSetup.atr14) : 'n/a',
       entryZoneLabel: formatPriceZone(chosenSetup.entryZone),
       interval: item.interval,
       isConsensus:
         consensusCandidate?.interval === item.interval && consensusCandidate.chosenSetup.label === chosenSetup.label,
       marketConditionLabel: chosenSetup.marketCondition,
+      rsiLabel: chosenSetup.rsi14 !== null ? chosenSetup.rsi14.toFixed(2) : 'n/a',
       riskRewardLabel: chosenSetup.riskReward !== null ? `1:${formatDecimalString(chosenSetup.riskReward.toFixed(2))}` : 'n/a',
       setupGrade: chosenSetup.grade,
       setupLabel: chosenSetup.label,

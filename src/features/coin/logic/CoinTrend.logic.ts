@@ -1,5 +1,6 @@
 import { IconMinus, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 import type { SupportResistance, TrendCandle, TrendInsight } from '../interface/CoinLogic.interface';
+import { getAverageTrueRange, getRelativeStrengthIndex } from './CoinSetupShared.logic';
 
 function getSimpleMovingAverage(values: number[], period: number, endIndex: number) {
   if (endIndex < 0 || values.length === 0) {
@@ -64,10 +65,12 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
       direction: 'sideways',
       endPrice: null,
       icon: IconMinus,
+      atr14: null,
       label: 'Sideways',
       ma20: null,
       ma50: null,
       ma200: null,
+      rsi14: null,
       reasons: ['Not enough candles yet'],
       rangePercent: 0,
       score: 0,
@@ -89,6 +92,8 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
   const changePercent = firstPrice !== 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0;
   const rangePercent = firstPrice !== 0 ? ((highestPrice - lowestPrice) / firstPrice) * 100 : 0;
   const lastIndex = closes.length - 1;
+  const atr14 = getAverageTrueRange(orderedCandles, 14);
+  const rsi14 = getRelativeStrengthIndex(orderedCandles, 14);
   const ma20 = getSimpleMovingAverage(closes, 20, lastIndex);
   const ma50 = getSimpleMovingAverage(closes, 50, lastIndex);
   const ma200 = getSimpleMovingAverage(closes, 200, lastIndex);
@@ -224,6 +229,28 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
     }
   }
 
+  if (atr14 !== null) {
+    reasons.push(`ATR14 volatility is ${atr14.toFixed(2)}`);
+  }
+
+  if (rsi14 !== null) {
+    if (rsi14 >= 70) {
+      score -= 1;
+      reasons.push(`RSI14 is overbought at ${rsi14.toFixed(2)}`);
+    } else if (rsi14 <= 30) {
+      score += 1;
+      reasons.push(`RSI14 is oversold at ${rsi14.toFixed(2)}`);
+    } else if (rsi14 >= 55) {
+      score += 1;
+      reasons.push(`RSI14 momentum is bullish at ${rsi14.toFixed(2)}`);
+    } else if (rsi14 <= 45) {
+      score -= 1;
+      reasons.push(`RSI14 momentum is bearish at ${rsi14.toFixed(2)}`);
+    } else {
+      reasons.push(`RSI14 is balanced at ${rsi14.toFixed(2)}`);
+    }
+  }
+
   let direction: TrendInsight['direction'] = 'sideways';
   let label = 'Sideways';
   let color: TrendInsight['color'] = 'gray';
@@ -261,11 +288,13 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
     direction,
     endPrice: lastPrice,
     icon,
+    atr14,
     label,
     ma20,
     ma50,
     ma200,
-    reasons: reasons.slice(0, 4),
+    rsi14,
+    reasons: reasons.slice(0, 6),
     rangePercent,
     score,
     startPrice: firstPrice,

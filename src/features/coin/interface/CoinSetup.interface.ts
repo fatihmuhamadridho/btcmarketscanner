@@ -10,6 +10,7 @@ export type CoinSetupPathStatus = {
 
 export type CoinSetupAnalysisContext = {
   atr: number | null;
+  atr14: number | null;
   breakdownShort: boolean;
   breakoutLong: boolean;
   bullishStructure: boolean;
@@ -24,6 +25,7 @@ export type CoinSetupAnalysisContext = {
   pathMode: SetupInsight['pathMode'];
   pathStatus: CoinSetupPathStatus;
   range: number;
+  rsi14: number | null;
   side: CoinSetupSide;
   scoreBase: number;
   structureScore: number;

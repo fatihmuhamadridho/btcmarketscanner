@@ -83,7 +83,7 @@ function matchesPositionSide(
     return true;
   }
 
-  return orderPositionSide === positionSide;
+  return orderPositionSide === positionSide || orderPositionSide === 'BOTH';
 }
 
 function getPositionSideFromAmount(positionAmt: number, fallback?: 'BOTH' | 'LONG' | 'SHORT') {

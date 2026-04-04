@@ -1,4 +1,5 @@
 import { Badge, Card, Group, Stack, Text } from '@mantine/core';
+import { formatDecimalString } from '@utils/format-number.util';
 import CoinSetupPathGrid from './CoinSetupPathGrid.molecule';
 import CoinSetupTargetGrid from './CoinSetupTargetGrid.molecule';
 import type {
@@ -57,6 +58,12 @@ export default function CoinSetupDetailCard({
         <Group gap="xs" wrap="wrap" align="center">
           <Badge variant="light" color="gray">
             Entry zone {formatPriceZone(setup.entryZone)}
+          </Badge>
+          <Badge variant="light" color="gray">
+            ATR14 {setup.atr14 !== null ? formatDecimalString(setup.atr14.toFixed(2)) : 'n/a'}
+          </Badge>
+          <Badge variant="light" color="gray">
+            RSI14 {setup.rsi14 !== null ? setup.rsi14.toFixed(2) : 'n/a'}
           </Badge>
           <Badge variant="light" color="gray">
             {setup.pathMode}

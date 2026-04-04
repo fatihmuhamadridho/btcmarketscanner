@@ -49,6 +49,35 @@ export function getAverageTrueRange(candles: Array<{ close: number; high: number
   return trueRanges.reduce((sum, value) => sum + value, 0) / trueRanges.length;
 }
 
+export function getRelativeStrengthIndex(candles: Array<{ close: number }>, period = 14) {
+  if (candles.length < period + 1) {
+    return null;
+  }
+
+  const closes = candles.map((candle) => candle.close);
+  let gainSum = 0;
+  let lossSum = 0;
+
+  for (let index = closes.length - period; index < closes.length; index += 1) {
+    const change = closes[index] - closes[index - 1];
+    if (change > 0) {
+      gainSum += change;
+    } else {
+      lossSum += Math.abs(change);
+    }
+  }
+
+  const averageGain = gainSum / period;
+  const averageLoss = lossSum / period;
+
+  if (averageLoss === 0) {
+    return 100;
+  }
+
+  const relativeStrength = averageGain / averageLoss;
+  return 100 - 100 / (1 + relativeStrength);
+}
+
 export function buildTakeProfitSteps(
   direction: 'long' | 'short',
   entryMid: number,

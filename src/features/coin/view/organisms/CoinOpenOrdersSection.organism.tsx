@@ -29,6 +29,10 @@ function colorForPurpose(purpose: CoinAutoBotOpenOrder['orderPurposeLabel']) {
   }
 }
 
+function colorForPnl(value: string) {
+  return value.startsWith('-') ? 'red' : value === 'n/a' ? 'gray' : 'teal';
+}
+
 export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbol }: CoinOpenOrdersSectionProps) {
   const entryOrders = openOrders.filter((item) => item.orderPurposeLabel === 'Entry');
   const tpOrders = openOrders.filter((item) => item.orderPurposeLabel === 'Take profit');
@@ -104,11 +108,12 @@ export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbo
                     <Table.Th>Purpose</Table.Th>
                     <Table.Th>Type</Table.Th>
                     <Table.Th>Status</Table.Th>
-                    <Table.Th>Entry</Table.Th>
+                    <Table.Th>Price</Table.Th>
                     <Table.Th>Qty</Table.Th>
                     <Table.Th>Lev</Table.Th>
                     <Table.Th>Margin</Table.Th>
                     <Table.Th>Notional</Table.Th>
+                    <Table.Th>Target PnL</Table.Th>
                     <Table.Th>Client</Table.Th>
                     <Table.Th>Action</Table.Th>
                   </Table.Tr>
@@ -158,9 +163,14 @@ export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbo
                         </Text>
                       </Table.Td>
                       <Table.Td>
-                        <Text fw={600} size="sm">
-                          {order.orderEntryPriceLabel}
-                        </Text>
+                        <Stack gap={0}>
+                          <Text fw={600} size="sm">
+                            {order.orderPriceLabel}
+                          </Text>
+                          <Text size="xs" c="dimmed">
+                            {order.orderPriceMovePercentLabel}
+                          </Text>
+                        </Stack>
                       </Table.Td>
                       <Table.Td>
                         <Text fw={600} size="sm">
@@ -181,6 +191,16 @@ export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbo
                         <Text fw={600} size="sm">
                           {order.orderNotionalLabel}
                         </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Stack gap={2}>
+                          <Text fw={600} size="sm" c={colorForPnl(order.orderPnLLabel)}>
+                            {order.orderPnLLabel}
+                          </Text>
+                          <Text size="xs" c="dimmed">
+                            ROI {order.orderPnLPercentLabel}
+                          </Text>
+                        </Stack>
                       </Table.Td>
                       <Table.Td>
                         <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
