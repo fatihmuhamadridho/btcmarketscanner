@@ -26,13 +26,21 @@ export type FuturesAutoBotPlan = {
   }>;
 };
 
+export type FuturesAutoBotPlanSource = 'consensus' | 'openclaw';
+
 export type FuturesAutoBotState = {
   botId: string;
   createdAt: string;
   execution?: FuturesAutoBotExecutionRecord | null;
   lastScanPrice?: number | null;
+  lastOpenClawValidationAt?: string | null;
+  lastOpenClawValidationFingerprint?: string | null;
+  openClawLockedPlan?: FuturesAutoBotPlan | null;
   updatedAt: string;
   plan: FuturesAutoBotPlan;
+  planSource?: FuturesAutoBotPlanSource;
+  planLockedAt?: string | null;
+  planLockExpiresAt?: string | null;
   status: CoinAutoBotStatus;
 };
 

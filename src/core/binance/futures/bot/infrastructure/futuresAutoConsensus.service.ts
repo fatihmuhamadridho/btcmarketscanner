@@ -1,4 +1,5 @@
 import { FuturesMarketController } from '@core/binance/futures/market/domain/futuresMarket.controller';
+import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
 import { analyzeSetupSide } from '@features/coin/logic/CoinSetup.logic';
 import { analyzeTrend } from '@features/coin/logic/CoinTrend.logic';
 import { formatDecimalString } from '@utils/format-number.util';
@@ -20,6 +21,16 @@ const timeframePriority: Record<ExecutionTimeframe, number> = {
 };
 
 const futuresMarketController = new FuturesMarketController();
+
+export type FuturesAutoConsensusTimeframeSnapshot = {
+  candles: FuturesKlineCandle[];
+  interval: ExecutionTimeframe;
+  longSetup: CoinSetupDetail;
+  setup: CoinSetupDetail;
+  shortSetup: CoinSetupDetail;
+  supportResistance: SupportResistance | null;
+  trend: TrendInsight;
+};
 
 function getSupportResistance(candles: SetupCandle[], windowSize: number): SupportResistance | null {
   if (candles.length === 0) {
@@ -71,7 +82,7 @@ export class FuturesAutoConsensusService {
     const snapshots = await Promise.all(
       executionTimeframes.map(async (interval) => {
         const candlesResponse = await futuresMarketController.getMarketInitialCandles(symbol, interval, INDICATOR_LOOKBACK_LIMIT);
-        const candles: SetupCandle[] = candlesResponse.data.map((candle) => ({
+        const candles = candlesResponse.data.map((candle) => ({
           openTime: candle.openTime,
           open: candle.open,
           high: candle.high,
@@ -87,11 +98,13 @@ export class FuturesAutoConsensusService {
         const setup = longSetup.gradeRank >= shortSetup.gradeRank ? longSetup : shortSetup;
 
         return {
+          candles,
           interval,
           longSetup,
           shortSetup,
           setup,
           trend,
+          supportResistance,
         };
       })
     );
@@ -121,6 +134,7 @@ export class FuturesAutoConsensusService {
       executionBasisLabel: executionTimeframes.join(' • ').replace('1h', '1H').replace('4h', '4H'),
       executionConsensusLabel,
       summaries,
+      snapshots,
     };
   }
 }

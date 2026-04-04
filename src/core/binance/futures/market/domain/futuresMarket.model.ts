@@ -90,8 +90,10 @@ export type FuturesKlineCandle = {
   closeTime: number;
   high: number;
   low: number;
+  numberOfTrades?: number;
   open: number;
   openTime: number;
+  quoteAssetVolume?: number;
   volume: number;
 };
 

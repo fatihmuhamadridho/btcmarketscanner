@@ -506,6 +506,7 @@ export function useCoinAutoBotLogic({
 
   const status = botResponse?.bot?.status ?? 'idle';
   const isActive = status !== 'idle' && status !== 'stopped';
+  const executionPlan = botResponse?.bot?.plan ?? null;
   const openOrdersRaw = openOrdersResponse?.openOrders ?? [];
   const openOrders = openOrdersRaw.map((order) => ({
     clientOrderId: order.clientOrderId,
@@ -573,6 +574,21 @@ export function useCoinAutoBotLogic({
     executionBasisLabel,
     executionConsensusLabel,
     executionEndpointLabel: getExecutionEndpointLabel(),
+    executionPlanDirection: executionPlan?.direction ?? activeSetup.direction,
+    executionPlanEntryZoneLabel: formatPriceZone(executionPlan?.entryZone ?? activeSetup.entryZone),
+    executionPlanPreviewLabel: executionPlan ? 'OpenClaw-adjusted execution plan' : executionConsensusLabel,
+    executionPlanRiskRewardLabel:
+      executionPlan?.riskReward !== null && executionPlan?.riskReward !== undefined
+        ? `1:${executionPlan.riskReward.toFixed(2)}`
+        : activeSetup.riskReward !== null
+          ? `1:${activeSetup.riskReward.toFixed(2)}`
+          : 'n/a',
+    executionPlanSetupLabel: executionPlan?.setupLabel ?? activeSetup.label,
+    executionPlanStopLossLabel: formatPriceLevel(executionPlan?.stopLoss ?? activeSetup.stopLoss),
+    executionPlanTakeProfitLabels: (executionPlan?.takeProfits ?? activeSetup.takeProfits).map((item) => ({
+      label: item.label,
+      valueLabel: formatPriceLevel(item.price),
+    })),
     leverage,
     isActive,
     isStarting: startMutation.isPending,
@@ -602,7 +618,6 @@ export function useCoinAutoBotLogic({
     onStop: () => {
       void stopMutation.mutateAsync();
     },
-    previewLabel: executionConsensusLabel,
     riskRewardLabel: activeSetup.riskReward !== null ? `1:${activeSetup.riskReward.toFixed(2)}` : 'n/a',
     rsi14Label: activeSetup.rsi14 !== null ? activeSetup.rsi14.toFixed(2) : 'n/a',
     setupGrade: activeSetup.grade,

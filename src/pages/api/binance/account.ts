@@ -7,6 +7,9 @@ type BinanceAccountApiResponse = {
   avatarLabel: string;
   displayName: string;
   isConfigured: boolean;
+  availableBalanceValue: number | null;
+  totalMarginBalanceValue: number | null;
+  walletBalanceValue: number | null;
   subtitle: string;
 };
 
@@ -32,6 +35,16 @@ function getInitials(value: string) {
   }
 
   return `${tokens[0][0] ?? ''}${tokens[1][0] ?? ''}`.toUpperCase();
+}
+
+function parseNumericBalance(value?: string) {
+  if (value === undefined) {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 async function fetchBinanceFuturesAccount() {
@@ -70,6 +83,9 @@ export default async function handler(
       avatarLabel: '?',
       displayName: 'Setup required',
       isConfigured: false,
+      availableBalanceValue: null,
+      totalMarginBalanceValue: null,
+      walletBalanceValue: null,
       subtitle: 'Add BINANCE_API_KEY and BINANCE_SECRET_KEY',
     });
   }
@@ -85,6 +101,9 @@ export default async function handler(
       avatarLabel: getInitials(displayName),
       displayName,
       isConfigured: true,
+      availableBalanceValue: parseNumericBalance(account.availableBalance),
+      totalMarginBalanceValue: parseNumericBalance(account.totalMarginBalance),
+      walletBalanceValue: parseNumericBalance(account.totalWalletBalance),
       subtitle: walletBalance ? `Wallet ${walletBalance}` : 'Futures account',
     });
   } catch (error) {
@@ -92,6 +111,9 @@ export default async function handler(
       avatarLabel: 'BF',
       displayName: 'Binance Futures',
       isConfigured: false,
+      availableBalanceValue: null,
+      totalMarginBalanceValue: null,
+      walletBalanceValue: null,
       subtitle: error instanceof Error ? 'Unable to load Binance account' : 'Binance account unavailable',
     });
   }

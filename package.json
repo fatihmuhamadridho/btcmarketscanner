@@ -1,6 +1,6 @@
 {
   "name": "btcmarketscanner",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,6 @@
   "dependencies": {
     "@mantine/core": "^8.3.18",
     "@mantine/hooks": "^8.3.18",
-    "@openai/codex-sdk": "^0.118.0",
     "@supabase/supabase-js": "^2.101.1",
     "@tabler/icons-react": "^3.41.0",
     "@tanstack/react-query": "^5.95.2",

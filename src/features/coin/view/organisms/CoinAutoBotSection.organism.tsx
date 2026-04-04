@@ -31,10 +31,16 @@ export default function CoinAutoBotSection({
   botStatusLabel,
   currentPriceLabel,
   direction,
-  entryZoneLabel,
   executionBasisLabel,
   executionConsensusLabel,
   executionEndpointLabel,
+  executionPlanDirection,
+  executionPlanEntryZoneLabel,
+  executionPlanPreviewLabel,
+  executionPlanRiskRewardLabel,
+  executionPlanSetupLabel,
+  executionPlanStopLossLabel,
+  executionPlanTakeProfitLabels,
   leverage,
   isActive,
   isStarting,
@@ -47,15 +53,10 @@ export default function CoinAutoBotSection({
   onLeverageChange,
   onStart,
   onStop,
-  previewLabel,
   rsi14Label,
-  riskRewardLabel,
   setupGrade,
-  setupLabel,
-  stopLossLabel,
   symbol,
   timeframeSummaries,
-  takeProfitLabels,
 }: CoinAutoBotSectionProps) {
   return (
     <Card
@@ -242,18 +243,18 @@ export default function CoinAutoBotSection({
               <Stack gap={4}>
                 <Text fw={700}>Execution plan</Text>
                 <Text c="dimmed" size="sm">
-                  {previewLabel} · {marketConditionLabel}
+                  {executionPlanPreviewLabel} · {marketConditionLabel}
                 </Text>
               </Stack>
               <Group gap="sm" wrap="wrap">
-                <Badge variant="light" color={direction === 'long' ? 'teal' : 'red'}>
-                  {direction.toUpperCase()}
+                <Badge variant="light" color={executionPlanDirection === 'long' ? 'teal' : 'red'}>
+                  {executionPlanDirection.toUpperCase()}
                 </Badge>
                 <Badge variant="light" color="gray">
                   Grade {setupGrade}
                 </Badge>
                 <Badge variant="light" color="gray">
-                  RR {riskRewardLabel}
+                  RR {executionPlanRiskRewardLabel}
                 </Badge>
                 <Badge variant="light" color="gray">
                   ATR14 {atr14Label}
@@ -265,7 +266,12 @@ export default function CoinAutoBotSection({
             </Group>
 
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
-              <Card radius="md" p="md" withBorder style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <Card
+                radius="md"
+                p="md"
+                withBorder
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+              >
                 <Stack gap={4}>
                   <Text c="dimmed" size="sm">
                     Allocation
@@ -273,7 +279,12 @@ export default function CoinAutoBotSection({
                   <Text fw={700}>{allocationLabel}</Text>
                 </Stack>
               </Card>
-              <Card radius="md" p="md" withBorder style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <Card
+                radius="md"
+                p="md"
+                withBorder
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+              >
                 <Stack gap={4}>
                   <Text c="dimmed" size="sm">
                     Leverage
@@ -281,7 +292,12 @@ export default function CoinAutoBotSection({
                   <Text fw={700}>{leverage}x</Text>
                 </Stack>
               </Card>
-              <Card radius="md" p="md" withBorder style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <Card
+                radius="md"
+                p="md"
+                withBorder
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+              >
                 <Stack gap={4}>
                   <Text c="dimmed" size="sm">
                     Current price
@@ -289,35 +305,56 @@ export default function CoinAutoBotSection({
                   <Text fw={700}>{currentPriceLabel}</Text>
                 </Stack>
               </Card>
-              <Card radius="md" p="md" withBorder style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <Card
+                radius="md"
+                p="md"
+                withBorder
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+              >
                 <Stack gap={4}>
                   <Text c="dimmed" size="sm">
                     Entry zone
                   </Text>
-                  <Text fw={700}>{entryZoneLabel}</Text>
+                  <Text fw={700}>{executionPlanEntryZoneLabel}</Text>
                 </Stack>
               </Card>
-              <Card radius="md" p="md" withBorder style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <Card
+                radius="md"
+                p="md"
+                withBorder
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+              >
                 <Stack gap={4}>
                   <Text c="dimmed" size="sm">
                     Stop loss
                   </Text>
-                  <Text fw={700}>{stopLossLabel}</Text>
+                  <Text fw={700}>{executionPlanStopLossLabel}</Text>
                 </Stack>
               </Card>
-              <Card radius="md" p="md" withBorder style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <Card
+                radius="md"
+                p="md"
+                withBorder
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+              >
                 <Stack gap={4}>
                   <Text c="dimmed" size="sm">
                     Setup
                   </Text>
-                  <Text fw={700}>{setupLabel}</Text>
+                  <Text fw={700}>{executionPlanSetupLabel}</Text>
                 </Stack>
               </Card>
             </SimpleGrid>
 
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-              {takeProfitLabels.map((item) => (
-                <Card key={item.label} radius="md" p="md" withBorder style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              {executionPlanTakeProfitLabels.map((item) => (
+                <Card
+                  key={item.label}
+                  radius="md"
+                  p="md"
+                  withBorder
+                  style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+                >
                   <Stack gap={4}>
                     <Text c="dimmed" size="sm">
                       {item.label}

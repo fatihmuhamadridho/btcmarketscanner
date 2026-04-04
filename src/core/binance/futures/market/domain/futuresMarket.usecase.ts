@@ -101,6 +101,8 @@ export class GetFuturesMarketSymbolDetailUseCase {
           close: Number(candle[4]),
           volume: Number(candle[5]),
           closeTime: candle[6],
+          quoteAssetVolume: Number(candle[7]),
+          numberOfTrades: Number(candle[8]),
         })),
       }),
     };
@@ -168,6 +170,8 @@ export class GetFuturesMarketInitialCandlesUseCase {
         close: Number(candle[4]),
         volume: Number(candle[5]),
         closeTime: candle[6],
+        quoteAssetVolume: Number(candle[7]),
+        numberOfTrades: Number(candle[8]),
       })),
     };
   }
@@ -191,6 +195,8 @@ export class GetFuturesMarketOlderCandlesUseCase {
       close: Number(candle[4]),
       volume: Number(candle[5]),
       closeTime: candle[6],
+      quoteAssetVolume: Number(candle[7]),
+      numberOfTrades: Number(candle[8]),
     }));
   }
 }

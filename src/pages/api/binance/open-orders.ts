@@ -246,14 +246,15 @@ export default async function handler(
       futuresAutoTradeService.getOpenOrders(symbol),
       futuresAutoTradeService.getOpenPositions(symbol),
     ]);
-    const leverageFromBot = futuresAutoBotService.get(symbol)?.plan.leverage ?? null;
+    const leverageFromBot = (await futuresAutoBotService.getResolved(symbol))?.plan.leverage ?? null;
+    const symbolPosition = openPositions.find((position) => position.symbol === symbol) ?? null;
     const activePosition =
       openPositions.find((position) => position.symbol === symbol && parseNumber(position.positionAmt) !== 0) ?? null;
-    const leverageFromPosition = activePosition?.leverage;
-    const leverage =
-      leverageFromBot ??
-      (typeof leverageFromPosition === 'string' ? parseNumber(leverageFromPosition) : leverageFromPosition ?? null);
-    const leverageLabel = leverage !== null ? `${leverage}x` : '10x';
+    const leverageFromPosition = symbolPosition?.leverage;
+    const leverageFromPositionValue =
+      typeof leverageFromPosition === 'string' ? parseNumber(leverageFromPosition) : leverageFromPosition ?? null;
+    const leverage = leverageFromPositionValue ?? leverageFromBot;
+    const leverageLabel = leverage !== null ? `${leverage}x` : 'n/a';
     const activePositionAmt = parseNumber(activePosition?.positionAmt ?? null);
     const activePositionDirection = getPositionDirection(activePosition?.positionSide, activePositionAmt);
     const activePositionEntryPrice = parseNumber(activePosition?.entryPrice ?? null);

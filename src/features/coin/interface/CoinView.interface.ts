@@ -250,6 +250,16 @@ export type CoinAutoBotSectionViewModel = {
   direction: 'long' | 'short';
   entryZoneLabel: string;
   executionEndpointLabel: string;
+  executionPlanDirection: 'long' | 'short';
+  executionPlanEntryZoneLabel: string;
+  executionPlanPreviewLabel: string;
+  executionPlanRiskRewardLabel: string;
+  executionPlanSetupLabel: string;
+  executionPlanStopLossLabel: string;
+  executionPlanTakeProfitLabels: Array<{
+    label: 'TP1' | 'TP2' | 'TP3';
+    valueLabel: string;
+  }>;
   isActive: boolean;
   isStarting: boolean;
   isStopping: boolean;
@@ -274,7 +284,6 @@ export type CoinAutoBotSectionViewModel = {
   onCancelOrder: (order: CoinAutoBotOpenOrder) => void;
   onStart: () => void;
   onStop: () => void;
-  previewLabel: string;
   riskRewardLabel: string;
   setupGrade: 'A+' | 'A' | 'B' | 'C';
   setupLabel: string;

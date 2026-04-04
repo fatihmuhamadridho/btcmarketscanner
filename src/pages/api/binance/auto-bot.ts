@@ -113,7 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   if (req.method === 'GET') {
     await futuresAutoBotService.recordProgress(symbol);
-    const bot = futuresAutoBotService.get(symbol);
+    const bot = await futuresAutoBotService.getResolved(symbol);
     return res.status(200).json({
       ok: true,
       bot,
@@ -136,7 +136,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   if (req.method === 'DELETE') {
-    const current = futuresAutoBotService.get(symbol);
+    const current = await futuresAutoBotService.getResolved(symbol);
     const stopped = await futuresAutoBotService.stop(symbol);
     return res.status(200).json({
       ok: true,
