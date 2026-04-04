@@ -1,0 +1,459 @@
+import { createHmac, randomUUID } from 'crypto';
+import { BASE_API_BINANCE, BINANCE_API_KEY, BINANCE_SECRET_KEY } from '@configs/base.config';
+import { FuturesMarketController } from '@core/binance/futures/market/domain/futuresMarket.controller';
+import type { FuturesAutoBotPlan } from '../domain/futuresAutoBot.model';
+
+type FuturesAccountResponse = {
+  availableBalance?: string;
+  dualSidePosition?: boolean;
+  totalWalletBalance?: string;
+};
+
+type FuturesPositionRiskResponseItem = {
+  entryPrice?: string;
+  isolatedMargin?: string;
+  leverage?: string;
+  liquidationPrice?: string;
+  marginType?: string;
+  markPrice?: string;
+  notional?: string;
+  positionAmt?: string;
+  positionSide?: 'BOTH' | 'LONG' | 'SHORT';
+  symbol?: string;
+  unRealizedProfit?: string;
+};
+
+type FuturesOrderResponse = {
+  avgPrice?: string;
+  clientOrderId?: string;
+  executedQty?: string;
+  origQty?: string;
+  orderId: number;
+  positionSide?: string;
+  price?: string;
+  reduceOnly?: boolean;
+  side?: string;
+  status?: string;
+  stopPrice?: string;
+  symbol?: string;
+  time?: number;
+  timeInForce?: string;
+  type?: string;
+  updateTime?: number;
+  workingType?: string;
+  closePosition?: boolean;
+};
+
+type FuturesOpenOrderResponse = FuturesOrderResponse & {
+  updateTime?: number;
+};
+
+type FuturesAlgoOrderResponse = {
+  algoId: number;
+  clientAlgoId?: string;
+  status?: string;
+  side?: string;
+  symbol?: string;
+  type?: string;
+  triggerPrice?: string;
+  quantity?: string;
+  positionSide?: string;
+  reduceOnly?: boolean;
+};
+
+type FuturesOrderSide = 'BUY' | 'SELL';
+type FuturesPositionSide = 'LONG' | 'SHORT';
+
+type FuturesSymbolFilter = Record<string, unknown> & {
+  filterType?: string;
+};
+
+type FuturesSymbolInfo = {
+  filters?: FuturesSymbolFilter[];
+  pricePrecision?: number;
+  quantityPrecision?: number;
+  symbol?: string;
+};
+
+const futuresMarketController = new FuturesMarketController();
+
+function buildBaseUrl() {
+  return BASE_API_BINANCE ?? 'https://demo-fapi.binance.com/fapi/v1';
+}
+
+function signQueryString(queryString: string) {
+  return createHmac('sha256', BINANCE_SECRET_KEY ?? '').update(queryString).digest('hex');
+}
+
+function roundDownToStep(value: number, step: number) {
+  if (!Number.isFinite(value) || !Number.isFinite(step) || step <= 0) {
+    return value;
+  }
+
+  const precision = Math.max(0, (step.toString().split('.')[1]?.length ?? 0) + 2);
+  const scaled = Math.floor(value / step) * step;
+
+  return Number(scaled.toFixed(precision));
+}
+
+function normalizePrice(value: number, tickSize: number, precision?: number) {
+  if (Number.isFinite(tickSize) && tickSize > 0) {
+    return roundDownToStep(value, tickSize);
+  }
+
+  if (typeof precision === 'number' && precision >= 0) {
+    return Number(value.toFixed(precision));
+  }
+
+  return value;
+}
+
+function parseNumber(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function pickSymbolRule(symbolInfo: FuturesSymbolInfo | undefined, filterType: string) {
+  return symbolInfo?.filters?.find((item) => item.filterType === filterType) ?? null;
+}
+
+function extractStepSize(symbolInfo: FuturesSymbolInfo | undefined) {
+  const lotSize = pickSymbolRule(symbolInfo, 'LOT_SIZE');
+  const marketLotSize = pickSymbolRule(symbolInfo, 'MARKET_LOT_SIZE');
+  const stepSize = parseNumber((marketLotSize?.stepSize as string | undefined) ?? (lotSize?.stepSize as string | undefined));
+  return stepSize ?? 0.001;
+}
+
+function extractTickSize(symbolInfo: FuturesSymbolInfo | undefined) {
+  const priceFilter = pickSymbolRule(symbolInfo, 'PRICE_FILTER');
+  const tickSize = parseNumber(priceFilter?.tickSize as string | undefined);
+  return tickSize ?? 0.01;
+}
+
+function splitTakeProfitQuantity(totalQuantity: number, stepSize: number) {
+  const first = roundDownToStep(totalQuantity * 0.4, stepSize);
+  const second = roundDownToStep(totalQuantity * 0.3, stepSize);
+  const third = roundDownToStep(totalQuantity - first - second, stepSize);
+
+  return [first, second, third];
+}
+
+function createClientAlgoId(symbol: string, suffix: string) {
+  const randomPart = randomUUID().replace(/-/g, '').slice(0, 8);
+  return `${symbol}-${suffix}-${randomPart}`.slice(0, 32);
+}
+
+export class FuturesAutoTradeService {
+  private async request<T>(
+    path: string,
+    options: {
+      method?: 'GET' | 'POST' | 'DELETE';
+      params?: Record<string, string | number | boolean | undefined>;
+      signed?: boolean;
+    } = {}
+  ) {
+    if (!BINANCE_API_KEY || !BINANCE_SECRET_KEY) {
+      throw new Error('Binance credentials are missing.');
+    }
+
+    const { method = 'GET', params = {}, signed = false } = options;
+    const url = new URL(path, buildBaseUrl());
+    const searchParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null) {
+        return;
+      }
+
+      searchParams.set(key, String(value));
+    });
+
+    if (signed) {
+      searchParams.set('recvWindow', '5000');
+      searchParams.set('timestamp', String(Date.now()));
+      searchParams.set('signature', signQueryString(searchParams.toString()));
+    }
+
+    url.search = searchParams.toString();
+
+    const response = await fetch(url.toString(), {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-MBX-APIKEY': BINANCE_API_KEY,
+        'User-Agent': 'binance-algo/1.1.0 (Skill)',
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Binance request failed with status ${response.status}`);
+    }
+
+    return (await response.json()) as T;
+  }
+
+  getAccount() {
+    return this.request<FuturesAccountResponse>('/fapi/v2/account', {
+      signed: true,
+    });
+  }
+
+  getOpenPositions(symbol?: string) {
+    return this.request<FuturesPositionRiskResponseItem[]>('/fapi/v2/positionRisk', {
+      params: symbol ? { symbol } : undefined,
+      signed: true,
+    });
+  }
+
+  getOpenOrders(symbol: string) {
+    return Promise.all([
+      this.request<FuturesOpenOrderResponse[]>('/fapi/v1/openOrders', {
+        params: { symbol },
+        signed: true,
+      }),
+      this.request<
+        Array<{
+          algoId?: number;
+          clientAlgoId?: string;
+          price?: string;
+          quantity?: string;
+          side?: string;
+          status?: string;
+          symbol?: string;
+          triggerPrice?: string;
+          type?: string;
+          workingType?: string;
+          positionSide?: string;
+          reduceOnly?: boolean;
+          closePosition?: boolean;
+        }>
+      >('/fapi/v1/openAlgoOrders', {
+        params: { symbol },
+        signed: true,
+      }),
+    ]);
+  }
+
+  getCurrentPrice(symbol: string) {
+    return this.request<{ symbol: string; price: string }>('/fapi/v1/ticker/price', {
+      params: { symbol },
+    });
+  }
+
+  async closePosition(symbol: string, positionSide?: 'BOTH' | 'LONG' | 'SHORT') {
+    const [account, positions] = await Promise.all([this.getAccount(), this.getOpenPositions(symbol)]);
+    const targetPosition =
+      positions.find((position) => {
+        if (position.symbol !== symbol || parseNumber(position.positionAmt) === 0) {
+          return false;
+        }
+
+        if (!positionSide || positionSide === 'BOTH') {
+          return true;
+        }
+
+        const rawQuantity = parseNumber(position.positionAmt) ?? 0;
+
+        if (account.dualSidePosition) {
+          return position.positionSide === positionSide;
+        }
+
+        return positionSide === 'LONG' ? rawQuantity > 0 : rawQuantity < 0;
+      }) ?? null;
+
+    if (!targetPosition) {
+      throw new Error(`No open position found for ${symbol}.`);
+    }
+
+    const rawQuantity = Math.abs(parseNumber(targetPosition.positionAmt) ?? 0);
+    const symbolInfo = await this.getSymbolInfo(symbol);
+    const stepSize = extractStepSize(symbolInfo ?? undefined);
+    const quantity = roundDownToStep(rawQuantity, stepSize);
+    const exitSide: FuturesOrderSide =
+      (parseNumber(targetPosition.positionAmt) ?? 0) > 0 ? 'SELL' : 'BUY';
+    const dualSidePosition = Boolean(account.dualSidePosition);
+    const params = {
+      symbol,
+      side: exitSide,
+      type: 'MARKET',
+      quantity,
+      ...(dualSidePosition ? { positionSide: targetPosition.positionSide ?? positionSide ?? 'BOTH' } : { reduceOnly: true }),
+      newOrderRespType: 'RESULT',
+    };
+
+    return this.request<FuturesOrderResponse>('/fapi/v1/order', {
+      method: 'POST',
+      params,
+      signed: true,
+    });
+  }
+
+  async cancelOpenOrder(symbol: string, order: { mode: 'Regular' | 'Algo'; orderId?: number; clientOrderId?: string | null; algoId?: number }) {
+    if (order.mode === 'Regular') {
+      return this.request<Record<string, unknown>>('/fapi/v1/order', {
+        method: 'DELETE',
+        params: {
+          symbol,
+          ...(order.orderId !== undefined ? { orderId: order.orderId } : {}),
+          ...(order.clientOrderId ? { origClientOrderId: order.clientOrderId } : {}),
+        },
+        signed: true,
+      });
+    }
+
+    return this.request<Record<string, unknown>>('/fapi/v1/algoOrder', {
+      method: 'DELETE',
+      params: {
+        symbol,
+        ...(order.algoId !== undefined ? { algoId: order.algoId } : {}),
+        ...(order.clientOrderId ? { clientAlgoId: order.clientOrderId } : {}),
+      },
+      signed: true,
+    });
+  }
+
+  cancelOpenOrders(symbol: string) {
+    return Promise.allSettled([
+      this.request<Record<string, unknown>>('/fapi/v1/allOpenOrders', {
+        method: 'DELETE',
+        params: { symbol },
+        signed: true,
+      }),
+      this.request<Record<string, unknown>>('/fapi/v1/algoOpenOrders', {
+        method: 'DELETE',
+        params: { symbol },
+        signed: true,
+      }),
+    ]).then((results) => {
+      const rejected = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+
+      if (rejected.length === results.length) {
+        throw rejected[0]?.reason instanceof Error ? rejected[0].reason : new Error('Failed to cancel open orders.');
+      }
+
+      return results;
+    });
+  }
+
+  async getSymbolInfo(symbol: string) {
+    const snapshot = await futuresMarketController.getMarketSymbolSnapshot(symbol);
+    return snapshot.data.symbolInfo ?? null;
+  }
+
+  async executeDemoTrade(plan: FuturesAutoBotPlan, currentPrice: number) {
+    const [account, symbolInfo] = await Promise.all([this.getAccount(), this.getSymbolInfo(plan.symbol)]);
+    const availableBalance = parseNumber(account.availableBalance ?? account.totalWalletBalance) ?? 0;
+    const stepSize = extractStepSize(symbolInfo ?? undefined);
+    const tickSize = extractTickSize(symbolInfo ?? undefined);
+    const allocatedMargin =
+      plan.allocationUnit === 'usdt' ? plan.allocationValue : availableBalance * (plan.allocationValue / 100);
+    const notional = allocatedMargin * Math.max(plan.leverage, 1);
+    const rawQuantity = notional / Math.max(currentPrice, 1);
+    const quantity = roundDownToStep(rawQuantity, stepSize);
+    const entryPrice = plan.entryMid ?? currentPrice;
+    const normalizedEntryPrice = normalizePrice(entryPrice, tickSize, symbolInfo?.pricePrecision);
+    const takeProfitPrices = plan.takeProfits
+      .map((item) => (item.price !== null ? normalizePrice(item.price, tickSize, symbolInfo?.pricePrecision) : null))
+      .filter((value): value is number => value !== null);
+    const stopLossPrice =
+      plan.stopLoss !== null ? normalizePrice(plan.stopLoss, tickSize, symbolInfo?.pricePrecision) : null;
+    const positionSide: FuturesPositionSide | null = account.dualSidePosition
+      ? plan.direction === 'long'
+        ? 'LONG'
+        : 'SHORT'
+      : null;
+    const positionSideParam = positionSide ? { positionSide } : {};
+    const algoOrderOwnershipParam = account.dualSidePosition ? positionSideParam : { reduceOnly: true };
+    const entrySide: FuturesOrderSide = plan.direction === 'long' ? 'BUY' : 'SELL';
+    const exitSide: FuturesOrderSide = plan.direction === 'long' ? 'SELL' : 'BUY';
+
+    if (quantity <= 0) {
+      throw new Error('Calculated order quantity is too small for the current balance and allocation.');
+    }
+
+    const entryOrder = await this.request<FuturesOrderResponse>('/fapi/v1/order', {
+      method: 'POST',
+      params: {
+        symbol: plan.symbol,
+        side: entrySide,
+        type: 'MARKET',
+        quantity,
+        newOrderRespType: 'RESULT',
+        ...positionSideParam,
+      },
+      signed: true,
+    });
+
+    const stopLossAlgoOrder = stopLossPrice
+      ? await this.request<FuturesAlgoOrderResponse>('/fapi/v1/algoOrder', {
+          method: 'POST',
+          params: {
+            algoType: 'CONDITIONAL',
+            clientAlgoId: createClientAlgoId(plan.symbol, 'sl'),
+            quantity,
+            side: exitSide,
+            symbol: plan.symbol,
+            triggerPrice: stopLossPrice,
+            type: 'STOP_MARKET',
+            workingType: 'MARK_PRICE',
+            ...positionSideParam,
+            ...algoOrderOwnershipParam,
+          },
+          signed: true,
+        })
+      : null;
+
+    const takeProfitQuantities = splitTakeProfitQuantity(quantity, stepSize);
+    const takeProfitAlgoOrders: FuturesAlgoOrderResponse[] = [];
+
+    for (let index = 0; index < takeProfitPrices.length; index += 1) {
+      const takeProfitPrice = takeProfitPrices[index];
+      const takeProfitQuantity = takeProfitQuantities[index];
+
+      if (takeProfitPrice === undefined || takeProfitQuantity === undefined || takeProfitQuantity <= 0) {
+        continue;
+      }
+
+      const order = await this.request<FuturesAlgoOrderResponse>('/fapi/v1/algoOrder', {
+        method: 'POST',
+        params: {
+          algoType: 'CONDITIONAL',
+          clientAlgoId: createClientAlgoId(plan.symbol, `tp${index + 1}`),
+          quantity: takeProfitQuantity,
+          symbol: plan.symbol,
+          side: exitSide,
+          triggerPrice: takeProfitPrice,
+          type: 'TAKE_PROFIT_MARKET',
+          workingType: 'MARK_PRICE',
+          ...positionSideParam,
+          ...algoOrderOwnershipParam,
+        },
+        signed: true,
+      });
+
+      takeProfitAlgoOrders.push(order);
+    }
+
+    return {
+      account,
+      entryOrder,
+      entryPrice: normalizedEntryPrice,
+      algoOrderClientIds: [
+        stopLossAlgoOrder?.clientAlgoId ?? null,
+        ...takeProfitAlgoOrders.map((order) => order.clientAlgoId ?? null),
+      ].filter((value): value is string => value !== null),
+      positionSide,
+      quantity,
+      stopLossAlgoOrder,
+      takeProfitAlgoOrders,
+    };
+  }
+}
+
+export const futuresAutoTradeService = new FuturesAutoTradeService();

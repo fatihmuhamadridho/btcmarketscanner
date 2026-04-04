@@ -7,6 +7,9 @@ import AppFooter from '@components/atoms/AppFooter.atom';
 import AnalysisDisclaimer from '@components/atoms/AnalysisDisclaimer.atom';
 import AppLayout from '@components/templates/AppLayout.template';
 import CoinChart from '../organisms/CoinChart.organism';
+import CoinAutoBotSection from '../organisms/CoinAutoBotSection.organism';
+import CoinOpenPositionsSection from '../organisms/CoinOpenPositionsSection.organism';
+import CoinOpenOrdersSection from '../organisms/CoinOpenOrdersSection.organism';
 import CoinPageStateCard from '../atoms/CoinPageStateCard.atom';
 import CoinMarketStructureSection from '../organisms/CoinMarketStructureSection.organism';
 import CoinSetupSection from '../organisms/CoinSetupSection.organism';
@@ -17,6 +20,7 @@ import type {
   CoinChartProps,
   CoinDistanceFromEntryFormatter,
   CoinMarketSymbol,
+  CoinAutoBotSectionViewModel,
   CoinPriceLevelFormatter,
   CoinPriceZoneFormatter,
   CoinSetupDetail,
@@ -30,6 +34,7 @@ import type {
 
 type CoinTemplateProps = {
   coinChart: Omit<CoinChartProps, 'symbol'>;
+  coinAutoBot: CoinAutoBotSectionViewModel;
   detail: unknown | null;
   headDescription: string;
   headTitle: string;
@@ -54,6 +59,7 @@ type CoinTemplateProps = {
 
 export default function CoinTemplate({
   coinChart,
+  coinAutoBot,
   detail,
   formatDate,
   formatDistanceFromEntry,
@@ -144,6 +150,20 @@ export default function CoinTemplate({
               />
 
               <CoinChart {...coinChart} symbol={marketSymbol.symbol ?? 'unknown'} />
+
+              <CoinAutoBotSection {...coinAutoBot} />
+
+              <CoinOpenPositionsSection
+                onClosePosition={coinAutoBot.onClosePosition}
+                positions={coinAutoBot.openPositions}
+                symbol={marketSymbol.symbol ?? 'unknown'}
+              />
+
+              <CoinOpenOrdersSection
+                onCancelOrder={coinAutoBot.onCancelOrder}
+                openOrders={coinAutoBot.openOrders}
+                symbol={marketSymbol.symbol ?? 'unknown'}
+              />
 
               <CoinMarketStructureSection timeframeSupportResistance={timeframeSupportResistance} />
 

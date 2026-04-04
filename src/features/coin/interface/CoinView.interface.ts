@@ -151,3 +151,110 @@ export type CoinDistanceFromEntryFormatter = (
   entryPrice: number | null,
   direction: 'long' | 'short'
 ) => string;
+
+export type CoinAutoBotExecutionMode = 'demo' | 'paper';
+export type CoinAutoBotExecutionBehavior = 'locked' | 're_evaluate' | 'switch_if_better';
+export type CoinAutoBotAllocationUnit = 'percent' | 'usdt';
+export type CoinAutoBotStatus = 'idle' | 'watching' | 'entry_pending' | 'entry_placed' | 'stopped' | 'error';
+
+export type CoinAutoBotTimeframeSummary = {
+  direction: 'long' | 'short';
+  entryZoneLabel: string;
+  interval: CoinTimeframe;
+  isConsensus: boolean;
+  marketConditionLabel: string;
+  riskRewardLabel: string;
+  setupGrade: 'A+' | 'A' | 'B' | 'C';
+  setupLabel: string;
+  stopLossLabel: string;
+  takeProfitLabels: Array<{
+    label: 'TP1' | 'TP2' | 'TP3';
+    valueLabel: string;
+  }>;
+  trendColor: 'teal' | 'red' | 'gray';
+  trendLabel: string;
+};
+
+export type CoinAutoBotOpenPosition = {
+  entryPriceLabel: string;
+  isolatedMarginLabel: string;
+  leverageLabel: string;
+  liquidationPriceLabel: string;
+  marginTypeLabel: string;
+  markPriceLabel: string;
+  notionalLabel: string;
+  positionAmtLabel: string;
+  positionSideLabel: 'BOTH' | 'LONG' | 'SHORT';
+  unrealizedPnlLabel: string;
+};
+
+export type CoinAutoBotOpenOrder = {
+  clientOrderId: string | null;
+  algoId: number | null;
+  orderEntryPriceLabel: string;
+  orderEstimatedMarginLabel: string;
+  orderModeLabel: string;
+  orderId: number | null;
+  orderNotionalLabel: string;
+  orderPositionSideLabel: string;
+  orderPurposeLabel: 'Entry' | 'Take profit' | 'Stop loss' | 'Other';
+  orderPriceLabel: string;
+  orderQuantityLabel: string;
+  orderReduceOnlyLabel: string;
+  orderSideLabel: string;
+  orderStatusLabel: string;
+  orderTimeInForceLabel: string;
+  orderTriggerPriceLabel: string;
+  orderTypeLabel: string;
+};
+
+export type CoinAutoBotSectionViewModel = {
+  allocationLabel: string;
+  allocationUnit: CoinAutoBotAllocationUnit;
+  allocationValue: number;
+  botStatus: CoinAutoBotStatus;
+  botStatusColor: 'gray' | 'red' | 'teal' | 'cyan' | 'yellow';
+  botStatusLabel: string;
+  currentPriceLabel: string;
+  direction: 'long' | 'short';
+  entryZoneLabel: string;
+  executionMode: CoinAutoBotExecutionMode;
+  executionBehavior: CoinAutoBotExecutionBehavior;
+  isActive: boolean;
+  isStarting: boolean;
+  isStopping: boolean;
+  marketConditionLabel: string;
+  notes: string[];
+  logs: Array<{
+    id: string;
+    level: 'info' | 'success' | 'warn' | 'error';
+    message: string;
+    timestamp: string;
+  }>;
+  executionBasisLabel: string;
+  executionConsensusLabel: string;
+  executionBehaviorLabel: string;
+  leverage: number;
+  openPositions: CoinAutoBotOpenPosition[];
+  openOrders: CoinAutoBotOpenOrder[];
+  timeframeSummaries: CoinAutoBotTimeframeSummary[];
+  onAllocationUnitChange: (value: CoinAutoBotAllocationUnit) => void;
+  onAllocationValueChange: (value: number) => void;
+  onExecutionBehaviorChange: (value: CoinAutoBotExecutionBehavior) => void;
+  onExecutionModeChange: (value: CoinAutoBotExecutionMode) => void;
+  onLeverageChange: (value: number) => void;
+  onClosePosition: (positionSide: 'BOTH' | 'LONG' | 'SHORT') => void;
+  onCancelOrder: (order: CoinAutoBotOpenOrder) => void;
+  onStart: () => void;
+  onStop: () => void;
+  previewLabel: string;
+  riskRewardLabel: string;
+  setupGrade: 'A+' | 'A' | 'B' | 'C';
+  setupLabel: string;
+  stopLossLabel: string;
+  symbol: string;
+  takeProfitLabels: Array<{
+    label: 'TP1' | 'TP2' | 'TP3';
+    valueLabel: string;
+  }>;
+};

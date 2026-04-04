@@ -1,5 +1,6 @@
 import CoinTemplate from '../templates/CoinTemplate.template';
 import { formatDate, useCoinDetailPageLogic } from '../../logic/Coin.logic';
+import { useCoinAutoBotLogic } from '../../logic/CoinAutoBot.logic';
 import { useCoinChartLogic } from '../../logic/CoinChart.logic';
 import type { CoinPageProps } from '../../interface/CoinView.interface';
 
@@ -20,6 +21,10 @@ export default function CoinPage({ symbol: initialSymbol }: CoinPageProps) {
     formatDistanceFromEntry,
     formatPriceLevel,
     formatPriceZone,
+    executionBasisLabel,
+    executionConsensusLabel,
+    executionConsensusSetup,
+    executionTimeframeSummaries,
     preferredSetup,
     selectedTimeframeSupportResistance,
     setInterval,
@@ -35,6 +40,19 @@ export default function CoinPage({ symbol: initialSymbol }: CoinPageProps) {
     trendSummary,
     TrendIcon,
   } = useCoinDetailPageLogic(initialSymbol);
+
+  const activeSetup = executionConsensusSetup;
+  const currentPrice = marketSymbol?.ticker?.displayLastPrice ? Number(marketSymbol.ticker.displayLastPrice.replaceAll(',', '')) : null;
+  const coinAutoBot = useCoinAutoBotLogic({
+    activeSetup,
+    currentPrice: Number.isFinite(currentPrice ?? NaN) ? currentPrice : null,
+    formatPriceLevel,
+    formatPriceZone,
+    executionBasisLabel,
+    executionConsensusLabel,
+    timeframeSummaries: executionTimeframeSummaries,
+    symbol: marketSymbol?.symbol ?? symbol ?? 'unknown',
+  });
 
   const coinChart = useCoinChartLogic({
     candles,
@@ -53,6 +71,7 @@ export default function CoinPage({ symbol: initialSymbol }: CoinPageProps) {
 
   return (
     <CoinTemplate
+      coinAutoBot={coinAutoBot}
       coinChart={coinChart}
       detail={detail}
       formatDate={formatDate}
