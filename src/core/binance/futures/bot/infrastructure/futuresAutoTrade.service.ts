@@ -482,7 +482,7 @@ export class FuturesAutoTradeService {
     return snapshot.data.symbolInfo ?? null;
   }
 
-  async executeDemoTrade(plan: FuturesAutoBotPlan, currentPrice: number) {
+  async executeTrade(plan: FuturesAutoBotPlan, currentPrice: number) {
     const [account, symbolInfo] = await Promise.all([this.getAccount(), this.getSymbolInfo(plan.symbol)]);
     const availableBalance = parseNumber(account.availableBalance ?? account.totalWalletBalance) ?? 0;
     const stepSize = extractStepSize(symbolInfo ?? undefined);

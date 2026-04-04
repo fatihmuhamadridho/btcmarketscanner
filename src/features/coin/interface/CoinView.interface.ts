@@ -152,8 +152,6 @@ export type CoinDistanceFromEntryFormatter = (
   direction: 'long' | 'short'
 ) => string;
 
-export type CoinAutoBotExecutionMode = 'demo' | 'paper';
-export type CoinAutoBotExecutionBehavior = 'locked' | 're_evaluate' | 'switch_if_better';
 export type CoinAutoBotAllocationUnit = 'percent' | 'usdt';
 export type CoinAutoBotStatus = 'idle' | 'watching' | 'entry_pending' | 'entry_placed' | 'stopped' | 'error';
 
@@ -219,8 +217,7 @@ export type CoinAutoBotSectionViewModel = {
   currentPriceLabel: string;
   direction: 'long' | 'short';
   entryZoneLabel: string;
-  executionMode: CoinAutoBotExecutionMode;
-  executionBehavior: CoinAutoBotExecutionBehavior;
+  executionEndpointLabel: string;
   isActive: boolean;
   isStarting: boolean;
   isStopping: boolean;
@@ -234,15 +231,12 @@ export type CoinAutoBotSectionViewModel = {
   }>;
   executionBasisLabel: string;
   executionConsensusLabel: string;
-  executionBehaviorLabel: string;
   leverage: number;
   openPositions: CoinAutoBotOpenPosition[];
   openOrders: CoinAutoBotOpenOrder[];
   timeframeSummaries: CoinAutoBotTimeframeSummary[];
   onAllocationUnitChange: (value: CoinAutoBotAllocationUnit) => void;
   onAllocationValueChange: (value: number) => void;
-  onExecutionBehaviorChange: (value: CoinAutoBotExecutionBehavior) => void;
-  onExecutionModeChange: (value: CoinAutoBotExecutionMode) => void;
   onLeverageChange: (value: number) => void;
   onClosePosition: (positionSide: 'BOTH' | 'LONG' | 'SHORT') => void;
   onCancelOrder: (order: CoinAutoBotOpenOrder) => void;

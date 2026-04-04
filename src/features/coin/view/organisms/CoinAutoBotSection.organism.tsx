@@ -17,8 +17,8 @@ const botStats = [
   },
   {
     icon: IconTrendingUp,
-    label: 'Trade mode',
-    valueKey: 'executionMode',
+    label: 'Execution endpoint',
+    valueKey: 'executionEndpointLabel',
   },
 ] as const;
 
@@ -31,11 +31,9 @@ export default function CoinAutoBotSection({
   currentPriceLabel,
   direction,
   entryZoneLabel,
-  executionMode,
   executionBasisLabel,
   executionConsensusLabel,
-  executionBehavior,
-  executionBehaviorLabel,
+  executionEndpointLabel,
   leverage,
   isActive,
   isStarting,
@@ -45,8 +43,6 @@ export default function CoinAutoBotSection({
   notes,
   onAllocationUnitChange,
   onAllocationValueChange,
-  onExecutionBehaviorChange,
-  onExecutionModeChange,
   onLeverageChange,
   onStart,
   onStop,
@@ -79,9 +75,8 @@ export default function CoinAutoBotSection({
               </Title>
             </Group>
             <Text c="dimmed" size="sm" maw={760}>
-              Live execution skeleton for {symbol}. Demo mode uses {executionBasisLabel} summary and will place actual
-              Binance demo orders when the multi-timeframe consensus enters the entry zone. Paper mode only simulates
-              the flow.
+              Live execution skeleton for {symbol}. The active Binance API endpoint is controlled by env, and the bot
+              will place actual orders when the multi-timeframe consensus enters the entry zone.
             </Text>
           </Stack>
 
@@ -112,10 +107,8 @@ export default function CoinAutoBotSection({
                 <Text c="dimmed" size="sm">
                   {item.label === 'Capital allocation'
                     ? allocationLabel
-                    : item.label === 'Trade mode'
-                      ? executionMode === 'demo'
-                        ? 'Real demo orders'
-                        : 'Simulation only'
+                    : item.label === 'Execution endpoint'
+                      ? executionEndpointLabel
                       : item.value}
                 </Text>
               </Stack>
@@ -325,39 +318,11 @@ export default function CoinAutoBotSection({
               <Group justify="space-between" align="center" wrap="wrap">
                 <Text fw={700}>Execution settings</Text>
                 <Text size="sm" c="dimmed">
-                  Mode, behavior, allocation, and leverage for this bot instance.
+                  Strategy, allocation, and leverage for this bot instance. The Binance endpoint follows env.
                 </Text>
               </Group>
 
-              <SimpleGrid cols={{ base: 1, md: 2, xl: 4 }} spacing="md">
-                <Card
-                  radius="md"
-                  p="md"
-                  withBorder
-                  style={{
-                    background: 'linear-gradient(180deg, rgba(11, 31, 46, 0.92) 0%, rgba(13, 24, 38, 0.96) 100%)',
-                    borderColor: 'rgba(56, 189, 248, 0.22)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
-                  }}
-                >
-                  <Stack gap={8}>
-                    <Text fw={700} c="cyan.2">
-                      Mode
-                    </Text>
-                    <SegmentedControl
-                      size="sm"
-                      fullWidth
-                      color="cyan"
-                      value={executionMode}
-                      onChange={(value) => onExecutionModeChange(value as typeof executionMode)}
-                      data={[
-                        { label: 'Demo', value: 'demo' },
-                        { label: 'Paper', value: 'paper' },
-                      ]}
-                    />
-                  </Stack>
-                </Card>
-
+              <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }} spacing="md">
                 <Card
                   radius="md"
                   p="md"
@@ -370,20 +335,12 @@ export default function CoinAutoBotSection({
                 >
                   <Stack gap={8}>
                     <Text fw={700} c="yellow.2">
-                      Behavior
+                      Strategy
                     </Text>
-                    <SegmentedControl
-                      size="xs"
-                      fullWidth
-                      color="yellow"
-                      value={executionBehavior}
-                      onChange={(value) => onExecutionBehaviorChange(value as typeof executionBehavior)}
-                      data={[
-                        { label: 'Lock', value: 'locked' },
-                        { label: 'Re-eval', value: 're_evaluate' },
-                        { label: 'Switch', value: 'switch_if_better' },
-                      ]}
-                    />
+                    <Text size="sm" c="dimmed" lh={1.45}>
+                      Auto refresh the best consensus until entry fills, then lock onto the open position and let the
+                      protection orders handle the exit.
+                    </Text>
                   </Stack>
                 </Card>
 
@@ -535,12 +492,8 @@ export default function CoinAutoBotSection({
             <Group justify="space-between" align="center" wrap="wrap">
               <Text size="sm" c="dimmed">
                 {isActive
-                  ? executionMode === 'demo'
-                    ? `Demo bot is armed on ${executionBasisLabel} summary (${executionBehaviorLabel}) and will place actual demo orders when price enters the consensus entry zone.`
-                    : 'Paper bot is simulating the watch loop without sending orders.'
-                  : executionMode === 'demo'
-                    ? `Start will arm the bot for actual demo execution on ${executionBasisLabel} summary (${executionBehaviorLabel}).`
-                    : 'Start will simulate the watch loop on this symbol.'}
+                  ? `Bot is armed on ${executionBasisLabel} summary and will place actual orders when price enters the consensus entry zone.`
+                  : `Start will arm the bot for actual execution on ${executionBasisLabel} summary. The Binance endpoint is controlled by env.`}
               </Text>
 
               <Group gap="sm" wrap="wrap">

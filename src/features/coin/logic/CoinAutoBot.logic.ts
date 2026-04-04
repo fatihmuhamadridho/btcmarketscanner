@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BASE_API_BINANCE } from '@configs/base.config';
 import { formatDecimalString } from '@utils/format-number.util';
 import type {
-  CoinAutoBotExecutionMode,
-  CoinAutoBotExecutionBehavior,
   CoinAutoBotAllocationUnit,
   CoinAutoBotSectionViewModel,
   CoinAutoBotOpenPosition,
@@ -38,8 +37,6 @@ type CoinAutoBotApiResponse =
           direction: 'long' | 'short';
           entryMid: number | null;
           entryZone: { high: number | null; low: number | null };
-          executionMode: CoinAutoBotExecutionMode;
-          executionBehavior: CoinAutoBotExecutionBehavior;
           leverage: number;
           notes: string[];
           riskReward: number | null;
@@ -161,16 +158,18 @@ function getStatusColor(status: CoinAutoBotStatus) {
   }
 }
 
-function getBehaviorLabel(value: CoinAutoBotExecutionBehavior) {
-  switch (value) {
-    case 're_evaluate':
-      return 'Re-evaluate every scan';
-    case 'switch_if_better':
-      return 'Switch if better';
-    case 'locked':
-    default:
-      return 'Locked until filled';
+function getExecutionEndpointLabel() {
+  const baseUrl = BASE_API_BINANCE ?? 'https://demo-fapi.binance.com/fapi/v1';
+
+  if (baseUrl.includes('demo')) {
+    return 'Binance demo API';
   }
+
+  if (baseUrl.includes('fapi.binance.com')) {
+    return 'Binance live API';
+  }
+
+  return 'Configured Binance API';
 }
 
 export function useCoinAutoBotLogic({
@@ -184,8 +183,6 @@ export function useCoinAutoBotLogic({
   symbol,
 }: CoinAutoBotLogicProps): CoinAutoBotSectionViewModel {
   const queryClient = useQueryClient();
-  const [executionMode, setExecutionMode] = useState<CoinAutoBotExecutionMode>('demo');
-  const [executionBehavior, setExecutionBehavior] = useState<CoinAutoBotExecutionBehavior>('locked');
   const [allocationUnit, setAllocationUnit] = useState<CoinAutoBotAllocationUnit>('percent');
   const [allocationValue, setAllocationValue] = useState(12);
   const [leverage, setLeverage] = useState(10);
@@ -269,8 +266,6 @@ export function useCoinAutoBotLogic({
           entryHigh: activeSetup.entryZone.high,
           entryLow: activeSetup.entryZone.low,
           entryMid: activeSetup.entryMid,
-          executionMode,
-          executionBehavior,
           notes: activeSetup.reasons,
           leverage,
           riskReward: activeSetup.riskReward,
@@ -428,11 +423,9 @@ export function useCoinAutoBotLogic({
     currentPriceLabel: formatPriceLevel(currentPrice),
     direction: activeSetup.direction,
     entryZoneLabel: formatPriceZone(activeSetup.entryZone),
-    executionMode,
-    executionBehavior,
     executionBasisLabel,
     executionConsensusLabel,
-    executionBehaviorLabel: getBehaviorLabel(executionBehavior),
+    executionEndpointLabel: getExecutionEndpointLabel(),
     leverage,
     isActive,
     isStarting: startMutation.isPending,
@@ -445,8 +438,6 @@ export function useCoinAutoBotLogic({
     timeframeSummaries,
     onAllocationUnitChange: setAllocationUnit,
     onAllocationValueChange: setAllocationValue,
-    onExecutionBehaviorChange: setExecutionBehavior,
-    onExecutionModeChange: setExecutionMode,
     onLeverageChange: setLeverage,
     onClosePosition: (positionSide) => {
       void closePositionMutation.mutateAsync(positionSide);

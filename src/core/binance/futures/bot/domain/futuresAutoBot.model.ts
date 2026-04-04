@@ -1,7 +1,6 @@
-import type { CoinAutoBotExecutionMode, CoinAutoBotStatus } from '@features/coin/interface/CoinView.interface';
+import type { CoinAutoBotStatus } from '@features/coin/interface/CoinView.interface';
 
 export type FuturesAutoBotDirection = 'long' | 'short';
-export type FuturesAutoBotExecutionBehavior = 'locked' | 're_evaluate' | 'switch_if_better';
 
 export type FuturesAutoBotPlan = {
   allocationUnit: 'percent' | 'usdt';
@@ -13,8 +12,6 @@ export type FuturesAutoBotPlan = {
     high: number | null;
     low: number | null;
   };
-  executionMode: CoinAutoBotExecutionMode;
-  executionBehavior: FuturesAutoBotExecutionBehavior;
   leverage: number;
   notes: string[];
   riskReward: number | null;

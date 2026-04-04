@@ -35,13 +35,6 @@ function buildInput(body: Record<string, unknown>): StartFuturesAutoBotInput | n
 
   const symbol = typeof body.symbol === 'string' ? body.symbol.trim().toUpperCase() : '';
   const direction = body.direction === 'long' || body.direction === 'short' ? body.direction : null;
-  const executionMode = body.executionMode === 'paper' || body.executionMode === 'demo' ? body.executionMode : null;
-  const executionBehavior =
-    body.executionBehavior === 'locked' ||
-    body.executionBehavior === 're_evaluate' ||
-    body.executionBehavior === 'switch_if_better'
-      ? body.executionBehavior
-      : null;
   const setupLabel = typeof body.setupLabel === 'string' ? body.setupLabel : '';
   const setupGrade = body.setupGrade === 'A+' || body.setupGrade === 'A' || body.setupGrade === 'B' || body.setupGrade === 'C'
     ? body.setupGrade
@@ -60,8 +53,6 @@ function buildInput(body: Record<string, unknown>): StartFuturesAutoBotInput | n
   if (
     !symbol ||
     !direction ||
-    !executionMode ||
-    !executionBehavior ||
     !setupLabel ||
     !setupGrade ||
     setupGradeRank === null ||
@@ -101,8 +92,6 @@ function buildInput(body: Record<string, unknown>): StartFuturesAutoBotInput | n
       high: entryHigh,
       low: entryLow,
     },
-    executionMode,
-    executionBehavior,
     leverage,
     notes: Array.isArray(body.notes) ? body.notes.filter((item): item is string => typeof item === 'string') : [],
     riskReward,
