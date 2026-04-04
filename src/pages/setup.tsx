@@ -1,12 +1,12 @@
 import type { GetServerSideProps } from 'next';
-import HomePage from '@features/home/view/pages/Home.page';
+import SetupPage from '@features/setup/view/pages/Setup.page';
 import { HAS_BINANCE_CREDENTIALS } from '@configs/base.config';
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  if (!HAS_BINANCE_CREDENTIALS) {
+  if (HAS_BINANCE_CREDENTIALS) {
     return {
       redirect: {
-        destination: '/setup',
+        destination: '/',
         permanent: false,
       },
     };
@@ -17,4 +17,4 @@ export const getServerSideProps: GetServerSideProps = async () => {
   };
 };
 
-export default HomePage;
+export default SetupPage;

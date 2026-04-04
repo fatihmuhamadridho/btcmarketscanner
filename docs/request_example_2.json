@@ -1,0 +1,26 @@
+{
+  "symbol": "BTCUSDT",
+  "htf": {
+    "timeframe": "1h",
+    "trend": "bullish",
+    "ema_alignment": "bullish"
+  },
+  "ltf": {
+    "timeframe": "15m",
+    "trend": "pullback",
+    "rsi": 58,
+    "atr": 250
+  },
+  "entry_tf": {
+    "timeframe": "1m",
+    "trigger": "breakout",
+    "volume": "increasing"
+  },
+  "setup": {
+    "direction": "long",
+    "entry": 68500,
+    "stop_loss": 68250,
+    "take_profit": 69000,
+    "risk_reward": "1:2"
+  }
+}

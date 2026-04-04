@@ -12,6 +12,13 @@ export type AppNavbarMarketItem = {
   } | null;
 };
 
+export type AppNavbarAccountProfile = {
+  avatarLabel: string;
+  displayName: string;
+  isConfigured: boolean;
+  subtitle: string;
+};
+
 export type AppNavbarProps = {
   isMarketLoading: boolean;
   marketItems: AppNavbarMarketItem[];

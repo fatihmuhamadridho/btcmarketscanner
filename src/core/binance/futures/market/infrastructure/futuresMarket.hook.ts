@@ -22,10 +22,16 @@ function getSupportResistance(candles: FuturesKlineCandle[], windowSize: number)
   }
 
   const windowCandles = candles.slice(-windowSize);
+  const lows = windowCandles.map((candle) => candle.low);
+  const highs = windowCandles.map((candle) => candle.high);
+  const averageSupport = lows.reduce((sum, value) => sum + value, 0) / lows.length;
+  const averageResistance = highs.reduce((sum, value) => sum + value, 0) / highs.length;
 
   return {
-    support: Math.min(...windowCandles.map((candle) => candle.low)),
-    resistance: Math.max(...windowCandles.map((candle) => candle.high)),
+    averageResistance,
+    averageSupport,
+    resistance: Math.max(...highs),
+    support: Math.min(...lows),
   };
 }
 
@@ -100,7 +106,14 @@ export type TimeframeSupportResistance = {
   label: string;
   isLoading: boolean;
   isError: boolean;
-  supportResistance: { support: number; resistance: number } | null;
+  supportResistance:
+    | {
+        averageResistance: number;
+        averageSupport: number;
+        resistance: number;
+        support: number;
+      }
+    | null;
 };
 
 export function useFuturesMarketOverview() {

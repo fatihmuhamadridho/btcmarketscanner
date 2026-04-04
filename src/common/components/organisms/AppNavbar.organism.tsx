@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Box, Button, Container, Group, Paper, Stack } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
 import { IconHome, IconLayoutDashboard, IconSearch } from '@tabler/icons-react';
 import AppNavbarBrand from '../atoms/AppNavbarBrand.atom';
+import AppNavbarAccount from '../atoms/AppNavbarAccount.atom';
 import AppNavbarSearchModal from '../molecules/AppNavbarSearchModal.molecule';
 import type { AppNavbarProps } from '../interface/AppNavbar.interface';
 
@@ -27,6 +29,25 @@ export default function AppNavbar({ isMarketLoading, marketItems }: AppNavbarPro
   const router = useRouter();
   const [isSearchOpened, setIsSearchOpened] = useState(false);
   const isCoinRoute = router.pathname.startsWith('/coin/');
+  const { data: accountProfile, isLoading: isLoadingAccountProfile } = useQuery({
+    queryKey: ['binance-account-profile'],
+    queryFn: async () => {
+      const response = await fetch('/api/binance/account');
+
+      if (!response.ok) {
+        throw new Error('Failed to load Binance account profile');
+      }
+
+      return (await response.json()) as {
+        avatarLabel: string;
+        displayName: string;
+        isConfigured: boolean;
+        subtitle: string;
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -79,7 +100,7 @@ export default function AppNavbar({ isMarketLoading, marketItems }: AppNavbarPro
           }}
         >
           <Stack gap={10}>
-            <Group justify="space-between" align="flex-start" gap="md" wrap="nowrap">
+            <Group justify="space-between" align="center" gap="md" wrap="nowrap">
               <AppNavbarBrand isCoinRoute={isCoinRoute} />
 
               <Button
@@ -109,26 +130,36 @@ export default function AppNavbar({ isMarketLoading, marketItems }: AppNavbarPro
               </Button>
             </Group>
 
-            <Group gap={8} wrap="nowrap" style={{ overflowX: 'auto', maxWidth: '100%' }}>
-              {NAV_ITEMS.map((item) => {
-                const isActive = item.href === '/' ? router.pathname === '/' : router.pathname.startsWith('/coin/');
+            <Group justify="space-between" align="center" gap="md" wrap="nowrap">
+              <Group gap="sm" wrap="nowrap" style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                {NAV_ITEMS.map((item) => {
+                  const isActive = item.href === '/' ? router.pathname === '/' : router.pathname.startsWith('/coin/');
 
-                return (
-                  <Button
-                    key={item.href}
-                    component={Link}
-                    href={item.href}
-                    variant={isActive ? 'light' : 'subtle'}
-                    color={isActive ? 'cyan' : 'gray'}
-                    radius="xl"
-                    size="sm"
-                    leftSection={item.href === '/' ? <IconHome size={16} /> : <IconLayoutDashboard size={16} />}
-                    style={{ flex: '0 0 auto' }}
-                  >
-                    {item.label}
-                  </Button>
-                );
-              })}
+                  return (
+                    <Button
+                      key={item.href}
+                      component={Link}
+                      href={item.href}
+                      variant={isActive ? 'light' : 'subtle'}
+                      color={isActive ? 'cyan' : 'gray'}
+                      radius="xl"
+                      size="sm"
+                      leftSection={item.href === '/' ? <IconHome size={16} /> : <IconLayoutDashboard size={16} />}
+                      style={{ flex: '0 0 auto' }}
+                    >
+                      {item.label}
+                    </Button>
+                  );
+                })}
+              </Group>
+
+              <AppNavbarAccount
+                avatarLabel={accountProfile?.avatarLabel ?? '?'}
+                displayName={accountProfile?.displayName ?? 'Loading account'}
+                isConfigured={accountProfile?.isConfigured ?? false}
+                isLoading={isLoadingAccountProfile}
+                subtitle={accountProfile?.subtitle ?? 'Fetching Binance data'}
+              />
             </Group>
           </Stack>
         </Paper>

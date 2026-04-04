@@ -127,10 +127,14 @@ export type CoinTimeframeSupportResistance = {
   interval: string;
   isLoading: boolean;
   label: string;
-  supportResistance: {
-    support: number;
-    resistance: number;
-  } | null;
+  supportResistance:
+    | {
+        averageResistance: number;
+        averageSupport: number;
+        resistance: number;
+        support: number;
+      }
+    | null;
 };
 
 export type MarketStructureTerm = 'short' | 'medium' | 'long';
