@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto';
+import { formatDecimalString } from '@utils/format-number.util';
+import { HAS_REDIS_REST_CONNECTION, redisPushTrimList, redisRestCommand } from '@utils/redis.util';
 import type {
   FuturesAutoBotExecutionRecord,
   FuturesAutoBotLogEntry,
@@ -25,7 +27,20 @@ function createLog(level: FuturesAutoBotLogEntry['level'], message: string): Fut
   };
 }
 
-function appendLog(symbol: string, log: FuturesAutoBotLogEntry) {
+function getLogStorageKey(symbol: string) {
+  return `btcmarketscanner:auto-bot:logs:${symbol}`;
+}
+
+async function appendLog(symbol: string, log: FuturesAutoBotLogEntry) {
+  if (HAS_REDIS_REST_CONNECTION) {
+    try {
+      await redisPushTrimList(getLogStorageKey(symbol), JSON.stringify(log), 50);
+      return;
+    } catch {
+      // Fall back to memory in local/dev mode or if Redis is temporarily unavailable.
+    }
+  }
+
   const currentLogs = inMemoryLogs.get(symbol) ?? [];
   inMemoryLogs.set(symbol, [...currentLogs, log].slice(-50));
 }
@@ -38,12 +53,54 @@ function formatDirectionLabel(direction: 'long' | 'short') {
   return direction === 'long' ? 'LONG' : 'SHORT';
 }
 
+function parseNumber(value?: string | null) {
+  if (value === undefined || value === null || value.trim().length === 0) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatLogPrice(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return 'n/a';
+  }
+
+  return formatDecimalString(value.toFixed(2));
+}
+
+function formatLogPriceRange(min: number | null, max: number | null) {
+  return `${formatLogPrice(min)} - ${formatLogPrice(max)}`;
+}
+
 export class FuturesAutoBotService {
   get(symbol: string) {
     return inMemoryBots.get(symbol) ?? null;
   }
 
-  getLogs(symbol: string) {
+  async getLogs(symbol: string) {
+    if (HAS_REDIS_REST_CONNECTION) {
+      try {
+        const entries = await redisRestCommand<string[]>('lrange', getLogStorageKey(symbol), 0, 49);
+        const parsedEntries = entries
+          .map((entry) => {
+            try {
+              return JSON.parse(entry) as FuturesAutoBotLogEntry;
+            } catch {
+              return null;
+            }
+          })
+          .filter((entry): entry is FuturesAutoBotLogEntry => entry !== null);
+
+        if (parsedEntries.length > 0) {
+          return parsedEntries.reverse();
+        }
+      } catch {
+        // Fallback to memory below.
+      }
+    }
+
     return inMemoryLogs.get(symbol) ?? [];
   }
 
@@ -77,7 +134,7 @@ export class FuturesAutoBotService {
           },
           updatedAt: new Date().toISOString(),
         };
-        appendLog(
+        await appendLog(
           symbol,
           createLog(
             'info',
@@ -101,7 +158,7 @@ export class FuturesAutoBotService {
           },
           updatedAt: new Date().toISOString(),
         };
-        appendLog(
+        await appendLog(
           symbol,
           createLog(
             'success',
@@ -109,7 +166,7 @@ export class FuturesAutoBotService {
           )
         );
       } else if (!isPositionOpen && current.plan.executionBehavior === 'locked') {
-        appendLog(
+        await appendLog(
           symbol,
           createLog(
             'info',
@@ -117,7 +174,7 @@ export class FuturesAutoBotService {
           )
         );
       } else if (!isPositionOpen && !consensus.consensusSetup) {
-        appendLog(
+        await appendLog(
           symbol,
           createLog('warn', `Consensus unavailable for ${symbol}. Keeping current plan until enough market data loads.`)
         );
@@ -136,10 +193,10 @@ export class FuturesAutoBotService {
       const entryMax = entryLow !== null && entryHigh !== null ? Math.max(entryLow, entryHigh) : null;
       const inEntryZone = entryMin !== null && entryMax !== null ? currentPrice >= entryMin && currentPrice <= entryMax : false;
       const scanMessage = isPositionOpen
-        ? `Position open for ${symbol}: price ${currentPrice.toFixed(2)}, tracking market bias ${consensus.consensusSetup ? formatDirectionLabel(consensus.consensusSetup.direction) : 'n/a'} from ${consensus.executionConsensusLabel}. Letting SL handle the exit.`
-        : `Progress check for ${symbol}: price ${currentPrice.toFixed(2)}, entry zone ${entryMin ?? 'n/a'} - ${entryMax ?? 'n/a'}, TP1 ${current.plan.takeProfits[0]?.price ?? 'n/a'}, SL ${current.plan.stopLoss ?? 'n/a'}.`;
+        ? `Position open for ${symbol}: price ${formatLogPrice(currentPrice)}, tracking market bias ${consensus.consensusSetup ? formatDirectionLabel(consensus.consensusSetup.direction) : 'n/a'} from ${consensus.executionConsensusLabel}. Letting SL handle the exit.`
+        : `Progress check for ${symbol}: price ${formatLogPrice(currentPrice)}, entry zone ${formatLogPriceRange(entryMin, entryMax)}, TP1 ${formatLogPrice(current.plan.takeProfits[0]?.price)}, SL ${formatLogPrice(current.plan.stopLoss)}.`;
 
-      appendLog(symbol, createLog('info', scanMessage));
+      await appendLog(symbol, createLog('info', scanMessage));
 
       const scannedState: FuturesAutoBotState = {
         ...nextState,
@@ -147,9 +204,58 @@ export class FuturesAutoBotService {
         updatedAt: new Date().toISOString(),
       };
 
+      if (nextState.execution && nextState.status === 'entry_pending') {
+        const openPositions = await futuresAutoTradeService.getOpenPositions(symbol);
+        const filledPosition = openPositions.find((position) => {
+          if (position.symbol !== symbol) {
+            return false;
+          }
+
+          const positionAmt = parseNumber(position.positionAmt) ?? 0;
+
+          return nextState.plan.direction === 'long' ? positionAmt > 0 : positionAmt < 0;
+        });
+
+        if (filledPosition) {
+          const protectionOrders = await futuresAutoTradeService.placeProtectionOrders(nextState.plan, nextState.execution.quantity);
+          const filledState: FuturesAutoBotState = {
+            ...scannedState,
+            execution: {
+              ...nextState.execution,
+              stopLossAlgoOrderId: protectionOrders.stopLossAlgoOrder?.algoId ?? null,
+              takeProfitAlgoOrderIds: protectionOrders.takeProfitAlgoOrders.map((order) => order.algoId),
+              algoOrderClientIds: protectionOrders.algoOrderClientIds,
+            },
+            status: 'entry_placed',
+          };
+
+          inMemoryBots.set(symbol, filledState);
+          await appendLog(
+            symbol,
+            createLog(
+              'success',
+              `Entry filled for ${symbol} at ${formatLogPrice(filledState.execution?.entryPrice ?? currentPrice)}. TP/SL protection orders placed.`
+            )
+          );
+
+          return filledState;
+        }
+
+        inMemoryBots.set(symbol, scannedState);
+        await appendLog(
+          symbol,
+          createLog(
+            'info',
+            `Limit entry for ${symbol} remains pending at ${formatLogPrice(nextState.execution.entryPrice)}. Waiting for fill before placing TP/SL.`
+          )
+        );
+
+        return scannedState;
+      }
+
       if (nextState.plan.executionMode === 'paper') {
         inMemoryBots.set(symbol, scannedState);
-        appendLog(
+        await appendLog(
           symbol,
           createLog(
             'info',
@@ -169,11 +275,18 @@ export class FuturesAutoBotService {
         return scannedState;
       }
 
-      appendLog(symbol, createLog('success', `Entry trigger hit for ${symbol} at ${currentPrice.toFixed(2)}. Placing demo orders.`));
+      await appendLog(
+        symbol,
+        createLog(
+          'success',
+          `Entry trigger hit for ${symbol} at ${formatLogPrice(currentPrice)}. Placing limit entry at the zone edge and waiting for fill.`
+        )
+      );
 
       const execution = (await futuresAutoTradeService.executeDemoTrade(nextState.plan, currentPrice)) as {
         entryOrder: { orderId: number; status?: string | null; avgPrice?: string | null };
         entryPrice: number | null;
+        entryFilled: boolean;
         algoOrderClientIds: string[];
         positionSide: 'LONG' | 'SHORT' | null;
         quantity: number;
@@ -196,16 +309,18 @@ export class FuturesAutoBotService {
       const executedState: FuturesAutoBotState = {
         ...scannedState,
         execution: executionRecord,
-        status: 'entry_placed',
+        status: execution.entryFilled ? 'entry_placed' : 'entry_pending',
       };
 
       inMemoryBots.set(symbol, executedState);
 
-      appendLog(
+      await appendLog(
         symbol,
         createLog(
           'success',
-          `Demo entry placed for ${symbol}. Entry order #${executionRecord.entryOrderId}, TP algo orders ${executionRecord.takeProfitAlgoOrderIds.join(', ') || 'n/a'}, SL algo order ${executionRecord.stopLossAlgoOrderId ?? 'n/a'}.`
+          execution.entryFilled
+            ? `Demo entry filled for ${symbol}. Entry order #${executionRecord.entryOrderId}, TP algo orders ${executionRecord.takeProfitAlgoOrderIds.join(', ') || 'n/a'}, SL algo order ${executionRecord.stopLossAlgoOrderId ?? 'n/a'}.`
+            : `Demo limit entry placed for ${symbol} at ${formatLogPrice(executionRecord.entryPrice)}. Waiting for fill before placing TP/SL.`
         )
       );
 
@@ -219,7 +334,7 @@ export class FuturesAutoBotService {
       };
 
       inMemoryBots.set(symbol, erroredState);
-      appendLog(symbol, createLog('error', `Auto bot execution failed for ${symbol}: ${errorMessage}`));
+      await appendLog(symbol, createLog('error', `Auto bot execution failed for ${symbol}: ${errorMessage}`));
 
       return erroredState;
     } finally {
@@ -227,15 +342,14 @@ export class FuturesAutoBotService {
     }
   }
 
-  start(input: StartFuturesAutoBotInput) {
+  async start(input: StartFuturesAutoBotInput) {
     const now = new Date().toISOString();
     const status: FuturesAutoBotState['status'] = input.executionMode === 'demo' ? 'entry_pending' : 'watching';
-    const existingLogs = inMemoryLogs.get(input.symbol) ?? [];
     const allocationLabel = input.allocationUnit === 'percent' ? `${input.allocationValue}% of wallet` : `${input.allocationValue} USDT margin`;
     const logMessage =
       input.executionMode === 'demo'
-        ? `Start requested for ${input.symbol} in demo mode with ${input.executionBehavior} behavior. Armed for actual entry on ${input.direction} setup with entry ${input.entryMid ?? 'n/a'}, allocation ${allocationLabel}, leverage ${input.leverage}x.`
-        : `Start requested for ${input.symbol} in paper mode with ${input.executionBehavior} behavior. Simulating ${input.direction} setup with entry ${input.entryMid ?? 'n/a'}, allocation ${allocationLabel}, leverage ${input.leverage}x.`;
+        ? `Start requested for ${input.symbol} in demo mode with ${input.executionBehavior} behavior. Armed for actual entry on ${input.direction} setup with entry ${formatLogPrice(input.entryMid)}, allocation ${allocationLabel}, leverage ${input.leverage}x.`
+        : `Start requested for ${input.symbol} in paper mode with ${input.executionBehavior} behavior. Simulating ${input.direction} setup with entry ${formatLogPrice(input.entryMid)}, allocation ${allocationLabel}, leverage ${input.leverage}x.`;
 
     const state: FuturesAutoBotState = {
       botId: createBotId(input.symbol),
@@ -246,7 +360,7 @@ export class FuturesAutoBotService {
     };
 
     inMemoryBots.set(input.symbol, state);
-    inMemoryLogs.set(input.symbol, [...existingLogs, createLog('success', logMessage)].slice(-50));
+    await appendLog(input.symbol, createLog('success', logMessage));
 
     return state;
   }
@@ -255,17 +369,17 @@ export class FuturesAutoBotService {
     const current = inMemoryBots.get(symbol);
 
     if (!current) {
-      appendLog(symbol, createLog('warn', `Stop requested for ${symbol}, but no active bot was found.`));
+      await appendLog(symbol, createLog('warn', `Stop requested for ${symbol}, but no active bot was found.`));
       return null;
     }
 
     if (current.execution || current.status === 'entry_placed') {
       try {
         await futuresAutoTradeService.cancelOpenOrders(symbol);
-        appendLog(symbol, createLog('success', `Cancelled open demo orders for ${symbol}.`));
+        await appendLog(symbol, createLog('success', `Cancelled open demo orders for ${symbol}.`));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown cancellation error.';
-        appendLog(symbol, createLog('error', `Failed to cancel open demo orders for ${symbol}: ${errorMessage}`));
+        await appendLog(symbol, createLog('error', `Failed to cancel open demo orders for ${symbol}: ${errorMessage}`));
       }
     }
 
@@ -276,15 +390,22 @@ export class FuturesAutoBotService {
     };
 
     inMemoryBots.set(symbol, nextState);
-    appendLog(symbol, createLog('info', `Auto bot stopped for ${symbol}. Active watch loop ended.`));
+    await appendLog(symbol, createLog('info', `Auto bot stopped for ${symbol}. Active watch loop ended.`));
 
     return nextState;
   }
 
-  clear(symbol: string) {
+  async clear(symbol: string) {
     inMemoryBots.delete(symbol);
     inMemoryLogs.delete(symbol);
     inFlightProgressChecks.delete(symbol);
+    if (HAS_REDIS_REST_CONNECTION) {
+      try {
+        await redisRestCommand<number>('del', getLogStorageKey(symbol));
+      } catch {
+        // ignore cleanup failures
+      }
+    }
   }
 }
 

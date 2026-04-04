@@ -105,6 +105,7 @@ type CoinBinanceOpenOrdersApiResponse =
         algoId: number | null;
         orderEntryPriceLabel: string;
         orderEstimatedMarginLabel: string;
+        orderLeverageLabel: string;
         orderModeLabel: string;
         orderId: number | null;
         orderPriceLabel: string;
@@ -187,7 +188,7 @@ export function useCoinAutoBotLogic({
   const [executionBehavior, setExecutionBehavior] = useState<CoinAutoBotExecutionBehavior>('locked');
   const [allocationUnit, setAllocationUnit] = useState<CoinAutoBotAllocationUnit>('percent');
   const [allocationValue, setAllocationValue] = useState(12);
-  const [leverage, setLeverage] = useState(1);
+  const [leverage, setLeverage] = useState(10);
 
   const { data: botResponse } = useQuery({
     queryKey: ['coin-auto-bot', symbol],
@@ -207,7 +208,7 @@ export function useCoinAutoBotLogic({
       query.state.data?.bot?.status === 'watching' ||
       query.state.data?.bot?.status === 'entry_pending' ||
       query.state.data?.bot?.status === 'entry_placed'
-        ? 5_000
+        ? 15_000
         : false,
     refetchOnWindowFocus: false,
   });
@@ -228,7 +229,7 @@ export function useCoinAutoBotLogic({
     staleTime: 10 * 1000,
     refetchInterval: (query) =>
       query.state.data?.positions?.length
-        ? 5_000
+        ? 15_000
         : query.state.data?.positions === undefined
           ? false
           : 15_000,
@@ -249,7 +250,7 @@ export function useCoinAutoBotLogic({
     },
     enabled: symbol.length > 0,
     staleTime: 10 * 1000,
-    refetchInterval: (query) => (query.state.data?.openOrders?.length ? 5_000 : 15_000),
+    refetchInterval: () => 15_000,
     refetchOnWindowFocus: false,
   });
 
@@ -401,6 +402,7 @@ export function useCoinAutoBotLogic({
     algoId: order.algoId,
     orderEntryPriceLabel: order.orderEntryPriceLabel,
     orderEstimatedMarginLabel: order.orderEstimatedMarginLabel,
+    orderLeverageLabel: order.orderLeverageLabel,
     orderModeLabel: order.orderModeLabel,
     orderId: order.orderId,
     orderPriceLabel: order.orderPriceLabel,
@@ -453,6 +455,10 @@ export function useCoinAutoBotLogic({
       void cancelOrderMutation.mutateAsync(order);
     },
     onStart: () => {
+      if (isActive || startMutation.isPending) {
+        return;
+      }
+
       void startMutation.mutateAsync();
     },
     onStop: () => {

@@ -551,6 +551,7 @@ export default function CoinAutoBotSection({
                   color="cyan"
                   variant="light"
                   loading={isStarting}
+                  disabled={isStarting || isActive}
                   onClick={onStart}
                 >
                   Start auto bot

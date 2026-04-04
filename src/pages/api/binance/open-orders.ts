@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { formatDecimalString } from '@utils/format-number.util';
 import { futuresAutoBotService } from '@core/binance/futures/bot/infrastructure/futuresAutoBot.service';
 import { futuresAutoTradeService } from '@core/binance/futures/bot/infrastructure/futuresAutoTrade.service';
 
@@ -10,6 +11,7 @@ type BinanceOpenOrderApiResponse =
         algoId: number | null;
         orderEntryPriceLabel: string;
         orderEstimatedMarginLabel: string;
+        orderLeverageLabel: string;
         orderModeLabel: string;
         orderId: number | null;
         orderPriceLabel: string;
@@ -50,15 +52,15 @@ function parseNumber(value?: string | null) {
 }
 
 function formatPrice(value: number | null) {
-  return value === null ? 'n/a' : `${value.toFixed(2)} USDT`;
+  return value === null ? 'n/a' : `${formatDecimalString(value.toFixed(2))} USDT`;
 }
 
 function formatQuantity(value: number | null) {
-  return value === null ? 'n/a' : value.toFixed(4);
+  return value === null ? 'n/a' : formatDecimalString(value.toFixed(4));
 }
 
 function formatMargin(value: number | null) {
-  return value === null ? 'n/a' : `${value.toFixed(2)} USDT`;
+  return value === null ? 'n/a' : `${formatDecimalString(value.toFixed(2))} USDT`;
 }
 
 function getOrderPurposeLabel(type?: string | null) {
@@ -115,8 +117,16 @@ export default async function handler(
       return res.status(200).json({ ok: true } as BinanceCancelOrderApiResponse);
     }
 
-    const [regularOrders, algoOrders] = await futuresAutoTradeService.getOpenOrders(symbol);
-    const leverage = futuresAutoBotService.get(symbol)?.plan.leverage ?? null;
+    const [[regularOrders, algoOrders], openPositions] = await Promise.all([
+      futuresAutoTradeService.getOpenOrders(symbol),
+      futuresAutoTradeService.getOpenPositions(symbol),
+    ]);
+    const leverageFromBot = futuresAutoBotService.get(symbol)?.plan.leverage ?? null;
+    const leverageFromPosition = openPositions.find((position) => position.symbol === symbol && parseNumber(position.positionAmt) !== 0)?.leverage;
+    const leverage =
+      leverageFromBot ??
+      (typeof leverageFromPosition === 'string' ? parseNumber(leverageFromPosition) : leverageFromPosition ?? null);
+    const leverageLabel = leverage !== null ? `${leverage}x` : '10x';
 
     const openOrders = [
       ...regularOrders.map((order) => ({
@@ -126,9 +136,8 @@ export default async function handler(
         orderEstimatedMarginLabel:
           leverage !== null && parseNumber(order.price) !== null && parseNumber(order.origQty ?? null) !== null
             ? formatMargin((parseNumber(order.price)! * parseNumber(order.origQty ?? null)!) / Math.max(leverage, 1))
-            : leverage !== null
-              ? 'n/a'
-              : 'Unknown leverage',
+            : 'n/a',
+        orderLeverageLabel: leverageLabel,
         orderModeLabel: 'Regular',
         orderId: order.orderId ?? null,
         orderPriceLabel: formatPrice(parseNumber(order.price)),
@@ -158,9 +167,8 @@ export default async function handler(
             ? formatMargin(
                 (parseNumber(order.triggerPrice ?? null)! * parseNumber(order.quantity ?? null)!) / Math.max(leverage, 1)
               )
-            : leverage !== null
-              ? 'n/a'
-              : 'Unknown leverage',
+            : 'n/a',
+        orderLeverageLabel: leverageLabel,
         orderModeLabel: 'Algo',
         orderId: null,
         orderPriceLabel: formatPrice(parseNumber(order.price ?? null)),

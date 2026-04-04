@@ -147,6 +147,29 @@ function createClientAlgoId(symbol: string, suffix: string) {
   return `${symbol}-${suffix}-${randomPart}`.slice(0, 32);
 }
 
+function isProtectionOrderType(type?: string | null) {
+  return Boolean(type && (type.includes('STOP') || type.includes('TAKE_PROFIT')));
+}
+
+function matchesPositionSide(
+  orderPositionSide: string | undefined,
+  positionSide?: 'BOTH' | 'LONG' | 'SHORT'
+) {
+  if (!positionSide || positionSide === 'BOTH') {
+    return true;
+  }
+
+  return orderPositionSide === positionSide;
+}
+
+function getEntryLimitPrice(plan: FuturesAutoBotPlan, currentPrice: number) {
+  if (plan.direction === 'long') {
+    return plan.entryZone.low ?? plan.entryMid ?? currentPrice;
+  }
+
+  return plan.entryZone.high ?? plan.entryMid ?? currentPrice;
+}
+
 export class FuturesAutoTradeService {
   private async request<T>(
     path: string,
@@ -291,7 +314,41 @@ export class FuturesAutoTradeService {
       method: 'POST',
       params,
       signed: true,
+    }).then(async (orderResponse) => {
+      await this.cancelProtectionOrders(symbol, targetPosition.positionSide ?? positionSide ?? 'BOTH');
+      return orderResponse;
     });
+  }
+
+  async cancelProtectionOrders(symbol: string, positionSide?: 'BOTH' | 'LONG' | 'SHORT') {
+    const [regularOrders, algoOrders] = await this.getOpenOrders(symbol);
+    const regularProtectionOrders = regularOrders.filter(
+      (order) =>
+        isProtectionOrderType(order.type) &&
+        matchesPositionSide(order.positionSide, positionSide)
+    );
+    const algoProtectionOrders = algoOrders.filter(
+      (order) =>
+        (order.reduceOnly === true || isProtectionOrderType(order.type) || order.closePosition === true) &&
+        matchesPositionSide(order.positionSide, positionSide)
+    );
+
+    await Promise.allSettled([
+      ...regularProtectionOrders.map((order) =>
+        this.cancelOpenOrder(symbol, {
+          mode: 'Regular',
+          clientOrderId: order.clientOrderId ?? null,
+          orderId: order.orderId,
+        })
+      ),
+      ...algoProtectionOrders.map((order) =>
+        this.cancelOpenOrder(symbol, {
+          mode: 'Algo',
+          algoId: order.algoId,
+          clientOrderId: order.clientAlgoId ?? null,
+        })
+      ),
+    ]);
   }
 
   async cancelOpenOrder(symbol: string, order: { mode: 'Regular' | 'Algo'; orderId?: number; clientOrderId?: string | null; algoId?: number }) {
@@ -341,23 +398,10 @@ export class FuturesAutoTradeService {
     });
   }
 
-  async getSymbolInfo(symbol: string) {
-    const snapshot = await futuresMarketController.getMarketSymbolSnapshot(symbol);
-    return snapshot.data.symbolInfo ?? null;
-  }
-
-  async executeDemoTrade(plan: FuturesAutoBotPlan, currentPrice: number) {
+  async placeProtectionOrders(plan: FuturesAutoBotPlan, quantity: number) {
     const [account, symbolInfo] = await Promise.all([this.getAccount(), this.getSymbolInfo(plan.symbol)]);
-    const availableBalance = parseNumber(account.availableBalance ?? account.totalWalletBalance) ?? 0;
     const stepSize = extractStepSize(symbolInfo ?? undefined);
     const tickSize = extractTickSize(symbolInfo ?? undefined);
-    const allocatedMargin =
-      plan.allocationUnit === 'usdt' ? plan.allocationValue : availableBalance * (plan.allocationValue / 100);
-    const notional = allocatedMargin * Math.max(plan.leverage, 1);
-    const rawQuantity = notional / Math.max(currentPrice, 1);
-    const quantity = roundDownToStep(rawQuantity, stepSize);
-    const entryPrice = plan.entryMid ?? currentPrice;
-    const normalizedEntryPrice = normalizePrice(entryPrice, tickSize, symbolInfo?.pricePrecision);
     const takeProfitPrices = plan.takeProfits
       .map((item) => (item.price !== null ? normalizePrice(item.price, tickSize, symbolInfo?.pricePrecision) : null))
       .filter((value): value is number => value !== null);
@@ -370,25 +414,7 @@ export class FuturesAutoTradeService {
       : null;
     const positionSideParam = positionSide ? { positionSide } : {};
     const algoOrderOwnershipParam = account.dualSidePosition ? positionSideParam : { reduceOnly: true };
-    const entrySide: FuturesOrderSide = plan.direction === 'long' ? 'BUY' : 'SELL';
     const exitSide: FuturesOrderSide = plan.direction === 'long' ? 'SELL' : 'BUY';
-
-    if (quantity <= 0) {
-      throw new Error('Calculated order quantity is too small for the current balance and allocation.');
-    }
-
-    const entryOrder = await this.request<FuturesOrderResponse>('/fapi/v1/order', {
-      method: 'POST',
-      params: {
-        symbol: plan.symbol,
-        side: entrySide,
-        type: 'MARKET',
-        quantity,
-        newOrderRespType: 'RESULT',
-        ...positionSideParam,
-      },
-      signed: true,
-    });
 
     const stopLossAlgoOrder = stopLossPrice
       ? await this.request<FuturesAlgoOrderResponse>('/fapi/v1/algoOrder', {
@@ -441,17 +467,71 @@ export class FuturesAutoTradeService {
     }
 
     return {
-      account,
-      entryOrder,
-      entryPrice: normalizedEntryPrice,
       algoOrderClientIds: [
         stopLossAlgoOrder?.clientAlgoId ?? null,
         ...takeProfitAlgoOrders.map((order) => order.clientAlgoId ?? null),
       ].filter((value): value is string => value !== null),
       positionSide,
-      quantity,
       stopLossAlgoOrder,
       takeProfitAlgoOrders,
+    };
+  }
+
+  async getSymbolInfo(symbol: string) {
+    const snapshot = await futuresMarketController.getMarketSymbolSnapshot(symbol);
+    return snapshot.data.symbolInfo ?? null;
+  }
+
+  async executeDemoTrade(plan: FuturesAutoBotPlan, currentPrice: number) {
+    const [account, symbolInfo] = await Promise.all([this.getAccount(), this.getSymbolInfo(plan.symbol)]);
+    const availableBalance = parseNumber(account.availableBalance ?? account.totalWalletBalance) ?? 0;
+    const stepSize = extractStepSize(symbolInfo ?? undefined);
+    const tickSize = extractTickSize(symbolInfo ?? undefined);
+    const allocatedMargin =
+      plan.allocationUnit === 'usdt' ? plan.allocationValue : availableBalance * (plan.allocationValue / 100);
+    const notional = allocatedMargin * Math.max(plan.leverage, 1);
+    const rawQuantity = notional / Math.max(currentPrice, 1);
+    const quantity = roundDownToStep(rawQuantity, stepSize);
+    const entryPrice = getEntryLimitPrice(plan, currentPrice);
+    const normalizedEntryPrice = normalizePrice(entryPrice, tickSize, symbolInfo?.pricePrecision);
+    const positionSide: FuturesPositionSide | null = account.dualSidePosition
+      ? plan.direction === 'long'
+        ? 'LONG'
+        : 'SHORT'
+      : null;
+    const entrySide: FuturesOrderSide = plan.direction === 'long' ? 'BUY' : 'SELL';
+
+    if (quantity <= 0) {
+      throw new Error('Calculated order quantity is too small for the current balance and allocation.');
+    }
+
+    const entryOrder = await this.request<FuturesOrderResponse>('/fapi/v1/order', {
+      method: 'POST',
+      params: {
+        symbol: plan.symbol,
+        side: entrySide,
+        type: 'LIMIT',
+        quantity,
+        price: normalizedEntryPrice,
+        timeInForce: 'GTC',
+        newOrderRespType: 'RESULT',
+        ...(positionSide ? { positionSide } : {}),
+      },
+      signed: true,
+    });
+
+    const entryFilled = entryOrder.status === 'FILLED' || Number(entryOrder.executedQty ?? '0') > 0;
+    const protectionOrders = entryFilled ? await this.placeProtectionOrders(plan, quantity) : null;
+
+    return {
+      entryOrder,
+      entryPrice: normalizedEntryPrice,
+      entryFilled,
+      algoOrderClientIds: protectionOrders?.algoOrderClientIds ?? [],
+      positionSide,
+      quantity,
+      stopLossAlgoOrder: protectionOrders?.stopLossAlgoOrder ?? null,
+      takeProfitAlgoOrders: protectionOrders?.takeProfitAlgoOrders ?? [],
     };
   }
 }

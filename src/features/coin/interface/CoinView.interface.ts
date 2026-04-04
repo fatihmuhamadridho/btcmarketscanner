@@ -193,6 +193,7 @@ export type CoinAutoBotOpenOrder = {
   algoId: number | null;
   orderEntryPriceLabel: string;
   orderEstimatedMarginLabel: string;
+  orderLeverageLabel: string;
   orderModeLabel: string;
   orderId: number | null;
   orderNotionalLabel: string;

@@ -95,7 +95,7 @@ export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbo
                 horizontalSpacing="sm"
                 verticalSpacing="sm"
                 striped
-                style={{ minWidth: 1180 }}
+                style={{ minWidth: 1540, tableLayout: 'auto' }}
               >
                 <Table.Thead>
                   <Table.Tr>
@@ -106,6 +106,8 @@ export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbo
                     <Table.Th>Status</Table.Th>
                     <Table.Th>Entry</Table.Th>
                     <Table.Th>Qty</Table.Th>
+                    <Table.Th>Lev</Table.Th>
+                    <Table.Th>Margin</Table.Th>
                     <Table.Th>Notional</Table.Th>
                     <Table.Th>Client</Table.Th>
                     <Table.Th>Action</Table.Th>
@@ -127,17 +129,21 @@ export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbo
                       }}
                     >
                       <Table.Td>
-                        <Badge variant="light" color={colorForMode(order.orderModeLabel)}>
+                        <Badge variant="light" color={colorForMode(order.orderModeLabel)} style={{ whiteSpace: 'nowrap' }}>
                           {order.orderModeLabel}
                         </Badge>
                       </Table.Td>
                       <Table.Td>
-                        <Badge variant="light" color={colorForSide(order.orderSideLabel)}>
+                        <Badge variant="light" color={colorForSide(order.orderSideLabel)} style={{ whiteSpace: 'nowrap' }}>
                           {order.orderSideLabel}
                         </Badge>
                       </Table.Td>
                       <Table.Td>
-                        <Badge variant="light" color={colorForPurpose(order.orderPurposeLabel)}>
+                        <Badge
+                          variant="light"
+                          color={colorForPurpose(order.orderPurposeLabel)}
+                          style={{ whiteSpace: 'nowrap' }}
+                        >
                           {order.orderPurposeLabel}
                         </Badge>
                       </Table.Td>
@@ -159,6 +165,16 @@ export default function CoinOpenOrdersSection({ openOrders, onCancelOrder, symbo
                       <Table.Td>
                         <Text fw={600} size="sm">
                           {order.orderQuantityLabel}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text fw={600} size="sm">
+                          {order.orderLeverageLabel}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text fw={600} size="sm">
+                          {order.orderEstimatedMarginLabel}
                         </Text>
                       </Table.Td>
                       <Table.Td>
