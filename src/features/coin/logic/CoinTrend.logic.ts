@@ -1,6 +1,6 @@
 import { IconMinus, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 import type { SupportResistance, TrendCandle, TrendInsight } from '../interface/CoinLogic.interface';
-import { getAverageTrueRange, getRelativeStrengthIndex } from './CoinSetupShared.logic';
+import { getAverageTrueRange, getExponentialMovingAverage, getRelativeStrengthIndex } from './CoinSetupShared.logic';
 
 function getSimpleMovingAverage(values: number[], period: number, endIndex: number) {
   if (endIndex < 0 || values.length === 0) {
@@ -66,6 +66,10 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
       endPrice: null,
       icon: IconMinus,
       atr14: null,
+      ema20: null,
+      ema50: null,
+      ema100: null,
+      ema200: null,
       label: 'Sideways',
       ma20: null,
       ma50: null,
@@ -94,12 +98,16 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
   const lastIndex = closes.length - 1;
   const atr14 = getAverageTrueRange(orderedCandles, 14);
   const rsi14 = getRelativeStrengthIndex(orderedCandles, 14);
+  const ema20 = getExponentialMovingAverage(closes, 20, lastIndex);
+  const ema50 = getExponentialMovingAverage(closes, 50, lastIndex);
+  const ema100 = getExponentialMovingAverage(closes, 100, lastIndex);
+  const ema200 = getExponentialMovingAverage(closes, 200, lastIndex);
   const ma20 = getSimpleMovingAverage(closes, 20, lastIndex);
   const ma50 = getSimpleMovingAverage(closes, 50, lastIndex);
   const ma200 = getSimpleMovingAverage(closes, 200, lastIndex);
-  const ma20Prev = getSimpleMovingAverage(closes, 20, lastIndex - 5);
-  const ma50Prev = getSimpleMovingAverage(closes, 50, lastIndex - 5);
-  const ma200Prev = getSimpleMovingAverage(closes, 200, lastIndex - 5);
+  const ema20Prev = getExponentialMovingAverage(closes, 20, lastIndex - 5);
+  const ema50Prev = getExponentialMovingAverage(closes, 50, lastIndex - 5);
+  const ema200Prev = getExponentialMovingAverage(closes, 200, lastIndex - 5);
   const recentVolumeAverage = getAverage(volumes, Math.max(0, volumes.length - 20), volumes.length - 1);
   const priorVolumeAverage = getAverage(volumes, Math.max(0, volumes.length - 40), Math.max(0, volumes.length - 21));
   const volumeRatio =
@@ -113,60 +121,60 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
   let score = 0;
   const reasons: string[] = [];
 
-  const priceAboveMa20 = ma20 !== null && lastPrice > ma20;
-  const priceAboveMa50 = ma50 !== null && lastPrice > ma50;
-  const priceAboveMa200 = ma200 !== null && lastPrice > ma200;
-  const priceBelowMa20 = ma20 !== null && lastPrice < ma20;
-  const priceBelowMa50 = ma50 !== null && lastPrice < ma50;
-  const priceBelowMa200 = ma200 !== null && lastPrice < ma200;
+  const priceAboveEma20 = ema20 !== null && lastPrice > ema20;
+  const priceAboveEma50 = ema50 !== null && lastPrice > ema50;
+  const priceAboveEma200 = ema200 !== null && lastPrice > ema200;
+  const priceBelowEma20 = ema20 !== null && lastPrice < ema20;
+  const priceBelowEma50 = ema50 !== null && lastPrice < ema50;
+  const priceBelowEma200 = ema200 !== null && lastPrice < ema200;
 
-  if (ma20 !== null && ma50 !== null) {
-    if (priceAboveMa20 && priceAboveMa50) {
+  if (ema20 !== null && ema50 !== null) {
+    if (priceAboveEma20 && priceAboveEma50) {
       score += 1;
-      reasons.push('Price is above MA20 and MA50');
-    } else if (priceBelowMa20 && priceBelowMa50) {
+      reasons.push('Price is above EMA20 and EMA50');
+    } else if (priceBelowEma20 && priceBelowEma50) {
       score -= 1;
-      reasons.push('Price is below MA20 and MA50');
+      reasons.push('Price is below EMA20 and EMA50');
     }
   }
 
-  if (ma200 !== null) {
-    if (priceAboveMa200) {
+  if (ema200 !== null) {
+    if (priceAboveEma200) {
       score += 1;
-      reasons.push('Price is holding above MA200');
-    } else if (priceBelowMa200) {
+      reasons.push('Price is holding above EMA200');
+    } else if (priceBelowEma200) {
       score -= 1;
-      reasons.push('Price is trading below MA200');
+      reasons.push('Price is trading below EMA200');
     }
   }
 
-  if (ma20 !== null && ma20Prev !== null) {
-    if (ma20 > ma20Prev) {
+  if (ema20 !== null && ema20Prev !== null) {
+    if (ema20 > ema20Prev) {
       score += 1;
-      reasons.push('MA20 is sloping up');
-    } else if (ma20 < ma20Prev) {
+      reasons.push('EMA20 is sloping up');
+    } else if (ema20 < ema20Prev) {
       score -= 1;
-      reasons.push('MA20 is sloping down');
+      reasons.push('EMA20 is sloping down');
     }
   }
 
-  if (ma50 !== null && ma50Prev !== null) {
-    if (ma50 > ma50Prev) {
+  if (ema50 !== null && ema50Prev !== null) {
+    if (ema50 > ema50Prev) {
       score += 1;
-      reasons.push('MA50 is sloping up');
-    } else if (ma50 < ma50Prev) {
+      reasons.push('EMA50 is sloping up');
+    } else if (ema50 < ema50Prev) {
       score -= 1;
-      reasons.push('MA50 is sloping down');
+      reasons.push('EMA50 is sloping down');
     }
   }
 
-  if (ma200 !== null && ma200Prev !== null) {
-    if (ma200 > ma200Prev) {
+  if (ema200 !== null && ema200Prev !== null) {
+    if (ema200 > ema200Prev) {
       score += 1;
-      reasons.push('MA200 is sloping up');
-    } else if (ma200 < ma200Prev) {
+      reasons.push('EMA200 is sloping up');
+    } else if (ema200 < ema200Prev) {
       score -= 1;
-      reasons.push('MA200 is sloping down');
+      reasons.push('EMA200 is sloping down');
     }
   }
 
@@ -289,6 +297,10 @@ export function analyzeTrend(candles: TrendCandle[], supportResistance: SupportR
     endPrice: lastPrice,
     icon,
     atr14,
+    ema20,
+    ema50,
+    ema100,
+    ema200,
     label,
     ma20,
     ma50,

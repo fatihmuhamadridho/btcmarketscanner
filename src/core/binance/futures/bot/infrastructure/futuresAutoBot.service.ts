@@ -125,6 +125,33 @@ function hasOpenProtectionOrder(
   return regularHasProtection || algoHasProtection;
 }
 
+function inferFilledTakeProfitCount(params: {
+  executionQuantity: number;
+  currentQuantity: number;
+}) {
+  const { currentQuantity, executionQuantity } = params;
+
+  if (!Number.isFinite(executionQuantity) || executionQuantity <= 0 || !Number.isFinite(currentQuantity) || currentQuantity <= 0) {
+    return 0;
+  }
+
+  const remainingRatio = currentQuantity / executionQuantity;
+
+  if (remainingRatio <= 0.18) {
+    return 3;
+  }
+
+  if (remainingRatio <= 0.48) {
+    return 2;
+  }
+
+  if (remainingRatio <= 0.82) {
+    return 1;
+  }
+
+  return 0;
+}
+
 export class FuturesAutoBotService {
   get(symbol: string) {
     return inMemoryBots.get(symbol) ?? null;
@@ -246,6 +273,13 @@ export class FuturesAutoBotService {
         const [regularOrders, algoOrders] = await futuresAutoTradeService.getOpenOrders(symbol);
         const hasProtectionOrders = hasOpenProtectionOrder(regularOrders, algoOrders, activePositionSide);
         const protectionQuantity = Math.abs(activePositionAmt);
+        const takeProfitStartIndex = Math.min(
+          inferFilledTakeProfitCount({
+            currentQuantity: protectionQuantity,
+            executionQuantity: current.execution?.quantity ?? protectionQuantity,
+          }),
+          nextState.plan.takeProfits.length
+        );
         const focusedState: FuturesAutoBotState = {
           ...scannedState,
           execution: nextState.execution ?? current.execution ?? undefined,
@@ -255,7 +289,9 @@ export class FuturesAutoBotService {
         inMemoryBots.set(symbol, focusedState);
 
         if (!hasProtectionOrders) {
-          const protectionOrders = await futuresAutoTradeService.placeProtectionOrders(nextState.plan, protectionQuantity);
+          const protectionOrders = await futuresAutoTradeService.placeProtectionOrders(nextState.plan, protectionQuantity, {
+            takeProfitStartIndex,
+          });
           const protectionState: FuturesAutoBotState = {
             ...focusedState,
             execution: focusedState.execution
@@ -275,7 +311,7 @@ export class FuturesAutoBotService {
             symbol,
             createLog(
               'success',
-              `Existing position detected for ${symbol}. TP/SL were missing, so protection orders were attached and the bot will keep tracking this trade only.`
+              `Existing position detected for ${symbol}. TP/SL were missing, so protection orders were attached from TP${takeProfitStartIndex + 1} onward and the bot will keep tracking this trade only.`
             ),
           false
         );

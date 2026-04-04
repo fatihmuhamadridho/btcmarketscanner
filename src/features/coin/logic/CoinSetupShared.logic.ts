@@ -49,6 +49,33 @@ export function getAverageTrueRange(candles: Array<{ close: number; high: number
   return trueRanges.reduce((sum, value) => sum + value, 0) / trueRanges.length;
 }
 
+export function getExponentialMovingAverage(values: number[], period: number, endIndex: number) {
+  if (endIndex < 0 || values.length === 0 || period <= 0) {
+    return null;
+  }
+
+  const cappedEndIndex = Math.min(endIndex, values.length - 1);
+  if (cappedEndIndex + 1 < period) {
+    return null;
+  }
+
+  const seedWindow = values.slice(0, period);
+  if (seedWindow.length < period) {
+    return null;
+  }
+
+  const seedAverage = seedWindow.reduce((sum, value) => sum + value, 0) / seedWindow.length;
+  const multiplier = 2 / (period + 1);
+  let ema = seedAverage;
+
+  for (let index = period; index <= cappedEndIndex; index += 1) {
+    const price = values[index];
+    ema = (price - ema) * multiplier + ema;
+  }
+
+  return ema;
+}
+
 export function getRelativeStrengthIndex(candles: Array<{ close: number }>, period = 14) {
   if (candles.length < period + 1) {
     return null;

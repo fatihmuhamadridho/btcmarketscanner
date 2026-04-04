@@ -76,19 +76,19 @@ export function buildSetupPath(context: CoinSetupAnalysisContext): SetupPathStep
 
   return [
     buildSetupPathStep('Trend structure holds', context.continuationMode ? 'done' : 'current'),
-    buildSetupPathStep(
-      context.side === 'long' ? 'Pullback to support / MA' : 'Pullback to resistance / MA',
-      context.side === 'long' ? (context.nearSupport ? 'done' : 'current') : context.nearResistance ? 'done' : 'current'
-    ),
-    buildSetupPathStep(
-      context.side === 'long' ? 'Bullish rejection / bounce' : 'Bearish rejection / drop',
-      context.side === 'long'
-        ? context.lastPrice > (context.trendSummary.ma20 ?? context.supportResistance.support)
+      buildSetupPathStep(
+        context.side === 'long' ? 'Pullback to support / EMA' : 'Pullback to resistance / EMA',
+        context.side === 'long' ? (context.nearSupport ? 'done' : 'current') : context.nearResistance ? 'done' : 'current'
+      ),
+      buildSetupPathStep(
+        context.side === 'long' ? 'Bullish rejection / bounce' : 'Bearish rejection / drop',
+        context.side === 'long'
+          ? context.lastPrice > (context.trendSummary.ema20 ?? context.supportResistance.support)
+            ? 'done'
+            : 'current'
+          : context.lastPrice < (context.trendSummary.ema20 ?? context.supportResistance.resistance)
           ? 'done'
           : 'current'
-        : context.lastPrice < (context.trendSummary.ma20 ?? context.supportResistance.resistance)
-          ? 'done'
-          : 'current'
-    ),
+      ),
   ];
 }

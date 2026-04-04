@@ -7,7 +7,7 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
   const {
     breakdownShort,
     rsi14,
-    maScore,
+    emaScore,
     nearResistance,
     pathMode,
     supportResistance,
@@ -20,7 +20,7 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
   let entryZone = buildZone(supportResistance.support + zoneBuffer * 0.2, supportResistance.support + zoneBuffer * 0.8);
   let marketCondition = 'Range-bound setup';
   const reasons: string[] = [];
-  let score = context.scoreBase + trendBiasScore + maScore + context.structureScore + context.volumeScore;
+  let score = context.scoreBase + trendBiasScore + emaScore + context.structureScore + context.volumeScore;
 
   if (breakdownShort) {
     entryZone = buildZone(supportResistance.support - zoneBuffer * 0.8, supportResistance.support - zoneBuffer * 0.1);
@@ -30,7 +30,7 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
   } else if (nearResistance) {
     const zoneHigh = Math.min(
       supportResistance.resistance - zoneBuffer * 0.15,
-      (trendSummary.ma20 ?? supportResistance.resistance) + zoneBuffer * 0.2
+      (trendSummary.ema20 ?? supportResistance.resistance) + zoneBuffer * 0.2
     );
     const zoneLow = Math.max(supportResistance.support + zoneBuffer * 0.2, zoneHigh - zoneBuffer * 1.35);
     entryZone = buildZone(Math.min(zoneLow, zoneHigh), zoneHigh);
@@ -40,7 +40,7 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
   } else {
     const zoneHigh = Math.min(
       supportResistance.resistance - zoneBuffer * 0.2,
-      (trendSummary.ma20 ?? context.lastPrice) + zoneBuffer * 0.35
+      (trendSummary.ema20 ?? context.lastPrice) + zoneBuffer * 0.35
     );
     const zoneLow = Math.max(supportResistance.support + zoneBuffer * 0.2, zoneHigh - zoneBuffer * 1.2);
     entryZone = buildZone(Math.min(zoneLow, zoneHigh), zoneHigh);
@@ -89,7 +89,7 @@ export function analyzeShortSetup(context: CoinSetupAnalysisContext): SetupInsig
     takeProfits,
     reasons: [
       'Trend bias is bearish',
-      `MA alignment: ${maScore}/3`,
+      `EMA alignment: ${emaScore}/3`,
       context.atr14 !== null ? `ATR14 volatility: ${context.atr14.toFixed(2)}` : 'ATR14 volatility is not available',
       rsi14 !== null ? `RSI14 signal: ${rsi14.toFixed(2)}` : 'RSI14 signal is not available',
       ...reasons.slice(0, 2),

@@ -45,9 +45,9 @@ export default function CoinTrendOverviewSection({ trendSummary, TrendIcon }: Co
         <CoinTrendOverviewBadges
           atr14={trendSummary.atr14}
           color={trendSummary.color}
-          ma20={trendSummary.ma20}
-          ma50={trendSummary.ma50}
-          ma200={trendSummary.ma200}
+          ema20={trendSummary.ema20}
+          ema50={trendSummary.ema50}
+          ema200={trendSummary.ema200}
           rsi14={trendSummary.rsi14}
           score={trendSummary.score}
           structure={trendSummary.structure}

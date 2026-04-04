@@ -24,17 +24,17 @@ export function buildCoinSetupAnalysisContext(
     trendSummary.structure.includes('Lower high') ||
     trendSummary.structure.includes('Lower low');
 
-  const maScore =
-    (trendSummary.ma20 !== null &&
-    ((side === 'long' && lastPrice > trendSummary.ma20) || (side === 'short' && lastPrice < trendSummary.ma20))
+  const emaScore =
+    (trendSummary.ema20 !== null &&
+    ((side === 'long' && lastPrice > trendSummary.ema20) || (side === 'short' && lastPrice < trendSummary.ema20))
       ? 1
       : 0) +
-    (trendSummary.ma50 !== null &&
-    ((side === 'long' && lastPrice > trendSummary.ma50) || (side === 'short' && lastPrice < trendSummary.ma50))
+    (trendSummary.ema50 !== null &&
+    ((side === 'long' && lastPrice > trendSummary.ema50) || (side === 'short' && lastPrice < trendSummary.ema50))
       ? 1
       : 0) +
-    (trendSummary.ma200 !== null &&
-    ((side === 'long' && lastPrice > trendSummary.ma200) || (side === 'short' && lastPrice < trendSummary.ma200))
+    (trendSummary.ema200 !== null &&
+    ((side === 'long' && lastPrice > trendSummary.ema200) || (side === 'short' && lastPrice < trendSummary.ema200))
       ? 1
       : 0);
 
@@ -111,7 +111,7 @@ export function buildCoinSetupAnalysisContext(
     candles,
     continuationMode,
     lastPrice,
-    maScore,
+    emaScore,
     nearResistance,
     nearSupport,
     orderedCandles,

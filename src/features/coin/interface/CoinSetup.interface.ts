@@ -18,7 +18,7 @@ export type CoinSetupAnalysisContext = {
   candles: SetupCandle[];
   continuationMode: boolean;
   lastPrice: number;
-  maScore: number;
+  emaScore: number;
   nearResistance: boolean;
   nearSupport: boolean;
   orderedCandles: SetupCandle[];

@@ -134,12 +134,31 @@ function extractTickSize(symbolInfo: FuturesSymbolInfo | undefined) {
   return tickSize ?? 0.01;
 }
 
-function splitTakeProfitQuantity(totalQuantity: number, stepSize: number) {
-  const first = roundDownToStep(totalQuantity * 0.4, stepSize);
-  const second = roundDownToStep(totalQuantity * 0.3, stepSize);
-  const third = roundDownToStep(totalQuantity - first - second, stepSize);
+function splitTakeProfitQuantityByWeights(totalQuantity: number, stepSize: number, weights: number[]) {
+  if (weights.length === 0) {
+    return [];
+  }
 
-  return [first, second, third];
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+  if (totalWeight <= 0) {
+    return weights.map(() => 0);
+  }
+
+  const normalizedWeights = weights.map((weight) => weight / totalWeight);
+  const quantities: number[] = [];
+  let remainingQuantity = totalQuantity;
+
+  normalizedWeights.forEach((weight, index) => {
+    const isLast = index === normalizedWeights.length - 1;
+    const quantity = isLast
+      ? roundDownToStep(remainingQuantity, stepSize)
+      : roundDownToStep(totalQuantity * weight, stepSize);
+    quantities.push(quantity);
+    remainingQuantity = Math.max(0, remainingQuantity - quantity);
+  });
+
+  return quantities;
 }
 
 function createClientAlgoId(symbol: string, suffix: string) {
@@ -427,11 +446,19 @@ export class FuturesAutoTradeService {
     });
   }
 
-  async placeProtectionOrders(plan: FuturesAutoBotPlan, quantity: number) {
+  async placeProtectionOrders(
+    plan: FuturesAutoBotPlan,
+    quantity: number,
+    options?: {
+      takeProfitStartIndex?: number;
+    }
+  ) {
     const [account, symbolInfo] = await Promise.all([this.getAccount(), this.getSymbolInfo(plan.symbol)]);
     const stepSize = extractStepSize(symbolInfo ?? undefined);
     const tickSize = extractTickSize(symbolInfo ?? undefined);
-    const takeProfitPrices = plan.takeProfits
+    const takeProfitStartIndex = Math.max(0, options?.takeProfitStartIndex ?? 0);
+    const takeProfitPlan = plan.takeProfits.slice(takeProfitStartIndex);
+    const takeProfitPrices = takeProfitPlan
       .map((item) => (item.price !== null ? normalizePrice(item.price, tickSize, symbolInfo?.pricePrecision) : null))
       .filter((value): value is number => value !== null);
     const stopLossPrice =
@@ -464,7 +491,11 @@ export class FuturesAutoTradeService {
         })
       : null;
 
-    const takeProfitQuantities = splitTakeProfitQuantity(quantity, stepSize);
+    const takeProfitQuantities = splitTakeProfitQuantityByWeights(
+      quantity,
+      stepSize,
+      [0.4, 0.3, 0.3].slice(takeProfitStartIndex)
+    );
     const takeProfitAlgoOrders: FuturesAlgoOrderResponse[] = [];
 
     for (let index = 0; index < takeProfitPrices.length; index += 1) {

@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { WebsocketService } from '@services/websocket.service';
+import { analyzeTrend } from '@features/coin/logic/CoinTrend.logic';
 import type { FuturesKlineCandle } from '../domain/futuresMarket.model';
 import { FuturesMarketController } from '../domain/futuresMarket.controller';
 
@@ -15,6 +16,7 @@ const MARKET_TIMEFRAMES = [
   { label: '4H', value: '4h' },
   { label: '1D', value: '1d' },
 ] as const;
+const INDICATOR_LOOKBACK_LIMIT = 300;
 
 function getSupportResistance(candles: FuturesKlineCandle[], windowSize: number) {
   if (candles.length === 0) {
@@ -114,6 +116,11 @@ export type TimeframeSupportResistance = {
   label: string;
   isLoading: boolean;
   isError: boolean;
+  atr14: number | null;
+  ema100: number | null;
+  ema20: number | null;
+  ema200: number | null;
+  ema50: number | null;
   supportResistance:
     | {
         averageResistance: number;
@@ -122,6 +129,9 @@ export type TimeframeSupportResistance = {
         support: number;
       }
     | null;
+  rsi14: number | null;
+  trendDirection: 'bullish' | 'bearish' | 'sideways';
+  trendLabel: string;
 };
 
 export function useFuturesMarketOverview() {
@@ -304,7 +314,7 @@ export function useFuturesMarketTimeframeSupportResistance(symbol?: string, wind
   const queries = useQueries({
     queries: MARKET_TIMEFRAMES.map((timeframe) => ({
       queryKey: ['futures-market-timeframe-support-resistance', symbol, timeframe.value, windowSize],
-      queryFn: () => futuresMarketController.getMarketInitialCandles(symbol ?? '', timeframe.value, 120),
+      queryFn: () => futuresMarketController.getMarketInitialCandles(symbol ?? '', timeframe.value, INDICATOR_LOOKBACK_LIMIT),
       enabled: typeof symbol === 'string' && symbol.length > 0,
       staleTime: 0,
       refetchOnWindowFocus: false,
@@ -314,13 +324,23 @@ export function useFuturesMarketTimeframeSupportResistance(symbol?: string, wind
   return MARKET_TIMEFRAMES.map((timeframe, index) => {
     const query = queries[index];
     const candles = query.data?.data ?? [];
+    const supportResistance = getSupportResistance(candles, windowSize);
+    const trend = analyzeTrend(candles, supportResistance);
 
     return {
       interval: timeframe.value,
+      atr14: trend.atr14,
+      ema100: trend.ema100,
+      ema20: trend.ema20,
+      ema200: trend.ema200,
+      ema50: trend.ema50,
       label: timeframe.label,
       isLoading: query.isLoading,
       isError: query.isError,
-      supportResistance: getSupportResistance(candles, windowSize),
+      supportResistance,
+      rsi14: trend.rsi14,
+      trendDirection: trend.direction,
+      trendLabel: trend.label,
     };
   });
 }

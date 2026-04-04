@@ -30,6 +30,19 @@ type CoinAutoBotApiResponse =
       bot: {
         botId: string;
         createdAt: string;
+        execution:
+          | {
+              algoOrderClientIds: string[];
+              entryOrderId: number;
+              entryOrderStatus: string | null;
+              entryPrice: number | null;
+              executedAt: string;
+              positionSide: 'LONG' | 'SHORT' | null;
+              quantity: number;
+              stopLossAlgoOrderId: number | null;
+              takeProfitAlgoOrderIds: number[];
+            }
+          | null;
         plan: {
           allocationUnit: CoinAutoBotAllocationUnit;
           allocationValue: number;
@@ -188,6 +201,36 @@ function getDirectionalDistance(entryPrice: number, targetPrice: number, positio
   return positionSide === 'SHORT' ? entryPrice - targetPrice : targetPrice - entryPrice;
 }
 
+function inferFilledTakeProfitCount(params: { executionQuantity: number | null; currentQuantity: number }) {
+  const { currentQuantity, executionQuantity } = params;
+
+  if (
+    executionQuantity === null ||
+    !Number.isFinite(executionQuantity) ||
+    executionQuantity <= 0 ||
+    !Number.isFinite(currentQuantity) ||
+    currentQuantity <= 0
+  ) {
+    return 0;
+  }
+
+  const remainingRatio = currentQuantity / executionQuantity;
+
+  if (remainingRatio <= 0.18) {
+    return 3;
+  }
+
+  if (remainingRatio <= 0.48) {
+    return 2;
+  }
+
+  if (remainingRatio <= 0.82) {
+    return 1;
+  }
+
+  return 0;
+}
+
 function formatDirectionalMovePercentLabel(
   entryPrice: number | null,
   targetPrice: number | null,
@@ -210,21 +253,32 @@ function buildProtectionTargets(params: {
     orderPriceValue: number | null;
     orderPurposeLabel: 'Entry' | 'Take profit' | 'Stop loss' | 'Other';
   }>;
+  takeProfitLabelOffset: number;
   positionSide: 'BOTH' | 'LONG' | 'SHORT';
 }) {
-  const { entryPrice, openOrders, positionSide } = params;
+  const { entryPrice, openOrders, positionSide, takeProfitLabelOffset } = params;
 
   if (entryPrice === null) {
     return [];
   }
 
-  const takeProfitPrices = openOrders
+  const takeProfitOrders = openOrders
     .filter((order) => order.orderPurposeLabel === 'Take profit' && matchesPositionSide(order.orderPositionSideLabel, positionSide))
     .map((order) => order.orderPriceValue)
     .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
     .filter((value) => getDirectionalDistance(entryPrice, value, positionSide) > 0)
-    .sort((left, right) => getDirectionalDistance(entryPrice, left, positionSide) - getDirectionalDistance(entryPrice, right, positionSide))
-    .slice(0, 3);
+    .sort((left, right) => getDirectionalDistance(entryPrice, left, positionSide) - getDirectionalDistance(entryPrice, right, positionSide));
+
+  const takeProfitTargets = takeProfitOrders.map((price, index) => {
+    const labelIndex = Math.min(takeProfitLabelOffset + index + 1, 3);
+    const label: 'TP1' | 'TP2' | 'TP3' = labelIndex === 1 ? 'TP1' : labelIndex === 2 ? 'TP2' : 'TP3';
+
+    return {
+      label,
+      priceLabel: `${formatDecimalString(price.toFixed(2))} USDT`,
+      percentLabel: `${formatDirectionalMovePercentLabel(entryPrice, price, positionSide, 'Take profit')} from entry`,
+    };
+  });
 
   const stopLossPrice = openOrders
     .filter((order) => order.orderPurposeLabel === 'Stop loss' && matchesPositionSide(order.orderPositionSideLabel, positionSide))
@@ -234,15 +288,7 @@ function buildProtectionTargets(params: {
     .sort((left, right) => Math.abs(getDirectionalDistance(entryPrice, left, positionSide)) - Math.abs(getDirectionalDistance(entryPrice, right, positionSide)))[0];
 
   return [
-    ...takeProfitPrices.map((price, index) => {
-      const label: 'TP1' | 'TP2' | 'TP3' = index === 0 ? 'TP1' : index === 1 ? 'TP2' : 'TP3';
-
-      return {
-        label,
-        priceLabel: `${formatDecimalString(price.toFixed(2))} USDT`,
-        percentLabel: `${formatDirectionalMovePercentLabel(entryPrice, price, positionSide, 'Take profit')} from entry`,
-      };
-    }),
+    ...takeProfitTargets,
     ...(stopLossPrice !== undefined
       ? [
           {
@@ -502,6 +548,10 @@ export function useCoinAutoBotLogic({
         protectionTargets: buildProtectionTargets({
           entryPrice: position.entryPrice,
           openOrders: openOrdersRaw,
+          takeProfitLabelOffset: inferFilledTakeProfitCount({
+            executionQuantity: botResponse?.bot?.execution?.quantity ?? null,
+            currentQuantity: Math.abs(position.positionAmt),
+          }),
           positionSide: position.positionSide,
         }),
         unrealizedPnlLabel:

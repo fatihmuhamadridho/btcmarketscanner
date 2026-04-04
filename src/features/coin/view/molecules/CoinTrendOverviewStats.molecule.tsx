@@ -21,15 +21,15 @@ export default function CoinTrendOverviewStats({
     <SimpleGrid cols={{ base: 1, sm: 2, xl: 5 }} spacing="md">
       <CoinTrendMetricCard
         label="Start price"
-        value={startPrice !== null ? startPrice.toFixed(2) : 'n/a'}
+        value={startPrice !== null ? formatDecimalString(startPrice.toFixed(2)) : 'n/a'}
       />
       <CoinTrendMetricCard
         label="Latest price"
-        value={endPrice !== null ? endPrice.toFixed(2) : 'n/a'}
+        value={endPrice !== null ? formatDecimalString(endPrice.toFixed(2)) : 'n/a'}
       />
-      <CoinTrendMetricCard label="Range" value={`${rangePercent.toFixed(2)}%`} />
+      <CoinTrendMetricCard label="Range" value={`${formatDecimalString(rangePercent.toFixed(2))}%`} />
       <CoinTrendMetricCard label="ATR14" value={atr14 !== null ? formatDecimalString(atr14.toFixed(2)) : 'n/a'} />
-      <CoinTrendMetricCard label="RSI14" value={rsi14 !== null ? rsi14.toFixed(2) : 'n/a'} />
+      <CoinTrendMetricCard label="RSI14" value={rsi14 !== null ? formatDecimalString(rsi14.toFixed(2)) : 'n/a'} />
     </SimpleGrid>
   );
 }

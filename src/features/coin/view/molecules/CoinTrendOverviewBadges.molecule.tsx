@@ -4,9 +4,9 @@ import { formatDecimalString } from '@utils/format-number.util';
 type CoinTrendOverviewBadgesProps = {
   atr14: number | null;
   color: 'teal' | 'red' | 'gray';
-  ma20: number | null;
-  ma50: number | null;
-  ma200: number | null;
+  ema20: number | null;
+  ema50: number | null;
+  ema200: number | null;
   rsi14: number | null;
   score: number;
   structure: string;
@@ -17,9 +17,9 @@ type CoinTrendOverviewBadgesProps = {
 export default function CoinTrendOverviewBadges({
   atr14,
   color,
-  ma20,
-  ma50,
-  ma200,
+  ema20,
+  ema50,
+  ema200,
   rsi14,
   score,
   structure,
@@ -39,13 +39,13 @@ export default function CoinTrendOverviewBadges({
         {structure}
       </Badge>
       <Badge variant="light" color="gray">
-        MA20 {ma20 !== null ? ma20.toFixed(2) : 'n/a'}
+        EMA20 {ema20 !== null ? formatDecimalString(ema20.toFixed(2)) : 'n/a'}
       </Badge>
       <Badge variant="light" color="gray">
-        MA50 {ma50 !== null ? ma50.toFixed(2) : 'n/a'}
+        EMA50 {ema50 !== null ? formatDecimalString(ema50.toFixed(2)) : 'n/a'}
       </Badge>
       <Badge variant="light" color="gray">
-        MA200 {ma200 !== null ? ma200.toFixed(2) : 'n/a'}
+        EMA200 {ema200 !== null ? formatDecimalString(ema200.toFixed(2)) : 'n/a'}
       </Badge>
       <Badge variant="light" color="gray">
         ATR14 {atr14 !== null ? formatDecimalString(atr14.toFixed(2)) : 'n/a'}

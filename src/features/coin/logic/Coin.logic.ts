@@ -65,8 +65,13 @@ function getConsensusSetupSummaries(
     interval: CoinTimeframe;
     longSetup: ReturnType<typeof analyzeSetupSide>;
     shortSetup: ReturnType<typeof analyzeSetupSide>;
+    ema100: number | null;
+    ema20: number | null;
+    ema200: number | null;
+    ema50: number | null;
     trendLabel: string;
     trendColor: 'teal' | 'red' | 'gray';
+    trendSummary: ReturnType<typeof analyzeTrend>;
   }>
 ): {
   consensusSetup: ReturnType<typeof analyzeSetupSide>;
@@ -79,6 +84,10 @@ function getConsensusSetupSummaries(
     return {
       chosenSetup,
       interval: item.interval,
+      ema100: item.trendSummary.ema100,
+      ema20: item.trendSummary.ema20,
+      ema200: item.trendSummary.ema200,
+      ema50: item.trendSummary.ema50,
       trendColor: item.trendColor,
       trendLabel: item.trendLabel,
     };
@@ -96,6 +105,10 @@ function getConsensusSetupSummaries(
     return {
       direction: chosenSetup.direction,
       atrLabel: chosenSetup.atr14 !== null ? formatPriceLevel(chosenSetup.atr14) : 'n/a',
+      ema20Label: item.ema20 !== null ? formatPriceLevel(item.ema20) : 'n/a',
+      ema50Label: item.ema50 !== null ? formatPriceLevel(item.ema50) : 'n/a',
+      ema100Label: item.ema100 !== null ? formatPriceLevel(item.ema100) : 'n/a',
+      ema200Label: item.ema200 !== null ? formatPriceLevel(item.ema200) : 'n/a',
       entryZoneLabel: formatPriceZone(chosenSetup.entryZone),
       interval: item.interval,
       isConsensus:
@@ -241,8 +254,13 @@ export function useCoinDetailPageLogic(initialSymbol?: CoinPageProps['symbol']) 
             interval: executionTimeframe,
             longSetup: analyzeSetupSide('long', candles, trend, supportResistance),
             shortSetup: analyzeSetupSide('short', candles, trend, supportResistance),
+            ema20: trend.ema20,
+            ema50: trend.ema50,
+            ema100: trend.ema100,
+            ema200: trend.ema200,
             trendColor: trend.color,
             trendLabel: trend.label,
+            trendSummary: trend,
           };
         })
       ),

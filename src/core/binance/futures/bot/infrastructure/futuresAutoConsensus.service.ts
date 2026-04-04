@@ -9,6 +9,7 @@ import type { CoinSetupDetail } from '@features/coin/interface/CoinView.interfac
 type ExecutionTimeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h';
 
 const executionTimeframes: ExecutionTimeframe[] = ['1m', '5m', '15m', '30m', '1h', '4h'];
+const INDICATOR_LOOKBACK_LIMIT = 300;
 const timeframePriority: Record<ExecutionTimeframe, number> = {
   '1m': 1,
   '5m': 2,
@@ -43,6 +44,10 @@ function buildSummary(interval: ExecutionTimeframe, trend: TrendInsight, setup: 
   return {
     direction: setup.direction,
     atrLabel: setup.atr14 !== null ? formatPrice(setup.atr14) : 'n/a',
+    ema20Label: trend.ema20 !== null ? formatPrice(trend.ema20) : 'n/a',
+    ema50Label: trend.ema50 !== null ? formatPrice(trend.ema50) : 'n/a',
+    ema100Label: trend.ema100 !== null ? formatPrice(trend.ema100) : 'n/a',
+    ema200Label: trend.ema200 !== null ? formatPrice(trend.ema200) : 'n/a',
     entryZoneLabel: `${formatPrice(setup.entryZone.low)} - ${formatPrice(setup.entryZone.high)}`,
     interval,
     isConsensus: false,
@@ -65,7 +70,7 @@ export class FuturesAutoConsensusService {
   async buildConsensus(symbol: string) {
     const snapshots = await Promise.all(
       executionTimeframes.map(async (interval) => {
-        const candlesResponse = await futuresMarketController.getMarketInitialCandles(symbol, interval, 120);
+        const candlesResponse = await futuresMarketController.getMarketInitialCandles(symbol, interval, INDICATOR_LOOKBACK_LIMIT);
         const candles: SetupCandle[] = candlesResponse.data.map((candle) => ({
           openTime: candle.openTime,
           open: candle.open,

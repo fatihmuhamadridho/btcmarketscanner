@@ -20,6 +20,10 @@ export type TrendInsight = {
   endPrice: number | null;
   icon: import('@tabler/icons-react').TablerIcon;
   atr14: number | null;
+  ema100: number | null;
+  ema20: number | null;
+  ema200: number | null;
+  ema50: number | null;
   label: string;
   ma20: number | null;
   ma50: number | null;

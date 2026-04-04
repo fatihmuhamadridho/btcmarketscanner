@@ -95,6 +95,10 @@ export type CoinTrendSummary = {
   endPrice: number | null;
   label: string;
   atr14: number | null;
+  ema100: number | null;
+  ema20: number | null;
+  ema200: number | null;
+  ema50: number | null;
   ma20: number | null;
   ma50: number | null;
   ma200: number | null;
@@ -132,6 +136,7 @@ export type CoinTimeframeSupportResistance = {
   interval: string;
   isLoading: boolean;
   label: string;
+  atr14: number | null;
   supportResistance:
     | {
         averageResistance: number;
@@ -140,6 +145,13 @@ export type CoinTimeframeSupportResistance = {
         support: number;
       }
     | null;
+  ema100: number | null;
+  ema20: number | null;
+  ema200: number | null;
+  ema50: number | null;
+  rsi14: number | null;
+  trendDirection: 'bullish' | 'bearish' | 'sideways';
+  trendLabel: string;
 };
 
 export type MarketStructureTerm = 'short' | 'medium' | 'long';
@@ -163,6 +175,10 @@ export type CoinAutoBotStatus = 'idle' | 'watching' | 'entry_pending' | 'entry_p
 export type CoinAutoBotTimeframeSummary = {
   direction: 'long' | 'short';
   atrLabel: string;
+  ema100Label: string;
+  ema20Label: string;
+  ema200Label: string;
+  ema50Label: string;
   entryZoneLabel: string;
   interval: CoinTimeframe;
   isConsensus: boolean;
