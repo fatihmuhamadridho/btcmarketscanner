@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { CookiesStorageService } from '../../../common/services/cookiesStorage.service';
 import { futuresAutoBotService } from '@core/binance/futures/bot/infrastructure/futuresAutoBot.service';
 import type {
   FuturesAutoBotLogEntry,
@@ -16,6 +17,39 @@ type AutoBotResponse =
       error: string;
       ok: false;
     };
+
+const cookiesStorage = new CookiesStorageService();
+
+function getBotStateCookieName(symbol: string) {
+  return `btcmarketscanner_auto_bot_state_${symbol}`;
+}
+
+function readBotStateCookie(req: NextApiRequest, symbol: string) {
+  const raw = cookiesStorage.getServer(req, getBotStateCookieName(symbol));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as FuturesAutoBotState;
+  } catch {
+    return null;
+  }
+}
+
+function syncBotStateCookie(res: NextApiResponse, symbol: string, state: FuturesAutoBotState | null) {
+  const cookieName = getBotStateCookieName(symbol);
+
+  if (state === null) {
+    cookiesStorage.deleteServer(res, cookieName);
+    return;
+  }
+
+  cookiesStorage.setServer(res, cookieName, JSON.stringify(state), {
+    maxAge: 60 * 60 * 24,
+  });
+}
 
 function parseNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -112,14 +146,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   if (req.method === 'GET') {
+    const cookieState = readBotStateCookie(req, symbol);
+    if (cookieState && !futuresAutoBotService.get(symbol)) {
+      futuresAutoBotService.hydrate(symbol, cookieState);
+    }
+
     await futuresAutoBotService.recordProgress(symbol);
     const bot = await futuresAutoBotService.getResolved(symbol);
+    syncBotStateCookie(res, symbol, bot);
     return res.status(200).json({
       ok: true,
       bot,
-      logs: await futuresAutoBotService.getLogs(symbol, {
-        preferMemoryOnly: bot?.status === 'entry_placed',
-      }),
+      logs: await futuresAutoBotService.getLogs(symbol),
     });
   }
 
@@ -131,19 +169,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const bot = await futuresAutoBotService.start(input);
+    syncBotStateCookie(res, symbol, bot);
 
     return res.status(200).json({ ok: true, bot, logs: await futuresAutoBotService.getLogs(symbol) });
   }
 
   if (req.method === 'DELETE') {
-    const current = await futuresAutoBotService.getResolved(symbol);
+    const cookieState = readBotStateCookie(req, symbol);
+    if (cookieState && !futuresAutoBotService.get(symbol)) {
+      futuresAutoBotService.hydrate(symbol, cookieState);
+    }
+
     const stopped = await futuresAutoBotService.stop(symbol);
+    syncBotStateCookie(res, symbol, stopped);
     return res.status(200).json({
       ok: true,
       bot: stopped,
-      logs: await futuresAutoBotService.getLogs(symbol, {
-        preferMemoryOnly: current?.status === 'entry_placed',
-      }),
+      logs: await futuresAutoBotService.getLogs(symbol),
     });
   }
 

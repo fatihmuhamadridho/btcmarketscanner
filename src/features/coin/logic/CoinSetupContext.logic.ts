@@ -13,10 +13,11 @@ export function buildCoinSetupAnalysisContext(
   const lastPrice = orderedCandles[orderedCandles.length - 1].close;
   const atr = getAverageTrueRange(orderedCandles, 14);
   const rsi14 = getRelativeStrengthIndex(orderedCandles, 14);
-  const range = Math.max(supportResistance.resistance - supportResistance.support, 1);
-  const zoneBuffer = Math.max(atr ?? range * 0.1, lastPrice * 0.002, 1);
-  const stopBuffer = Math.max(zoneBuffer * 0.9, lastPrice * 0.003);
-  const targetBuffer = Math.max(zoneBuffer * 1.2, range * 0.16);
+  const range = Math.max(supportResistance.resistance - supportResistance.support, Number.EPSILON);
+  const scaleFloor = Math.max(lastPrice * 0.002, range * 0.1, 0.00000001);
+  const zoneBuffer = Math.max(atr ?? 0, scaleFloor);
+  const stopBuffer = Math.max(zoneBuffer * 0.9, lastPrice * 0.003, range * 0.2);
+  const targetBuffer = Math.max(zoneBuffer * 1.2, range * 0.16, lastPrice * 0.005);
 
   const bullishStructure = trendSummary.structurePattern === 'HH/HL' || trendSummary.structure.includes('Higher high');
   const bearishStructure =

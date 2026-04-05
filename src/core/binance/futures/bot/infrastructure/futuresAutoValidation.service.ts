@@ -54,6 +54,7 @@ export type FuturesAutoBotOpenClawValidationResult = {
 type FuturesAutoBotOpenClawValidationInput = {
   accountSize: number | null;
   consensusSetup: CoinSetupDetail | null;
+  setupCandidateOverride?: CoinValidationSnapshotSetupCandidate | null;
   currentPrice: number;
   isPerpetual: boolean;
   leverage: number;
@@ -72,14 +73,12 @@ type CachedOpenClawValidation = {
 
 const openClawPromptInstructions = [
   'Validate this futures setup snapshot before any Binance entry order is opened.',
-  'Treat 15m as the mandatory setup anchor, 1h as the primary bias, 4h as a soft macro context, and 1m as the trigger.',
-  'Return only a JSON object with these fields: setup_id, symbol, exchange, market_type, is_perpetual, confidence, decision, accepted, rejection_reasons, validated_setup.',
-  'Set confidence to a number from 0 to 1 that reflects how strong the setup is, even when rejecting the setup.',
-  'Use decision = "accept" only when the setup is coherent, HTF trend alignment is acceptable, and risk/reward is valid.',
-  'If the setup is not good enough, set decision = "reject", accepted = false, rejection_reasons to a concise array of reasons, validated_setup = null, and suggested_setup to the best adjusted setup you recommend.',
-  'Add adjustment_notes with concise actions the bot should take to move toward the suggested setup.',
-  'Set next_action to one of wait_for_entry_zone, wait_for_new_data, flip_direction, or ready_to_enter.',
-  'If the setup is accepted, validated_setup must contain the practical, executable trade plan and suggested_setup should be null.',
+  'Use 15m as the setup anchor, 1h as the primary bias, 4h as soft macro context, and 1m as the trigger.',
+  'Return only JSON with: setup_id, symbol, exchange, market_type, is_perpetual, confidence, decision, accepted, rejection_reasons, adjustment_notes, next_action, suggested_setup, validated_setup.',
+  'Confidence must be 0 to 1 and should reflect setup strength even on rejects.',
+  'Accept only when the setup is coherent, the higher timeframe bias is aligned enough, and risk/reward is valid.',
+  'Reject with accepted=false, concise rejection_reasons, suggested_setup for the best adjusted setup, and validated_setup=null.',
+  'If accepted, validated_setup must be the executable plan and suggested_setup must be null.',
 ].join(' ');
 
 const validationCache = new Map<string, CachedOpenClawValidation>();
@@ -265,8 +264,10 @@ async function runOpenClawValidation(snapshot: CoinValidationSnapshot) {
           'agent',
           '--session-id',
           'main',
+          '--thinking',
+          'low',
           '--message',
-          `${openClawPromptInstructions}\n\nSnapshot JSON:\n${JSON.stringify(snapshot, null, 2)}`,
+          `${openClawPromptInstructions}\n\nSnapshot JSON:\n${JSON.stringify(snapshot)}`,
         ],
         {
           env: process.env,
@@ -427,6 +428,7 @@ function toValidationSnapshot(input: FuturesAutoBotOpenClawValidationInput): Coi
   const snapshot = buildCoinValidationSnapshot({
     accountSize: input.accountSize,
     consensusSetup: input.consensusSetup,
+    setupCandidateOverride: input.setupCandidateOverride ?? null,
     currentPrice: input.currentPrice,
     currentTrend,
     isPerpetual: input.isPerpetual,

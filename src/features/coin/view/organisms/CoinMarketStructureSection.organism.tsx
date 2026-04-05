@@ -1,5 +1,5 @@
 import { Card, Divider, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
-import { formatDecimalString } from '@utils/format-number.util';
+import { formatPriceLevel } from '../../logic/CoinFormat.logic';
 import CoinMarketStructureCard from '../molecules/CoinMarketStructureCard.molecule';
 import type { CoinTimeframeSupportResistance } from '../../interface/CoinView.interface';
 
@@ -118,7 +118,7 @@ export default function CoinMarketStructureSection({ timeframeSupportResistance 
                   <Text c="dimmed" size="sm">
                     {item.label}
                   </Text>
-                  <Text fw={700}>{formatDecimalString(item.value?.toString())}</Text>
+                  <Text fw={700}>{formatPriceLevel(item.value ?? null)}</Text>
                 </Stack>
               ))}
             </SimpleGrid>

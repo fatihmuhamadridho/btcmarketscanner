@@ -17,3 +17,5 @@
 17. Buat user management system
 18. Fixing pindah halaman dari detail coin ke homepage seharunsya tidak lagging
 19. Tambahin guard dimana kalo orang yang akses belom pake cloudflare guard atau something vpn maka munculin alert dan tunggu sampe si user udah pake guard itu
+20. Fixng behavior valiation setup, karna sekrang masih sering banget minta validasi padahal suggestionya masih tetep sama (On Progress, masih pengecekan berkala)
+21. Gimana cara ngurangin pemakaian token openclaw nya (On Progress, notes sudah dikurangin berdasarkan payload timeframe nya)

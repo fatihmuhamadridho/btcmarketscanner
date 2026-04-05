@@ -9,6 +9,12 @@ type FuturesAccountResponse = {
   totalWalletBalance?: string;
 };
 
+type FuturesLeverageResponse = {
+  leverage?: number;
+  maxNotionalValue?: string;
+  symbol?: string;
+};
+
 type FuturesPositionRiskResponseItem = {
   entryPrice?: string;
   isolatedMargin?: string;
@@ -183,10 +189,10 @@ function matchesPositionSide(
 
 function getEntryLimitPrice(plan: FuturesAutoBotPlan, currentPrice: number) {
   if (plan.direction === 'long') {
-    return plan.entryZone.low ?? plan.entryMid ?? currentPrice;
+    return plan.entryZone.high ?? plan.entryMid ?? currentPrice;
   }
 
-  return plan.entryZone.high ?? plan.entryMid ?? currentPrice;
+  return plan.entryZone.low ?? plan.entryMid ?? currentPrice;
 }
 
 export class FuturesAutoTradeService {
@@ -542,11 +548,25 @@ export class FuturesAutoTradeService {
     return snapshot.data.symbolInfo ?? null;
   }
 
+  async setSymbolLeverage(symbol: string, leverage: number) {
+    const normalizedLeverage = Math.max(1, Math.trunc(leverage));
+
+    return this.request<FuturesLeverageResponse>('/fapi/v1/leverage', {
+      method: 'POST',
+      params: {
+        leverage: normalizedLeverage,
+        symbol,
+      },
+      signed: true,
+    });
+  }
+
   async executeTrade(plan: FuturesAutoBotPlan, currentPrice: number) {
     const [account, symbolInfo] = await Promise.all([this.getAccount(), this.getSymbolInfo(plan.symbol)]);
     const availableBalance = parseNumber(account.availableBalance ?? account.totalWalletBalance) ?? 0;
     const stepSize = extractStepSize(symbolInfo ?? undefined);
     const tickSize = extractTickSize(symbolInfo ?? undefined);
+    await this.setSymbolLeverage(plan.symbol, plan.leverage);
     const allocatedMargin =
       plan.allocationUnit === 'usdt' ? plan.allocationValue : availableBalance * (plan.allocationValue / 100);
     const notional = allocatedMargin * Math.max(plan.leverage, 1);

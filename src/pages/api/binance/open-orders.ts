@@ -1,7 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { CookiesStorageService } from '../../../common/services/cookiesStorage.service';
 import { formatDecimalString } from '@utils/format-number.util';
 import { futuresAutoBotService } from '@core/binance/futures/bot/infrastructure/futuresAutoBot.service';
 import { futuresAutoTradeService } from '@core/binance/futures/bot/infrastructure/futuresAutoTrade.service';
+import type { FuturesAutoBotState } from '@core/binance/futures/bot/domain/futuresAutoBot.model';
 
 type BinanceOpenOrderApiResponse =
   | {
@@ -55,8 +57,42 @@ function parseNumber(value?: string | null) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+const cookiesStorage = new CookiesStorageService();
+
+function getBotStateCookieName(symbol: string) {
+  return `btcmarketscanner_auto_bot_state_${symbol}`;
+}
+
+function readBotStateCookie(req: NextApiRequest, symbol: string) {
+  const raw = cookiesStorage.getServer(req, getBotStateCookieName(symbol));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as FuturesAutoBotState;
+  } catch {
+    return null;
+  }
+}
+
 function formatPrice(value: number | null) {
-  return value === null ? 'n/a' : `${formatDecimalString(value.toFixed(2))} USDT`;
+  if (value === null) {
+    return 'n/a';
+  }
+
+  const absoluteValue = Math.abs(value);
+  const decimals =
+    absoluteValue >= 1000 ? 2 :
+    absoluteValue >= 100 ? 3 :
+    absoluteValue >= 1 ? 4 :
+    absoluteValue >= 0.1 ? 5 :
+    absoluteValue >= 0.01 ? 7 :
+    absoluteValue >= 0.001 ? 8 :
+    10;
+
+  return `${formatDecimalString(value.toFixed(decimals))} USDT`;
 }
 
 function formatQuantity(value: number | null) {
@@ -223,6 +259,11 @@ export default async function handler(
   }
 
   try {
+    const cookieState = readBotStateCookie(req, symbol);
+    if (cookieState && !futuresAutoBotService.get(symbol)) {
+      futuresAutoBotService.hydrate(symbol, cookieState);
+    }
+
     if (req.method === 'DELETE') {
       const body = req.body as { algoId?: number; clientOrderId?: string | null; mode?: 'Regular' | 'Algo'; orderId?: number; symbol?: string };
       const targetMode = body.mode === 'Algo' ? 'Algo' : 'Regular';

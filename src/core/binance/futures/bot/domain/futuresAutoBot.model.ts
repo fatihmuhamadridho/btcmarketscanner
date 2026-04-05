@@ -1,6 +1,7 @@
 import type { CoinAutoBotStatus } from '@features/coin/interface/CoinView.interface';
 
 export type FuturesAutoBotDirection = 'long' | 'short';
+export type FuturesAutoBotSetupType = 'breakout_retest' | 'breakdown_retest' | 'continuation';
 
 export type FuturesAutoBotPlan = {
   allocationUnit: 'percent' | 'usdt';
@@ -18,6 +19,7 @@ export type FuturesAutoBotPlan = {
   setupGrade: 'A+' | 'A' | 'B' | 'C';
   setupGradeRank: number;
   setupLabel: string;
+  setupType?: FuturesAutoBotSetupType;
   stopLoss: number | null;
   symbol: string;
   takeProfits: Array<{

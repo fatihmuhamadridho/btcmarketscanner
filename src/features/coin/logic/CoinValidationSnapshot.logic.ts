@@ -30,15 +30,16 @@ const TIMEFRAME_ROLES: Record<'4h' | '1h' | '15m' | '1m', CoinValidationSnapshot
 };
 
 const SNAPSHOT_CANDLE_LIMITS: Record<'1m' | '15m' | '1h' | '4h', number> = {
-  '1m': 20,
-  '15m': 50,
-  '1h': 50,
-  '4h': 20,
+  '1m': 12,
+  '15m': 36,
+  '1h': 30,
+  '4h': 18,
 };
 
 type BuildCoinValidationSnapshotInput = {
   accountSize: number | null;
   consensusSetup: SetupInsight | null;
+  setupCandidateOverride?: CoinValidationSnapshotSetupCandidate | null;
   currentPrice: number | null;
   currentTrend: TrendInsight;
   leverage: number;
@@ -270,8 +271,9 @@ export function buildCoinValidationSnapshot(input: BuildCoinValidationSnapshotIn
   const currentTime = new Date();
   const currentTrend = input.currentTrend;
   const currentContextSupportResistance = input.timeframeSupportResistance.find((item) => item.interval === '15m') ?? null;
+  const consensusSetup = input.consensusSetup;
 
-  if (!input.consensusSetup) {
+  if (!consensusSetup && !input.setupCandidateOverride) {
     return null;
   }
 
@@ -298,11 +300,13 @@ export function buildCoinValidationSnapshot(input: BuildCoinValidationSnapshotIn
     }),
   } satisfies Record<'1m' | '15m' | '1h' | '4h', CoinValidationSnapshotTimeframe>;
 
-  const setupCandidate = buildSetupCandidate({
-    consensusSetup: input.consensusSetup,
-    currentContextSupportResistance,
-    currentPrice: input.currentPrice,
-  });
+  const setupCandidate =
+    input.setupCandidateOverride ??
+    buildSetupCandidate({
+      consensusSetup: consensusSetup!,
+      currentContextSupportResistance,
+      currentPrice: input.currentPrice,
+    });
 
   const snapshotWithoutQuality = {
     current_context: {

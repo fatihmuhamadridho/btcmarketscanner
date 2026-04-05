@@ -1,5 +1,6 @@
 import { Badge, Card, SimpleGrid, Stack, Text } from '@mantine/core';
 import { formatDecimalString } from '@utils/format-number.util';
+import { formatPriceLevel } from '../../logic/CoinFormat.logic';
 
 type CoinMarketStructureCardProps = {
   isLoading: boolean;
@@ -30,16 +31,24 @@ export default function CoinMarketStructureCard({
   trendDirection,
   trendLabel,
 }: CoinMarketStructureCardProps) {
+  function formatCompactIndicatorValue(value: number | null) {
+    if (value === null) {
+      return 'n/a';
+    }
+
+    return formatDecimalString(value.toFixed(Math.abs(value) < 1 ? 6 : 2));
+  }
+
   return (
     <Card
       radius="md"
       p="lg"
       withBorder
-      style={{
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderColor: 'rgba(255,255,255,0.08)',
-      }}
-      >
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          borderColor: 'rgba(255,255,255,0.08)',
+        }}
+    >
       <Stack gap={10}>
         <Stack gap={4}>
           <Text fw={700}>{label}</Text>
@@ -53,54 +62,70 @@ export default function CoinMarketStructureCard({
           ) : null}
         </Stack>
 
-        <SimpleGrid cols={2} spacing="sm">
-          <Stack gap={2}>
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               Support
             </Text>
-            <Text fw={700}>{formatDecimalString(support?.toString())}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {formatPriceLevel(support)}
+            </Text>
           </Stack>
-          <Stack gap={2}>
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               Resistance
             </Text>
-            <Text fw={700}>{formatDecimalString(resistance?.toString())}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {formatPriceLevel(resistance)}
+            </Text>
           </Stack>
-          <Stack gap={2}>
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               ATR14
             </Text>
-            <Text fw={700}>{atr14 !== null ? formatDecimalString(atr14.toFixed(2)) : 'n/a'}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCompactIndicatorValue(atr14)}
+            </Text>
           </Stack>
-          <Stack gap={2}>
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               RSI14
             </Text>
-            <Text fw={700}>{rsi14 !== null ? formatDecimalString(rsi14.toFixed(2)) : 'n/a'}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {rsi14 !== null ? formatDecimalString(rsi14.toFixed(2)) : 'n/a'}
+            </Text>
           </Stack>
-          <Stack gap={2}>
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               EMA20
             </Text>
-            <Text fw={700}>{ema20 !== null ? formatDecimalString(ema20.toFixed(2)) : 'n/a'}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCompactIndicatorValue(ema20)}
+            </Text>
           </Stack>
-          <Stack gap={2}>
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               EMA50
             </Text>
-            <Text fw={700}>{ema50 !== null ? formatDecimalString(ema50.toFixed(2)) : 'n/a'}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCompactIndicatorValue(ema50)}
+            </Text>
           </Stack>
-          <Stack gap={2}>
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               EMA100
             </Text>
-            <Text fw={700}>{ema100 !== null ? formatDecimalString(ema100.toFixed(2)) : 'n/a'}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCompactIndicatorValue(ema100)}
+            </Text>
           </Stack>
-          <Stack gap={2}>
+          <Stack gap={2} style={{ minWidth: 0 }}>
             <Text c="dimmed" size="xs" tt="uppercase">
               EMA200
             </Text>
-            <Text fw={700}>{ema200 !== null ? formatDecimalString(ema200.toFixed(2)) : 'n/a'}</Text>
+            <Text fw={700} style={{ lineHeight: 1.15, wordBreak: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCompactIndicatorValue(ema200)}
+            </Text>
           </Stack>
         </SimpleGrid>
       </Stack>

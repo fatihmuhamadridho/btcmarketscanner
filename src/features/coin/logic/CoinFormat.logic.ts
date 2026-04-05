@@ -42,7 +42,17 @@ export function formatPriceLevel(value: number | null) {
     return 'n/a';
   }
 
-  return formatDecimalString(value.toFixed(2));
+  const absoluteValue = Math.abs(value);
+  const decimals =
+    absoluteValue >= 1000 ? 2 :
+    absoluteValue >= 100 ? 3 :
+    absoluteValue >= 1 ? 4 :
+    absoluteValue >= 0.1 ? 5 :
+    absoluteValue >= 0.01 ? 6 :
+    absoluteValue >= 0.001 ? 8 :
+    10;
+
+  return formatDecimalString(value.toFixed(decimals));
 }
 
 export function formatSignedPercent(value: number) {

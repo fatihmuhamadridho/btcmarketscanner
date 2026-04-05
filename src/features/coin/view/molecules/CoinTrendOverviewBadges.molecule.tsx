@@ -1,5 +1,5 @@
 import { Badge, Group } from '@mantine/core';
-import { formatDecimalString } from '@utils/format-number.util';
+import { formatPriceLevel } from '../../logic/CoinFormat.logic';
 
 type CoinTrendOverviewBadgesProps = {
   atr14: number | null;
@@ -39,16 +39,16 @@ export default function CoinTrendOverviewBadges({
         {structure}
       </Badge>
       <Badge variant="light" color="gray">
-        EMA20 {ema20 !== null ? formatDecimalString(ema20.toFixed(2)) : 'n/a'}
+        EMA20 {formatPriceLevel(ema20)}
       </Badge>
       <Badge variant="light" color="gray">
-        EMA50 {ema50 !== null ? formatDecimalString(ema50.toFixed(2)) : 'n/a'}
+        EMA50 {formatPriceLevel(ema50)}
       </Badge>
       <Badge variant="light" color="gray">
-        EMA200 {ema200 !== null ? formatDecimalString(ema200.toFixed(2)) : 'n/a'}
+        EMA200 {formatPriceLevel(ema200)}
       </Badge>
       <Badge variant="light" color="gray">
-        ATR14 {atr14 !== null ? formatDecimalString(atr14.toFixed(2)) : 'n/a'}
+        ATR14 {formatPriceLevel(atr14)}
       </Badge>
       <Badge variant="light" color="gray">
         RSI14 {rsi14 !== null ? rsi14.toFixed(2) : 'n/a'}
