@@ -22,3 +22,4 @@
 22. Hapus semua yang berkaitan dengn redis
 23. Integrasi React Query di web ini
 24. Tambahin fitur transaction history buat ngitung berapa win dan berapa loss berdasarkan realized_pnl secara global dan detail per coin (On Progress, per detail coin sudah ada)
+25. Bikin 2 mode yaitu aggresive sama conservative

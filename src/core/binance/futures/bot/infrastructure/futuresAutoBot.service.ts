@@ -158,6 +158,7 @@ function createWatchingStateFromConsensus(params: {
   return {
     ...current,
     execution: null,
+    executionHistory: current.executionHistory ?? [],
     lastOpenClawValidationAt: null,
     lastOpenClawValidationFingerprint: null,
     openClawLockedPlan: null,
@@ -652,6 +653,11 @@ export class FuturesAutoBotService {
       }
 
       if (nextState.status === 'entry_placed' && !hasActivePosition) {
+        const executionHistory = [
+          ...(current.executionHistory ?? []),
+          ...(current.execution ? [current.execution] : []),
+        ].slice(-20);
+
         try {
           await futuresAutoTradeService.cancelProtectionOrders(symbol, 'BOTH');
         } catch (error) {
@@ -671,6 +677,8 @@ export class FuturesAutoBotService {
           consensus,
           currentPrice,
         });
+
+        resetState.executionHistory = executionHistory;
 
         inMemoryBots.set(symbol, resetState);
         await storeLogEntry(
@@ -729,6 +737,7 @@ export class FuturesAutoBotService {
           entryPrice: number | null;
           entryFilled: boolean;
           algoOrderClientIds: string[];
+          allocatedMargin: number;
           positionSide: 'LONG' | 'SHORT' | null;
           quantity: number;
           stopLossAlgoOrder: { algoId: number } | null;
@@ -736,6 +745,7 @@ export class FuturesAutoBotService {
         };
 
         const executionRecord: FuturesAutoBotExecutionRecord = {
+          allocatedMargin: execution.allocatedMargin,
           algoOrderClientIds: execution.algoOrderClientIds,
           entryOrderId: execution.entryOrder.orderId,
           entryOrderStatus: execution.entryOrder.status ?? null,
@@ -751,6 +761,7 @@ export class FuturesAutoBotService {
           ...scannedState,
           planSource: 'openclaw',
           openClawLockedPlan: activePlan,
+          executionHistory: current.executionHistory ?? [],
           planLockedAt: current.planLockedAt ?? new Date().toISOString(),
           planLockExpiresAt: current.planLockExpiresAt ?? new Date(Date.now() + OPENCLAW_PLAN_LOCK_TTL_MS).toISOString(),
           execution: executionRecord,
@@ -868,6 +879,7 @@ export class FuturesAutoBotService {
         entryPrice: number | null;
         entryFilled: boolean;
         algoOrderClientIds: string[];
+        allocatedMargin: number;
         positionSide: 'LONG' | 'SHORT' | null;
         quantity: number;
         stopLossAlgoOrder: { algoId: number } | null;
@@ -875,6 +887,7 @@ export class FuturesAutoBotService {
       };
 
       const executionRecord: FuturesAutoBotExecutionRecord = {
+        allocatedMargin: execution.allocatedMargin,
         algoOrderClientIds: execution.algoOrderClientIds,
         entryOrderId: execution.entryOrder.orderId,
         entryOrderStatus: execution.entryOrder.status ?? null,
@@ -890,6 +903,7 @@ export class FuturesAutoBotService {
         ...scannedState,
         planSource: 'openclaw',
         openClawLockedPlan: validatedPlan,
+        executionHistory: current.executionHistory ?? [],
         lastOpenClawValidationAt: new Date().toISOString(),
         lastOpenClawValidationFingerprint: openClawValidationFingerprint,
         planLockedAt: new Date().toISOString(),
@@ -946,6 +960,7 @@ export class FuturesAutoBotService {
       createdAt: now,
       updatedAt: now,
       plan: input,
+      executionHistory: [],
       openClawLockedPlan: null,
       lastOpenClawValidationAt: null,
       lastOpenClawValidationFingerprint: null,

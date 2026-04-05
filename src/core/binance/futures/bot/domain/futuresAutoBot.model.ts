@@ -34,6 +34,7 @@ export type FuturesAutoBotState = {
   botId: string;
   createdAt: string;
   execution?: FuturesAutoBotExecutionRecord | null;
+  executionHistory?: FuturesAutoBotExecutionRecord[];
   lastScanPrice?: number | null;
   lastOpenClawValidationAt?: string | null;
   lastOpenClawValidationFingerprint?: string | null;
@@ -49,6 +50,7 @@ export type FuturesAutoBotState = {
 export type StartFuturesAutoBotInput = FuturesAutoBotPlan;
 
 export type FuturesAutoBotExecutionRecord = {
+  allocatedMargin: number;
   entryOrderId: number;
   entryOrderStatus: string | null;
   entryPrice: number | null;

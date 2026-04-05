@@ -641,6 +641,7 @@ export class FuturesAutoTradeService {
       entryPrice: normalizedEntryPrice,
       entryFilled,
       algoOrderClientIds: protectionOrders?.algoOrderClientIds ?? [],
+      allocatedMargin,
       positionSide,
       quantity,
       stopLossAlgoOrder: protectionOrders?.stopLossAlgoOrder ?? null,

@@ -239,8 +239,10 @@ export type CoinAutoBotOpenOrder = {
 };
 
 export type CoinAutoBotTransactionHistoryEntry = {
+  actualMarginLabel: string;
   assetLabel: string;
   infoLabel: string;
+  roiLabel: string;
   realizedPnlLabel: string;
   symbol: string;
   timeLabel: string;
@@ -249,6 +251,7 @@ export type CoinAutoBotTransactionHistoryEntry = {
 
 export type CoinAutoBotTransactionHistorySummary = {
   lossCount: number;
+  roiLabel: string;
   totalRealizedPnlLabel: string;
   winCount: number;
   winRateLabel: string;

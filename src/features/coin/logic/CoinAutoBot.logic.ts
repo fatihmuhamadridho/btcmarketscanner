@@ -7,7 +7,6 @@ import type {
   CoinAutoBotSectionViewModel,
   CoinAutoBotOpenPosition,
   CoinAutoBotOpenOrder,
-  CoinAutoBotTransactionHistoryEntry,
   CoinAutoBotTransactionHistorySummary,
   CoinAutoBotTimeframeSummary,
   CoinSetupDetail,
@@ -147,9 +146,11 @@ type CoinBinanceTransactionHistoryApiResponse =
   | {
       ok: true;
       history: Array<{
+        actualMargin: number | null;
         asset: string;
         info: string;
         income: number | null;
+        roi: number | null;
         symbol: string;
         time: number | null;
         tranId: number | null;
@@ -569,8 +570,17 @@ export function useCoinAutoBotLogic({
     orderTriggerPriceLabel: order.orderTriggerPriceLabel,
     orderTypeLabel: order.orderTypeLabel,
   }));
-  const transactionHistory: CoinAutoBotTransactionHistoryEntry[] = (transactionHistoryResponse?.history ?? []).map((item) => ({
+  const realizedPnlValues = (transactionHistoryResponse?.history ?? [])
+    .map((item) => item.income)
+    .filter((value): value is number => value !== null && Number.isFinite(value));
+  const totalRealizedPnl = realizedPnlValues.reduce((sum, value) => sum + value, 0);
+  const winCount = realizedPnlValues.filter((value) => value > 0).length;
+  const lossCount = realizedPnlValues.filter((value) => value < 0).length;
+  const closedTradeCount = winCount + lossCount;
+  const transactionHistory = (transactionHistoryResponse?.history ?? []).map((item) => ({
+    actualMarginLabel: item.actualMargin !== null ? `${formatDecimalString(item.actualMargin.toFixed(2))} USDT` : 'n/a',
     assetLabel: item.asset,
+    roiLabel: item.roi !== null ? `${item.roi >= 0 ? '+' : ''}${formatDecimalString(item.roi.toFixed(2))}%` : 'n/a',
     infoLabel: item.info,
     realizedPnlLabel:
       item.income !== null
@@ -580,15 +590,17 @@ export function useCoinAutoBotLogic({
     timeLabel: item.time !== null ? new Date(item.time).toLocaleString() : 'n/a',
     tranIdLabel: item.tranId !== null ? String(item.tranId) : 'n/a',
   }));
-  const realizedPnlValues = (transactionHistoryResponse?.history ?? [])
-    .map((item) => item.income)
-    .filter((value): value is number => value !== null && Number.isFinite(value));
-  const totalRealizedPnl = realizedPnlValues.reduce((sum, value) => sum + value, 0);
-  const winCount = realizedPnlValues.filter((value) => value > 0).length;
-  const lossCount = realizedPnlValues.filter((value) => value < 0).length;
-  const closedTradeCount = winCount + lossCount;
+  const totalActualMargin = (transactionHistoryResponse?.history ?? [])
+    .map((item) => item.actualMargin)
+    .filter((value): value is number => value !== null && Number.isFinite(value) && value > 0)
+    .reduce((sum, value) => sum + value, 0);
+  const totalActualRoiValue = totalActualMargin > 0 ? (totalRealizedPnl / totalActualMargin) * 100 : null;
   const transactionHistorySummary: CoinAutoBotTransactionHistorySummary = {
     lossCount,
+    roiLabel:
+      totalActualRoiValue !== null
+        ? `${totalActualRoiValue >= 0 ? '+' : ''}${formatDecimalString(totalActualRoiValue.toFixed(2))}%`
+        : 'n/a',
     totalRealizedPnlLabel: `${totalRealizedPnl >= 0 ? '+' : ''}${formatDecimalString(totalRealizedPnl.toFixed(2))} USDT`,
     winCount,
     winRateLabel: closedTradeCount > 0 ? `${formatDecimalString(((winCount / closedTradeCount) * 100).toFixed(2))}%` : 'n/a',
