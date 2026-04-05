@@ -31,7 +31,6 @@ import type {
   MarketStructureTerm,
   MarketStructureTermOption,
 } from '../../interface/CoinView.interface';
-import type { CoinValidationSnapshot } from '../../interface/CoinValidationSnapshot.interface';
 
 type CoinTemplateProps = {
   coinChart: Omit<CoinChartProps, 'symbol'>;
@@ -53,7 +52,6 @@ type CoinTemplateProps = {
   structureTerm: MarketStructureTerm;
   structureTerms: ReadonlyArray<MarketStructureTermOption>;
   symbolInfo: CoinSymbolInfo | null | undefined;
-  validationSnapshot: CoinValidationSnapshot | null;
   timeframeSupportResistance: ReadonlyArray<CoinTimeframeSupportResistance>;
   trendSummary: CoinTrendSummary;
   TrendIcon: ComponentType<{ size?: number }>;

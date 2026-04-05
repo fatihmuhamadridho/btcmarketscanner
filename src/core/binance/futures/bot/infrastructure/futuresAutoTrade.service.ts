@@ -570,7 +570,11 @@ export class FuturesAutoTradeService {
     const allocatedMargin =
       plan.allocationUnit === 'usdt' ? plan.allocationValue : availableBalance * (plan.allocationValue / 100);
     const notional = allocatedMargin * Math.max(plan.leverage, 1);
-    const rawQuantity = notional / Math.max(currentPrice, 1);
+    if (!Number.isFinite(currentPrice) || currentPrice <= 0) {
+      throw new Error(`Invalid current price for ${plan.symbol}.`);
+    }
+
+    const rawQuantity = notional / currentPrice;
     const quantity = roundDownToStep(rawQuantity, stepSize);
     const entryPrice = getEntryLimitPrice(plan, currentPrice);
     const normalizedEntryPrice = normalizePrice(entryPrice, tickSize, symbolInfo?.pricePrecision);

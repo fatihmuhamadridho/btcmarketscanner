@@ -163,10 +163,10 @@ export function useFuturesMarketSymbolSnapshot(symbol?: string) {
   });
 }
 
-export function useFuturesMarketSymbolInitialCandles(symbol?: string, interval = '1d') {
+export function useFuturesMarketSymbolInitialCandles(symbol?: string, interval = '1d', limit = 200) {
   return useQuery({
-    queryKey: ['futures-market-symbol-initial-candles', symbol, interval],
-    queryFn: () => futuresMarketController.getMarketInitialCandles(symbol ?? '', interval),
+    queryKey: ['futures-market-symbol-initial-candles', symbol, interval, limit],
+    queryFn: () => futuresMarketController.getMarketInitialCandles(symbol ?? '', interval, limit),
     enabled: typeof symbol === 'string' && symbol.length > 0,
     staleTime: 0,
     refetchOnWindowFocus: false,

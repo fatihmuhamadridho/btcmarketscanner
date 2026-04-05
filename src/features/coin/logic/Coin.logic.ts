@@ -151,12 +151,12 @@ export function useCoinDetailPageLogic(initialSymbol?: CoinPageProps['symbol']) 
     isFetching: isFetchingInitialCandles,
     error: candlesError,
   } = useFuturesMarketSymbolInitialCandles(symbol, interval);
-  const executionCandles1m = useFuturesMarketSymbolInitialCandles(symbol, '1m');
-  const executionCandles5m = useFuturesMarketSymbolInitialCandles(symbol, '5m');
-  const executionCandles15m = useFuturesMarketSymbolInitialCandles(symbol, '15m');
-  const executionCandles30m = useFuturesMarketSymbolInitialCandles(symbol, '30m');
-  const executionCandles1h = useFuturesMarketSymbolInitialCandles(symbol, '1h');
-  const executionCandles4h = useFuturesMarketSymbolInitialCandles(symbol, '4h');
+  const executionCandles1m = useFuturesMarketSymbolInitialCandles(symbol, '1m', 120);
+  const executionCandles5m = useFuturesMarketSymbolInitialCandles(symbol, '5m', 120);
+  const executionCandles15m = useFuturesMarketSymbolInitialCandles(symbol, '15m', 120);
+  const executionCandles30m = useFuturesMarketSymbolInitialCandles(symbol, '30m', 120);
+  const executionCandles1h = useFuturesMarketSymbolInitialCandles(symbol, '1h', 120);
+  const executionCandles4h = useFuturesMarketSymbolInitialCandles(symbol, '4h', 120);
   const detail = snapshotData?.data;
   const marketSymbol = detail?.symbol;
   const symbolInfo = detail?.symbolInfo;
