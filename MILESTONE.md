@@ -19,4 +19,6 @@
 19. Tambahin guard dimana kalo orang yang akses belom pake cloudflare guard atau something vpn maka munculin alert dan tunggu sampe si user udah pake guard itu
 20. Fixng behavior valiation setup, karna sekrang masih sering banget minta validasi padahal suggestionya masih tetep sama (On Progress, masih pengecekan berkala)
 21. Gimana cara ngurangin pemakaian token openclaw nya (On Progress, notes sudah dikurangin berdasarkan payload timeframe nya)
-22. Hapu semua yang berkaitan dengn redis
+22. Hapus semua yang berkaitan dengn redis
+23. Integrasi React Query di web ini
+24. Tambahin fitur transaction history buat ngitung berapa win dan berapa loss berdasarkan realized_pnl secara global dan detail per coin (On Progress, per detail coin sudah ada)

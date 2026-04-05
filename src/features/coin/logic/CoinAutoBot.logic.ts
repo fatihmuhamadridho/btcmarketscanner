@@ -7,6 +7,8 @@ import type {
   CoinAutoBotSectionViewModel,
   CoinAutoBotOpenPosition,
   CoinAutoBotOpenOrder,
+  CoinAutoBotTransactionHistoryEntry,
+  CoinAutoBotTransactionHistorySummary,
   CoinAutoBotTimeframeSummary,
   CoinSetupDetail,
   CoinPriceLevelFormatter,
@@ -134,6 +136,23 @@ type CoinBinanceOpenOrdersApiResponse =
         orderTriggerPriceLabel: string;
         orderTypeLabel: string;
         symbol: string;
+      }>;
+    }
+  | {
+      error: string;
+      ok: false;
+    };
+
+type CoinBinanceTransactionHistoryApiResponse =
+  | {
+      ok: true;
+      history: Array<{
+        asset: string;
+        info: string;
+        income: number | null;
+        symbol: string;
+        time: number | null;
+        tranId: number | null;
       }>;
     }
   | {
@@ -382,6 +401,24 @@ export function useCoinAutoBotLogic({
     refetchOnWindowFocus: false,
   });
 
+  const { data: transactionHistoryResponse } = useQuery({
+    queryKey: ['binance-transaction-history', symbol],
+    queryFn: async () => {
+      const response = await fetch(`/api/binance/transaction-history?symbol=${encodeURIComponent(symbol)}`);
+      const payload = (await response.json()) as CoinBinanceTransactionHistoryApiResponse;
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.ok ? 'Unable to read Binance transaction history' : payload.error);
+      }
+
+      return payload;
+    },
+    enabled: symbol.length > 0,
+    staleTime: 15 * 1000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
   const startMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch('/api/binance/auto-bot', {
@@ -532,6 +569,30 @@ export function useCoinAutoBotLogic({
     orderTriggerPriceLabel: order.orderTriggerPriceLabel,
     orderTypeLabel: order.orderTypeLabel,
   }));
+  const transactionHistory: CoinAutoBotTransactionHistoryEntry[] = (transactionHistoryResponse?.history ?? []).map((item) => ({
+    assetLabel: item.asset,
+    infoLabel: item.info,
+    realizedPnlLabel:
+      item.income !== null
+        ? `${item.income >= 0 ? '+' : ''}${formatDecimalString(item.income.toFixed(2))} ${item.asset}`
+        : 'n/a',
+    symbol: item.symbol,
+    timeLabel: item.time !== null ? new Date(item.time).toLocaleString() : 'n/a',
+    tranIdLabel: item.tranId !== null ? String(item.tranId) : 'n/a',
+  }));
+  const realizedPnlValues = (transactionHistoryResponse?.history ?? [])
+    .map((item) => item.income)
+    .filter((value): value is number => value !== null && Number.isFinite(value));
+  const totalRealizedPnl = realizedPnlValues.reduce((sum, value) => sum + value, 0);
+  const winCount = realizedPnlValues.filter((value) => value > 0).length;
+  const lossCount = realizedPnlValues.filter((value) => value < 0).length;
+  const closedTradeCount = winCount + lossCount;
+  const transactionHistorySummary: CoinAutoBotTransactionHistorySummary = {
+    lossCount,
+    totalRealizedPnlLabel: `${totalRealizedPnl >= 0 ? '+' : ''}${formatDecimalString(totalRealizedPnl.toFixed(2))} USDT`,
+    winCount,
+    winRateLabel: closedTradeCount > 0 ? `${formatDecimalString(((winCount / closedTradeCount) * 100).toFixed(2))}%` : 'n/a',
+  };
   const openPositions: CoinAutoBotOpenPosition[] = (positionsResponse?.positions ?? [])
     .filter((position) => position.positionAmt !== 0)
     .map((position) => {
@@ -598,6 +659,8 @@ export function useCoinAutoBotLogic({
     logs,
     openPositions,
     openOrders,
+    transactionHistorySummary,
+    transactionHistory,
     timeframeSummaries,
     onAllocationUnitChange: setAllocationUnit,
     onAllocationValueChange: setAllocationValue,

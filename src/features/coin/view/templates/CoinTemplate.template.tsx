@@ -10,6 +10,7 @@ import CoinChart from '../organisms/CoinChart.organism';
 import CoinAutoBotSection from '../organisms/CoinAutoBotSection.organism';
 import CoinOpenPositionsSection from '../organisms/CoinOpenPositionsSection.organism';
 import CoinOpenOrdersSection from '../organisms/CoinOpenOrdersSection.organism';
+import CoinTransactionHistorySection from '../organisms/CoinTransactionHistorySection.organism';
 import CoinPageStateCard from '../atoms/CoinPageStateCard.atom';
 import CoinMarketStructureSection from '../organisms/CoinMarketStructureSection.organism';
 import CoinSetupSection from '../organisms/CoinSetupSection.organism';
@@ -163,6 +164,12 @@ export default function CoinTemplate({
                 onCancelOrder={coinAutoBot.onCancelOrder}
                 openOrders={coinAutoBot.openOrders}
                 symbol={marketSymbol.symbol ?? 'unknown'}
+              />
+
+              <CoinTransactionHistorySection
+                symbol={marketSymbol.symbol ?? 'unknown'}
+                summary={coinAutoBot.transactionHistorySummary}
+                transactionHistory={coinAutoBot.transactionHistory}
               />
 
               <CoinMarketStructureSection timeframeSupportResistance={timeframeSupportResistance} />

@@ -652,6 +652,20 @@ export class FuturesAutoBotService {
       }
 
       if (nextState.status === 'entry_placed' && !hasActivePosition) {
+        try {
+          await futuresAutoTradeService.cancelProtectionOrders(symbol, 'BOTH');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown protection-order cancellation error.';
+          await storeLogEntry(
+            symbol,
+            createLog(
+              'warn',
+              `Position for ${symbol} is flat, but some protection orders may still be lingering: ${errorMessage}`
+            ),
+            shouldPersistLogs
+          );
+        }
+
         const resetState = createWatchingStateFromConsensus({
           current: scannedState,
           consensus,

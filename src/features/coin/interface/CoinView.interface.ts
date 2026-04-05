@@ -238,6 +238,22 @@ export type CoinAutoBotOpenOrder = {
   orderTypeLabel: string;
 };
 
+export type CoinAutoBotTransactionHistoryEntry = {
+  assetLabel: string;
+  infoLabel: string;
+  realizedPnlLabel: string;
+  symbol: string;
+  timeLabel: string;
+  tranIdLabel: string;
+};
+
+export type CoinAutoBotTransactionHistorySummary = {
+  lossCount: number;
+  totalRealizedPnlLabel: string;
+  winCount: number;
+  winRateLabel: string;
+};
+
 export type CoinAutoBotSectionViewModel = {
   atr14Label: string;
   allocationLabel: string;
@@ -276,6 +292,8 @@ export type CoinAutoBotSectionViewModel = {
   leverage: number;
   openPositions: CoinAutoBotOpenPosition[];
   openOrders: CoinAutoBotOpenOrder[];
+  transactionHistorySummary: CoinAutoBotTransactionHistorySummary;
+  transactionHistory: CoinAutoBotTransactionHistoryEntry[];
   timeframeSummaries: CoinAutoBotTimeframeSummary[];
   onAllocationUnitChange: (value: CoinAutoBotAllocationUnit) => void;
   onAllocationValueChange: (value: number) => void;

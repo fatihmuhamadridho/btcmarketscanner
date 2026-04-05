@@ -54,6 +54,16 @@ type FuturesOpenOrderResponse = FuturesOrderResponse & {
   updateTime?: number;
 };
 
+type FuturesIncomeHistoryResponseItem = {
+  asset?: string;
+  income?: string;
+  incomeType?: string;
+  info?: string;
+  symbol?: string;
+  time?: number;
+  tranId?: number;
+};
+
 type FuturesAlgoOrderResponse = {
   algoId: number;
   clientAlgoId?: string;
@@ -188,11 +198,7 @@ function matchesPositionSide(
 }
 
 function getEntryLimitPrice(plan: FuturesAutoBotPlan, currentPrice: number) {
-  if (plan.direction === 'long') {
-    return plan.entryZone.high ?? plan.entryMid ?? currentPrice;
-  }
-
-  return plan.entryZone.low ?? plan.entryMid ?? currentPrice;
+  return plan.entryMid ?? (plan.direction === 'long' ? plan.entryZone.high : plan.entryZone.low) ?? currentPrice;
 }
 
 export class FuturesAutoTradeService {
@@ -286,6 +292,29 @@ export class FuturesAutoTradeService {
         signed: true,
       }),
     ]);
+  }
+
+  async getRealizedPnlHistory(symbol: string, limit = 20) {
+    const history = await this.request<FuturesIncomeHistoryResponseItem[]>('/fapi/v1/income', {
+      params: {
+        incomeType: 'REALIZED_PNL',
+        limit: Math.max(1, Math.trunc(limit)),
+        symbol,
+      },
+      signed: true,
+    });
+
+    return history
+      .filter((item) => item.symbol === symbol && item.incomeType === 'REALIZED_PNL')
+      .map((item) => ({
+        asset: item.asset ?? 'USDT',
+        income: parseNumber(item.income ?? null),
+        info: item.info ?? 'n/a',
+        symbol: item.symbol ?? symbol,
+        time: typeof item.time === 'number' && Number.isFinite(item.time) ? item.time : null,
+        tranId: typeof item.tranId === 'number' && Number.isFinite(item.tranId) ? item.tranId : null,
+      }))
+      .filter((item) => item.income !== null && item.time !== null);
   }
 
   getCurrentPrice(symbol: string) {
