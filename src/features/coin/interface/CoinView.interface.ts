@@ -1,4 +1,12 @@
 import type { RefObject } from 'react';
+import type {
+  SetupInsight,
+  SetupPathStep,
+  SupportResistance,
+  TrendCandle,
+  TrendDirection,
+  TrendInsight as CoreTrendInsight,
+} from 'btcmarketscanner-core';
 
 export type CoinTimeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d';
 
@@ -52,40 +60,14 @@ export type CoinChartProps = CoinChartViewModel & {
   symbol: string;
 };
 
-export type CoinSetupPathStep = {
-  label: string;
-  status: 'done' | 'current' | 'pending';
-};
+export type CoinSetupPathStep = SetupPathStep;
 
 export type CoinSetupTarget = {
   label: 'TP1' | 'TP2' | 'TP3' | 'Stop loss';
   price: number | null;
 };
 
-export type CoinSetupDetail = {
-  direction: 'long' | 'short';
-  entryMid: number | null;
-  entryZone: {
-    high: number | null;
-    low: number | null;
-  };
-  grade: 'A+' | 'A' | 'B' | 'C';
-  gradeRank: number;
-  label: string;
-  marketCondition: string;
-  pathMode: 'breakout' | 'continuation';
-  path: CoinSetupPathStep[];
-  atr14: number | null;
-  rsi14: number | null;
-  takeProfits: Array<{
-    label: 'TP1' | 'TP2' | 'TP3';
-    price: number | null;
-  }>;
-  reasons: string[];
-  riskReward: number | null;
-  stopLoss: number | null;
-  takeProfit: number | null;
-};
+export type CoinSetupDetail = SetupInsight;
 
 export type CoinSetupPreferred = Pick<CoinSetupDetail, 'direction' | 'grade' | 'label'>;
 

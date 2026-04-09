@@ -1,5 +1,6 @@
 import { createHmac, randomUUID } from 'crypto';
 import { BASE_API_BINANCE, BINANCE_API_KEY, BINANCE_SECRET_KEY } from '@configs/base.config';
+import { getBinanceFuturesBaseUrl } from '@configs/binance-futures-url';
 import { FuturesMarketController } from '@core/binance/futures/market/domain/futuresMarket.controller';
 import type { FuturesAutoBotPlan } from '../domain/futuresAutoBot.model';
 
@@ -94,7 +95,7 @@ type FuturesSymbolInfo = {
 const futuresMarketController = new FuturesMarketController();
 
 function buildBaseUrl() {
-  return BASE_API_BINANCE ?? 'https://demo-fapi.binance.com/fapi/v1';
+  return getBinanceFuturesBaseUrl(BASE_API_BINANCE);
 }
 
 function signQueryString(queryString: string) {

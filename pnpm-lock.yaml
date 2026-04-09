@@ -29,6 +29,9 @@ importers:
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
+      btcmarketscanner-core:
+        specifier: link:../core
+        version: link:../core
       cookie:
         specifier: ^1.1.1
         version: 1.1.1

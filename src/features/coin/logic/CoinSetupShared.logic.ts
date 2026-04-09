@@ -1,4 +1,4 @@
-import type { SetupInsight, SetupPathStep, SupportResistance } from '../interface/CoinLogic.interface';
+import type { SetupInsight, SetupPathStep, SupportResistance } from 'btcmarketscanner-core';
 
 export function buildSetupPathStep(label: string, status: SetupPathStep['status']): SetupPathStep {
   return { label, status };

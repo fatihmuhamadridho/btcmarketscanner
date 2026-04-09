@@ -1,10 +1,9 @@
 import { FuturesMarketController } from '@core/binance/futures/market/domain/futuresMarket.controller';
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
-import { analyzeSetupSide } from '@features/coin/logic/CoinSetup.logic';
-import { analyzeTrend } from '@features/coin/logic/CoinTrend.logic';
+import { analyzeSetupSide, analyzeTrend, getSupportResistance as buildSupportResistance } from 'btcmarketscanner-core';
 import { formatDecimalString } from '@utils/format-number.util';
 import type { CoinAutoBotTimeframeSummary } from '@features/coin/interface/CoinView.interface';
-import type { SetupCandle, SupportResistance, TrendInsight } from '@features/coin/interface/CoinLogic.interface';
+import type { SetupCandle, SupportResistance, TrendInsight } from 'btcmarketscanner-core';
 import type { CoinSetupDetail } from '@features/coin/interface/CoinView.interface';
 
 type ExecutionTimeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h';
@@ -31,21 +30,6 @@ export type FuturesAutoConsensusTimeframeSnapshot = {
   supportResistance: SupportResistance | null;
   trend: TrendInsight;
 };
-
-function getSupportResistance(candles: SetupCandle[], windowSize: number): SupportResistance | null {
-  if (candles.length === 0) {
-    return null;
-  }
-
-  const windowCandles = candles.slice(-windowSize);
-  const lows = windowCandles.map((candle) => candle.low);
-  const highs = windowCandles.map((candle) => candle.high);
-
-  return {
-    support: Math.min(...lows),
-    resistance: Math.max(...highs),
-  };
-}
 
 function formatPrice(value: number | null) {
   return value === null ? 'n/a' : formatDecimalString(value.toFixed(2));
@@ -91,7 +75,7 @@ export class FuturesAutoConsensusService {
           volume: candle.volume,
           closeTime: candle.closeTime,
         }));
-        const supportResistance = getSupportResistance(candles, 20);
+        const supportResistance = buildSupportResistance(candles, 20);
         const trend = analyzeTrend(candles, supportResistance);
         const longSetup = analyzeSetupSide('long', candles, trend, supportResistance);
         const shortSetup = analyzeSetupSide('short', candles, trend, supportResistance);

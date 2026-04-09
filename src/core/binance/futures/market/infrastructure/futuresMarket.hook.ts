@@ -1,7 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { WebsocketService } from '@services/websocket.service';
-import { analyzeTrend } from '@features/coin/logic/CoinTrend.logic';
+import { analyzeTrend, getSupportResistance } from 'btcmarketscanner-core';
 import type { FuturesKlineCandle } from '../domain/futuresMarket.model';
 import { FuturesMarketController } from '../domain/futuresMarket.controller';
 
@@ -17,25 +17,6 @@ const MARKET_TIMEFRAMES = [
   { label: '1D', value: '1d' },
 ] as const;
 const INDICATOR_LOOKBACK_LIMIT = 300;
-
-function getSupportResistance(candles: FuturesKlineCandle[], windowSize: number) {
-  if (candles.length === 0) {
-    return null;
-  }
-
-  const windowCandles = candles.slice(-windowSize);
-  const lows = windowCandles.map((candle) => candle.low);
-  const highs = windowCandles.map((candle) => candle.high);
-  const averageSupport = lows.reduce((sum, value) => sum + value, 0) / lows.length;
-  const averageResistance = highs.reduce((sum, value) => sum + value, 0) / highs.length;
-
-  return {
-    averageResistance,
-    averageSupport,
-    resistance: Math.max(...highs),
-    support: Math.min(...lows),
-  };
-}
 
 type BinanceKlineStreamEvent = {
   e?: string;

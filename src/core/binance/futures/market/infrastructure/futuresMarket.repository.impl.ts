@@ -1,5 +1,6 @@
 import { AxiosService } from '@services/axios.service';
 import { BASE_API_BINANCE } from '@configs/base.config';
+import { getBinanceFuturesBaseUrl } from '@configs/binance-futures-url';
 import { FuturesMarketRepository } from '../domain/futuresMarket.repository';
 import type {
   FuturesExchangeInfoResponse,
@@ -37,7 +38,7 @@ export class FuturesMarketRepositoryImpl implements FuturesMarketRepository {
 export function createFuturesMarketRepository() {
   return new FuturesMarketRepositoryImpl(
     new AxiosService({
-      baseURL: BASE_API_BINANCE,
+      baseURL: getBinanceFuturesBaseUrl(BASE_API_BINANCE),
     })
   );
 }

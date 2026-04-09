@@ -1,6 +1,6 @@
 import type { FuturesKlineCandle } from '@core/binance/futures/market/domain/futuresMarket.model';
+import type { TrendInsight } from 'btcmarketscanner-core';
 import { analyzeTrend } from './CoinTrend.logic';
-import type { TrendInsight } from '../interface/CoinLogic.interface';
 import type {
   CoinValidationRules,
   CoinValidationSession,

@@ -3,12 +3,16 @@
   "version": "0.3.5",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "pnpm run deps:dev && pnpm run deps:sync && next dev --webpack",
     "build": "next build",
     "start": "next start",
+    "prepare": "husky",
     "lint": "eslint",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "prettier": "prettier . --write"
+    "prettier": "prettier . --write",
+    "deps:dev": "node ./scripts/switch-core-dependency.mjs workspace",
+    "deps:prod": "node ./scripts/switch-core-dependency.mjs github",
+    "deps:sync": "pnpm install"
   },
   "dependencies": {
     "@mantine/core": "^8.3.18",
@@ -18,6 +22,7 @@
     "@tanstack/react-query": "^5.95.2",
     "axios": "^1.14.0",
     "bcrypt": "^6.0.0",
+    "btcmarketscanner-core": "workspace:*",
     "cookie": "^1.1.1",
     "lightweight-charts": "^5.1.0",
     "next": "16.2.1",
@@ -33,6 +38,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "husky": "^9.1.7",
     "postcss": "^8.5.8",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",

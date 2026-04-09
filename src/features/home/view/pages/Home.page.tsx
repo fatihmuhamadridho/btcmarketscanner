@@ -2,15 +2,7 @@ import HomeTemplate from '../templates/HomeTemplate.template';
 import { getHomeCardChangeBadgeColor, useHomePageLogic } from '../../logic/Home.logic';
 
 export default function Home() {
-  const {
-    currentPage,
-    marketItems,
-    setActivePage,
-    setSortMode,
-    sortMode,
-    totalPages,
-    visibleMarketItems,
-  } =
+  const { currentPage, marketItems, setActivePage, setSortMode, sortMode, totalPages, visibleMarketItems } =
     useHomePageLogic();
   const coinCards = visibleMarketItems.map((coin) => ({
     changeBadgeColor: getHomeCardChangeBadgeColor(Number(coin.ticker.priceChangePercent ?? 0)),
