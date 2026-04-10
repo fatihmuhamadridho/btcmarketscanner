@@ -9,8 +9,10 @@ export default function CoinPage({ symbol: initialSymbol }: CoinPageProps) {
     candles,
     candlesError,
     detail,
+    currentLivePrice,
     hasMoreOlderCandles,
     interval,
+    isLivePriceConnected,
     isLoadingMore,
     isLoadingCandles,
     isPageLoading,
@@ -42,9 +44,12 @@ export default function CoinPage({ symbol: initialSymbol }: CoinPageProps) {
   } = useCoinDetailPageLogic(initialSymbol);
 
   const activeSetup = executionConsensusSetup;
+  const displayLastPriceLabel =
+    currentLivePrice !== null ? formatPriceLevel(currentLivePrice) : marketSymbol?.ticker?.displayLastPrice ?? 'n/a';
   const coinAutoBot = useCoinAutoBotLogic({
     activeSetup,
-    currentPrice: marketSymbol?.ticker?.displayLastPrice ? Number(marketSymbol.ticker.displayLastPrice.replaceAll(',', '')) : null,
+    currentPrice:
+      currentLivePrice ?? (marketSymbol?.ticker?.displayLastPrice ? Number(marketSymbol.ticker.displayLastPrice.replaceAll(',', '')) : null),
     formatPriceLevel,
     formatPriceZone,
     executionBasisLabel,
@@ -89,6 +94,7 @@ export default function CoinPage({ symbol: initialSymbol }: CoinPageProps) {
       structureTerm={structureTerm}
       structureTerms={structureTerms}
       symbolInfo={symbolInfo}
+      displayLastPriceLabel={displayLastPriceLabel}
       timeframeSupportResistance={timeframeSupportResistance}
       trendSummary={trendSummary}
       TrendIcon={TrendIcon}

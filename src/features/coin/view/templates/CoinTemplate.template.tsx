@@ -53,6 +53,7 @@ type CoinTemplateProps = {
   structureTerm: MarketStructureTerm;
   structureTerms: ReadonlyArray<MarketStructureTermOption>;
   symbolInfo: CoinSymbolInfo | null | undefined;
+  displayLastPriceLabel: string;
   timeframeSupportResistance: ReadonlyArray<CoinTimeframeSupportResistance>;
   trendSummary: CoinTrendSummary;
   TrendIcon: ComponentType<{ size?: number }>;
@@ -78,6 +79,7 @@ export default function CoinTemplate({
   structureTerm,
   structureTerms,
   symbolInfo,
+  displayLastPriceLabel,
   timeframeSupportResistance,
   trendSummary,
   TrendIcon,
@@ -116,7 +118,7 @@ export default function CoinTemplate({
                 status={marketSymbol.status ?? 'n/a'}
                 onboardLabel={formatDate(symbolInfo.onboardDate ?? undefined)}
                 symbol={marketSymbol.symbol ?? 'unknown'}
-                displayLastPrice={marketSymbol.ticker?.displayLastPrice ?? 'n/a'}
+                displayLastPrice={displayLastPriceLabel}
                 displayChange={marketSymbol.ticker?.displayChange ?? 'n/a'}
                 displayVolume={marketSymbol.ticker?.displayVolume ?? 'n/a'}
               />

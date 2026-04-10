@@ -4,6 +4,7 @@ import { formatDecimalString } from '@utils/format-number.util';
 import {
   useFuturesMarketSymbolCandles,
   useFuturesMarketSymbolInitialCandles,
+  useFuturesMarketSymbolLivePrice,
   useFuturesMarketSymbolSnapshot,
   useFuturesMarketTimeframeSupportResistance,
 } from '@core/binance/futures/market/infrastructure/futuresMarket.hook';
@@ -146,6 +147,7 @@ export function useCoinDetailPageLogic(initialSymbol?: CoinPageProps['symbol']) 
     isLoading: isLoadingSnapshot,
     error: snapshotError,
   } = useFuturesMarketSymbolSnapshot(symbol);
+  const { livePrice: currentLivePrice, isConnected: isLivePriceConnected } = useFuturesMarketSymbolLivePrice(symbol);
   const {
     data: initialCandlesData,
     isFetching: isFetchingInitialCandles,
@@ -282,6 +284,8 @@ export function useCoinDetailPageLogic(initialSymbol?: CoinPageProps['symbol']) 
     isLoadingCandles: isFetchingInitialCandles,
     isPageLoading,
     loadOlderCandles,
+    currentLivePrice,
+    isLivePriceConnected,
     executionConsensusSetup: executionSummaryResult.consensusSetup,
     executionTimeframeSummaries: executionSummaryResult.summaries,
     executionBasisLabel: EXECUTION_TIMEFRAMES.map(formatExecutionTimeframeLabel).join(' • '),

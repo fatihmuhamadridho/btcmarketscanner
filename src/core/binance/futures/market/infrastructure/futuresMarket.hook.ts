@@ -92,6 +92,32 @@ function capCandles(candles: FuturesKlineCandle[], limit = 500) {
   return candles.slice(-limit);
 }
 
+type BinanceAggTradeStreamEvent = {
+  e?: string;
+  s?: string;
+  p?: string;
+};
+
+function parseLivePrice(rawMessage: string, symbol: string) {
+  try {
+    const parsed = JSON.parse(rawMessage) as BinanceAggTradeStreamEvent;
+
+    if (parsed.e !== 'aggTrade' && parsed.e !== 'trade') {
+      return null;
+    }
+
+    if (parsed.s?.toUpperCase() !== symbol.toUpperCase()) {
+      return null;
+    }
+
+    const price = Number(parsed.p);
+
+    return Number.isFinite(price) ? price : null;
+  } catch {
+    return null;
+  }
+}
+
 export type TimeframeSupportResistance = {
   interval: string;
   label: string;
@@ -152,6 +178,56 @@ export function useFuturesMarketSymbolInitialCandles(symbol?: string, interval =
     staleTime: 0,
     refetchOnWindowFocus: false,
   });
+}
+
+export function useFuturesMarketSymbolLivePrice(symbol?: string) {
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    if (!symbol) {
+      setLivePrice(null);
+      setIsConnected(false);
+      return undefined;
+    }
+
+    if (globalThis.window === undefined) {
+      return undefined;
+    }
+
+    const streamPath = `${symbol.toLowerCase()}@aggTrade`;
+
+    let socket: WebSocket | null = null;
+
+    try {
+      socket = futuresWebsocketService.connect(streamPath);
+      setIsConnected(false);
+    } catch {
+      setIsConnected(false);
+      return undefined;
+    }
+
+    socket.onopen = () => setIsConnected(true);
+    socket.onerror = () => setIsConnected(false);
+    socket.onclose = () => setIsConnected(false);
+    socket.onmessage = (event) => {
+      const nextPrice = parseLivePrice(event.data, symbol);
+
+      if (nextPrice !== null) {
+        setLivePrice(nextPrice);
+      }
+    };
+
+    return () => {
+      socket.onopen = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      socket.onmessage = null;
+      futuresWebsocketService.close();
+    };
+  }, [symbol]);
+
+  return { isConnected, livePrice };
 }
 
 export function useFuturesMarketSymbolCandles(symbol?: string, initialCandles: FuturesKlineCandle[] = [], interval = '1d') {
