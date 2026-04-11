@@ -22,7 +22,7 @@
     "@tanstack/react-query": "^5.95.2",
     "axios": "^1.14.0",
     "bcrypt": "^6.0.0",
-    "btcmarketscanner-core": "github:fatihmuhamadridho/btcmarketscanner-core#master",
+    "btcmarketscanner-core": "workspace:*",
     "cookie": "^1.1.1",
     "lightweight-charts": "^5.1.0",
     "next": "16.2.1",

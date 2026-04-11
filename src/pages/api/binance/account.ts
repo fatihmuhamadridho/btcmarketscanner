@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { BASE_API_BINANCE, BINANCE_API_KEY, BINANCE_SECRET_KEY } from '@configs/base.config';
+import { getBinanceFuturesBaseUrl } from '@configs/binance-futures-url';
 import { formatDecimalString } from '@utils/format-number.util';
 
 type BinanceAccountApiResponse = {
@@ -15,9 +16,12 @@ type BinanceAccountApiResponse = {
 
 type BinanceFuturesAccountResponse = {
   accountAlias?: string;
+  asset?: string;
+  availableBalance?: string;
+  balance?: string;
+  crossWalletBalance?: string;
   totalWalletBalance?: string;
   totalMarginBalance?: string;
-  availableBalance?: string;
 };
 
 function getInitials(value: string) {
@@ -48,8 +52,8 @@ function parseNumericBalance(value?: string) {
 }
 
 async function fetchBinanceFuturesAccount() {
-  const baseUrl = BASE_API_BINANCE ?? 'https://fapi.binance.com/fapi/v1';
-  const url = new URL('/fapi/v2/account', baseUrl);
+  const baseUrl = getBinanceFuturesBaseUrl(BASE_API_BINANCE ?? 'https://fapi.binance.com/fapi/v1');
+  const url = new URL('/fapi/v3/balance', baseUrl);
   const params = new URLSearchParams({
     recvWindow: '5000',
     timestamp: String(Date.now()),
@@ -71,7 +75,18 @@ async function fetchBinanceFuturesAccount() {
     throw new Error(errorText || `Binance account request failed with status ${response.status}`);
   }
 
-  return (await response.json()) as BinanceFuturesAccountResponse;
+  const balances = (await response.json()) as BinanceFuturesAccountResponse[];
+  const usdtBalance = balances.find((item) => item.asset === 'USDT') ?? balances[0];
+
+  if (!usdtBalance) {
+    throw new Error('Binance account balance is empty');
+  }
+
+  return {
+    ...usdtBalance,
+    totalWalletBalance: usdtBalance.balance ?? usdtBalance.totalWalletBalance,
+    totalMarginBalance: usdtBalance.crossWalletBalance ?? usdtBalance.totalMarginBalance,
+  };
 }
 
 export default async function handler(

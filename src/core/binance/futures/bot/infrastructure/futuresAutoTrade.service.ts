@@ -9,6 +9,30 @@ type FuturesAccountResponse = {
   dualSidePosition?: boolean;
   totalWalletBalance?: string;
 };
+type FuturesAccountInfoResponse = {
+  assets?: Array<{
+    asset?: string;
+    availableBalance?: string;
+    walletBalance?: string;
+    marginBalance?: string;
+    crossWalletBalance?: string;
+  }>;
+  availableBalance?: string;
+  totalWalletBalance?: string;
+  totalMarginBalance?: string;
+  dualSidePosition?: boolean;
+};
+type FuturesAccountBalanceResponseItem = {
+  accountAlias?: string;
+  asset?: string;
+  availableBalance?: string;
+  balance?: string;
+  crossUnPnl?: string;
+  crossWalletBalance?: string;
+  marginAvailable?: boolean;
+  maxWithdrawAmount?: string;
+  updateTime?: number;
+};
 
 type FuturesLeverageResponse = {
   leverage?: number;
@@ -134,6 +158,38 @@ function parseNumber(value?: string | null) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function toAccountSummary(balanceItems: FuturesAccountBalanceResponseItem[]) {
+  const usdtBalance = balanceItems.find((item) => item.asset === 'USDT') ?? balanceItems[0];
+
+  if (!usdtBalance) {
+    return null;
+  }
+
+  return {
+    availableBalance: usdtBalance.availableBalance ?? usdtBalance.balance,
+    totalWalletBalance: usdtBalance.balance,
+    totalMarginBalance: usdtBalance.crossWalletBalance,
+  };
+}
+
+function toAccountSummaryFromAccountInfo(accountInfo: FuturesAccountInfoResponse | null | undefined) {
+  if (!accountInfo) {
+    return null;
+  }
+
+  const usdtAsset = accountInfo.assets?.find((item) => item.asset === 'USDT') ?? accountInfo.assets?.[0];
+  if (!usdtAsset && !accountInfo.availableBalance && !accountInfo.totalWalletBalance) {
+    return null;
+  }
+
+  return {
+    availableBalance: usdtAsset?.availableBalance ?? accountInfo.availableBalance,
+    totalWalletBalance: usdtAsset?.walletBalance ?? accountInfo.totalWalletBalance,
+    totalMarginBalance: usdtAsset?.marginBalance ?? usdtAsset?.crossWalletBalance ?? accountInfo.totalMarginBalance,
+    dualSidePosition: accountInfo.dualSidePosition,
+  };
+}
+
 function pickSymbolRule(symbolInfo: FuturesSymbolInfo | undefined, filterType: string) {
   return symbolInfo?.filters?.find((item) => item.filterType === filterType) ?? null;
 }
@@ -254,9 +310,30 @@ export class FuturesAutoTradeService {
   }
 
   getAccount() {
-    return this.request<FuturesAccountResponse>('/fapi/v2/account', {
+    return this.request<FuturesAccountBalanceResponseItem[]>('/fapi/v3/balance', {
       signed: true,
-    });
+    })
+      .then((balances) => {
+        const account = toAccountSummary(balances);
+
+        if (!account) {
+          throw new Error('Binance account balance is empty.');
+        }
+
+        return account as FuturesAccountResponse;
+      })
+      .catch(async () => {
+        const accountInfo = await this.request<FuturesAccountInfoResponse>('/fapi/v2/account', {
+          signed: true,
+        });
+        const account = toAccountSummaryFromAccountInfo(accountInfo);
+
+        if (!account) {
+          throw new Error('Binance account data is empty.');
+        }
+
+        return account as FuturesAccountResponse;
+      });
   }
 
   getOpenPositions(symbol?: string) {
