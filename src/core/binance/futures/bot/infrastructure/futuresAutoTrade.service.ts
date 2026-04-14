@@ -436,45 +436,87 @@ export class FuturesAutoTradeService {
       throw new Error(`No open position found for ${symbol}.`);
     }
 
+    console.log(`[closePosition] Starting to close position for ${symbol}, side=${targetPosition.positionSide}, amount=${targetPosition.positionAmt}`);
+
     await this.cancelProtectionOrders(symbol, targetPosition.positionSide ?? positionSide ?? 'BOTH');
 
     let lastOrderResponse: FuturesOrderResponse | null = null;
+    const maxAttempts = 10; // Increased from 2 to handle multiple partial closes
+    let closedQuantity = 0;
 
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       targetPosition = await resolveTargetPosition();
 
       if (!targetPosition) {
+        console.log(`[closePosition] Position fully closed after ${attempt} attempts, total closed: ${closedQuantity}`);
         break;
       }
 
       const rawQuantity = Math.abs(parseNumber(targetPosition.positionAmt) ?? 0);
-      const quantity = roundDownToStep(rawQuantity, stepSize);
 
-      if (quantity <= 0) {
+      // Consider positions smaller than 0.00001 as dust and close them anyway
+      if (rawQuantity < 0.00001) {
+        console.log(`[closePosition] Dust position detected: ${rawQuantity}, attempting to close as ${rawQuantity}`);
+      } else if (rawQuantity === 0) {
+        console.log(`[closePosition] No remaining position after attempt ${attempt}`);
         break;
       }
 
+      // Try to round down to step size, but if that results in 0, use the raw quantity
+      const quantity = roundDownToStep(rawQuantity, stepSize);
+      let finalQuantity = quantity;
+
+      if (quantity <= 0 && rawQuantity > 0) {
+        // Rounding resulted in 0, but we have a position - try to close anyway
+        // Use a smaller value that respects step size
+        const minStep = stepSize && stepSize > 0 ? stepSize : 0.00001;
+        finalQuantity = Math.max(minStep, rawQuantity);
+        console.log(`[closePosition] Rounded quantity was 0, using final quantity ${finalQuantity} (raw: ${rawQuantity})`);
+      } else if (quantity <= 0) {
+        console.log(`[closePosition] Quantity too small to close: ${rawQuantity}, breaking after ${attempt} attempts`);
+        break;
+      }
       const exitSide: FuturesOrderSide = (parseNumber(targetPosition.positionAmt) ?? 0) > 0 ? 'SELL' : 'BUY';
-      const params = {
-        symbol,
-        side: exitSide,
-        type: 'MARKET',
-        quantity,
-        ...(dualSidePosition ? { positionSide: targetPosition.positionSide ?? positionSide ?? 'BOTH' } : { reduceOnly: true }),
-        newOrderRespType: 'RESULT',
-      };
 
-      lastOrderResponse = await this.request<FuturesOrderResponse>('/fapi/v1/order', {
-        method: 'POST',
-        params,
-        signed: true,
-      });
+      try {
+        console.log(`[closePosition] Attempt ${attempt + 1}/${maxAttempts}: closing ${finalQuantity} (raw: ${rawQuantity}), side=${exitSide}`);
+        lastOrderResponse = await this.request<FuturesOrderResponse>('/fapi/v1/order', {
+          method: 'POST',
+          params: {
+            symbol,
+            side: exitSide,
+            type: 'MARKET',
+            quantity: finalQuantity,
+            ...(dualSidePosition
+              ? { positionSide: targetPosition.positionSide ?? positionSide ?? 'BOTH' }
+              : { reduceOnly: true }),
+            newOrderRespType: 'RESULT',
+          },
+          signed: true,
+        });
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
+        closedQuantity += finalQuantity;
+        console.log(`[closePosition] Order placed, executedQty=${lastOrderResponse.executedQty}, status=${lastOrderResponse.status}`);
+
+        // Wait before next attempt to let order settle
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`[closePosition] Error on attempt ${attempt + 1}: ${errMsg}`);
+        throw error;
+      }
     }
 
     if (!lastOrderResponse) {
       throw new Error(`Unable to close position for ${symbol}.`);
+    }
+
+    // Final verification: check remaining position
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const finalPosition = await resolveTargetPosition();
+    if (finalPosition) {
+      const remainingAmt = Math.abs(parseNumber(finalPosition.positionAmt) ?? 0);
+      console.warn(`[closePosition] WARNING: Position still has ${remainingAmt} remaining after close attempt!`);
     }
 
     await this.cancelProtectionOrders(symbol, positionSide ?? 'BOTH');
@@ -483,6 +525,7 @@ export class FuturesAutoTradeService {
 
   async cancelProtectionOrders(symbol: string, positionSide?: 'BOTH' | 'LONG' | 'SHORT') {
     const [regularOrders, algoOrders] = await this.getOpenOrders(symbol);
+
     const regularProtectionOrders = regularOrders.filter(
       (order) =>
         isProtectionOrderType(order.type) &&
@@ -493,6 +536,27 @@ export class FuturesAutoTradeService {
         (order.reduceOnly === true || isProtectionOrderType(order.type) || order.closePosition === true) &&
         matchesPositionSide(order.positionSide, positionSide)
     );
+
+    console.log(
+      `[cancelProtectionOrders] ${symbol}: Found ${regularProtectionOrders.length} regular + ${algoProtectionOrders.length} algo protection orders to cancel (positionSide=${positionSide})`
+    );
+
+    // Log details of orders being cancelled
+    regularProtectionOrders.forEach((order) => {
+      console.log(
+        `[cancelProtectionOrders] ${symbol}: Canceling regular order - orderId=${order.orderId}, type=${order.type}, side=${order.positionSide}`
+      );
+    });
+    algoProtectionOrders.forEach((order) => {
+      console.log(
+        `[cancelProtectionOrders] ${symbol}: Canceling algo order - algoId=${order.algoId}, type=${order.type}, side=${order.positionSide}, reduceOnly=${order.reduceOnly}, closePosition=${order.closePosition}`
+      );
+    });
+
+    if (regularProtectionOrders.length === 0 && algoProtectionOrders.length === 0) {
+      console.log(`[cancelProtectionOrders] ${symbol}: No protection orders found to cancel`);
+      console.log(`[cancelProtectionOrders] ${symbol}: All open orders: ${JSON.stringify(regularOrders.concat(algoOrders as any))}`);
+    }
 
     await Promise.allSettled([
       ...regularProtectionOrders.map((order) =>
@@ -613,7 +677,13 @@ export class FuturesAutoTradeService {
 
     for (let index = 0; index < takeProfitPrices.length; index += 1) {
       const takeProfitPrice = takeProfitPrices[index];
-      const takeProfitQuantity = takeProfitQuantities[index];
+      // Important: takeProfitQuantities is sliced, so map index correctly
+      const quantityIndex = index - takeProfitStartIndex;
+      const takeProfitQuantity = quantityIndex >= 0 ? takeProfitQuantities[quantityIndex] : undefined;
+
+      console.log(
+        `[placeProtectionOrders] ${plan.symbol}: TP${index + 1} - price=${takeProfitPrice}, quantityIndex=${quantityIndex}, quantity=${takeProfitQuantity}, skip=${takeProfitPrice === undefined || takeProfitQuantity === undefined || takeProfitQuantity <= 0}`,
+      );
 
       if (takeProfitPrice === undefined || takeProfitQuantity === undefined || takeProfitQuantity <= 0) {
         continue;
